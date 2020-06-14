@@ -23,8 +23,8 @@ draw_null_info_binary <- function(N, Na, Nb, log_base = 2){
     Na = Na,
     Nb = Nb,
     mi = calc_mutual_info(
-      build_occurance_vec(sample(ids, size = Na), N, log_base = log_base),
-      build_occurance_vec(sample(ids, size = Nb), N, log_base = log_base),
+      build_occurance_vec(N, sample(ids, size = Na), log_base = log_base),
+      build_occurance_vec(N, sample(ids, size = Nb), log_base = log_base),
       N
     )
   )

@@ -4,15 +4,15 @@
 \alias{build_occurrence_vec}
 \title{Build logical occurrence vec}
 \usage{
-build_occurrence_vec(true_indices, n)
+build_occurrence_vec(n, fill_indices)
 }
 \arguments{
-\item{true_indices}{Integer vector of all indices an occurrence happened.}
-
 \item{n}{Total number of observations (aka the length of the final vector).}
+
+\item{fill_indices}{Integer vector of all indices an occurrence happened.}
 }
 \value{
-Array of length \code{n} with \code{TRUE} in every place indicated by \code{true_indices} and \code{FALSE} elsewhere.
+Array of length \code{n} with \code{TRUE} in every place indicated by \code{fill_indices} and \code{FALSE} elsewhere.
 }
 \description{
 Build logical occurrence vec

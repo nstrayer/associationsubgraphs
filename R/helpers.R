@@ -55,18 +55,35 @@ expand_combinations <- function(n, self_pairs = FALSE){
 
 #' Build logical occurrence vec
 #'
-#' @param true_indices Integer vector of all indices an occurrence happened.
 #' @param n Total number of observations (aka the length of the final vector).
+#' @param fill_indices Integer vector of all indices an occurrence happened.
 #'
-#' @return Array of length `n` with `TRUE` in every place indicated by `true_indices` and `FALSE` elsewhere.
+#' @return Array of length `n` with `TRUE` in every place indicated by `fill_indices` and `FALSE` elsewhere.
 #' @export
 #'
 #' @examples
 #' build_occurrence_vec(c(1,3,5), 6)
-build_occurrence_vec <- function(true_indices, n){
+build_occurrence_vec <- function(n, fill_indices){
 
   vec <- rep(FALSE, n)
-  vec[true_indices] <- TRUE
+  vec[fill_indices] <- TRUE
+  vec
+}
+
+#' Build counts observation vec
+#'
+#' @inheritParams build_occurrence_vec
+#' @param fill_values Array of same length as `fill_indices` that contain the
+#'   integer counts for the filled observations.
+#'
+#' @return Array of length `n` with every observation indicated by `fill_indices` filled with the matching entry in `fill_values` and `0` elsewhere.
+#' @export
+#'
+#' @examples
+#' build_count_vec(10, c(1,3,4), fill_values = c(10, 20, 30))
+build_count_vec <- function(n, fill_indices, fill_values){
+  vec <- rep(0L, n)
+  vec[fill_indices] <- fill_values
   vec
 }
 
