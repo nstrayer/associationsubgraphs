@@ -1,5 +1,12 @@
 #' Interactive association network visualization
 #'
+#' Produces an interactive plot of nodes connected by edges scaled by the
+#' strength of association.
+#'
+#' The plot automatically detects isolated subgraphs (groups of nodes with
+#' connections only within the group) and lays them out in a grid to avoid
+#' overlap between unrelated parts of the network.
+#'
 #' @param association_pairs dataframe with columns `a` and `b` representing the
 #'   ids of the variables or nodes and columns `strength` that is a numeric
 #'   indicator of strength of association (higher = stronger).
@@ -12,6 +19,7 @@
 #'   Lower values mean a better but slower layout, higher means faster. See the
 #'   [d3-force docs](https://github.com/d3/d3-force#simulation_alphaDecay) for
 #'   more info.
+#' @param n_neighbors How many neighbors for a hovered node should be shown?
 #'
 #' @return Interactive javascript visualization of association network
 #' @export
@@ -20,7 +28,8 @@
 visualize_association_network <- function(association_pairs,
                                           node_info,
                                           measure_title = "association",
-                                          alphaDecay = 0.01) {
+                                          alphaDecay = 0.01,
+                                          n_neighbors = 5) {
   unique_nodes <- dplyr::count(dplyr::bind_rows(
       dplyr::select(association_pairs, id = a),
       dplyr::select(association_pairs, id = b)
@@ -45,6 +54,8 @@ visualize_association_network <- function(association_pairs,
       )
     ),
     container = "div",
-    options = list(measure = measure_title, alphaDecay = alphaDecay)
+    options = list(measure = measure_title,
+                   alphaDecay = alphaDecay,
+                   n_neighbors = n_neighbors)
   )
 }

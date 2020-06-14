@@ -8,7 +8,8 @@ visualize_association_network(
   association_pairs,
   node_info,
   measure_title = "association",
-  alphaDecay = 0.01
+  alphaDecay = 0.01,
+  n_neighbors = 5
 )
 }
 \arguments{
@@ -27,10 +28,18 @@ between the variables.}
 Lower values mean a better but slower layout, higher means faster. See the
 \href{https://github.com/d3/d3-force#simulation_alphaDecay}{d3-force docs} for
 more info.}
+
+\item{n_neighbors}{How many neighbors for a hovered node should be shown?}
 }
 \value{
 Interactive javascript visualization of association network
 }
 \description{
-Interactive association network visualization
+Produces an interactive plot of nodes connected by edges scaled by the
+strength of association.
+}
+\details{
+The plot automatically detects isolated subgraphs (groups of nodes with
+connections only within the group) and lays them out in a grid to avoid
+overlap between unrelated parts of the network.
 }
