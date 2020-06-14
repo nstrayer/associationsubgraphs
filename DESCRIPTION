@@ -1,0 +1,15 @@
+Package: entropynet
+Type: Package
+Title: Estimation of association networks using non-parametric entropy-based measures
+Version: 0.1.0
+Author: Nick Strayer
+Maintainer: Nick Strayer <nick.strayer@gmail.com>
+Description: Package for estimation of robust entropy association networks from both binary occurence and count data. Includes functions for investigating the found networks through visualization and various network-analysis statistics. 
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    dplyr,
+    purrr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.0.2
