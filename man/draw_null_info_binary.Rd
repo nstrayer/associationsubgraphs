@@ -13,7 +13,7 @@ draw_null_info_binary(N, Na, Nb, log_base = 2)
 
 \item{Nb}{Number of times the b-variable occurs}
 
-\item{log_base}{Base of logarithm used. \code{2} will return entropy in bits.}
+\item{log_base}{Base of logarithm used. \code{2} will return information measures in bits.}
 }
 \value{
 Single row dataframe with settings for draw and mutual information (\code{mi}) for current draw.
