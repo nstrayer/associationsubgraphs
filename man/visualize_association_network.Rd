@@ -43,3 +43,11 @@ The plot automatically detects isolated subgraphs (groups of nodes with
 connections only within the group) and lays them out in a grid to avoid
 overlap between unrelated parts of the network.
 }
+\examples{
+
+virus_net \%>\%
+  dplyr::arrange(desc(strength)) \%>\%
+  head(300) \%>\%
+  visualize_association_network()
+
+}
