@@ -25,6 +25,7 @@ virus_host_viruses <- read_csv(here("data-raw/mammal_virus_viruses.csv")) %>%
     enveloped = vEnvelope
   ) %>%
   mutate(
+    virus_id = virus_id %>% str_replace_all("_", " "),
     enveloped = enveloped == "enveloped",
   )
 
@@ -33,8 +34,8 @@ virus_host <- read_csv(here("data-raw/mammal_virus_associations.csv")) %>%
     virus_id = vVirusNameCorrected,
     host_id = hHostNameFinal,
     method = DetectionMethod
-  )
-
+  ) %>%
+  mutate(virus_id = str_replace_all(virus_id, "_", " "))
 
 
 usethis::use_data(virus_host, overwrite = TRUE)
