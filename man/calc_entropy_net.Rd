@@ -54,7 +54,7 @@ allows you to run on clusters etc..}
 \item{subset_pairs}{Should the algorithm be run on a random subset of
 possible combinations? Useful for making sure everything is good before
 running larger jobs. Set to the number of pairs you want to calculate
-strength for.}
+strength for. If reproducability is desired use \code{set.seed()}.}
 
 \item{verbose}{Information about steps is written to console.}
 }
