@@ -13,6 +13,9 @@
 #'   association network).
 #' @param target_col Name of the column containing the target for occurance
 #'   (I.e. the data used to infer association between nodes).
+#' @param count_col Name of column containing count values as integers. If this
+#'   is not set and no column with title `count` is included in `pairs` then
+#'   entropy will be run on binary occurrence.
 #' @param info_func What information function should be used? Like all of the
 #'   `calc_*` functions in this package this takes as its arguments two paired
 #'   vectors of observations as input and returns a number corresponding to
@@ -31,6 +34,7 @@
 #'   possible combinations? Useful for making sure everything is good before
 #'   running larger jobs. Set to the number of pairs you want to calculate
 #'   strength for.
+#' @param verbose Information about steps is written to console.
 #'
 #' @return
 #' @export
@@ -49,16 +53,33 @@
 calc_entropy_net <- function(pairs,
                              id_col,
                              target_col,
+                             count_col,
                              info_func = entropynet::calc_mutual_info,
                              possible_targets,
                              parallel = TRUE,
-                             subset_pairs = FALSE){
+                             subset_pairs = FALSE,
+                             verbose = FALSE){
+  status_update <- function(msg){
+    if(verbose) cat(msg, "\n")
+  }
 
   if(!missing(id_col)){
     pairs <- dplyr::rename(pairs, id := {{id_col}})
   }
   if(!missing(target_col)){
     pairs <- dplyr::rename(pairs, target := {{target_col}})
+  }
+  if(!missing(count_col)){
+    pairs <- dplyr::rename(pairs, count := {{count_col}})
+  }
+
+  # Do we have a count column in data?
+  if("count" %in% colnames(pairs)){
+    count_mode <- TRUE
+    status_update("Running in count-mode")
+  } else {
+    count_mode <- FALSE
+    status_update("Running in occurrence-mode")
   }
 
   all_targets <- dplyr::distinct(pairs, target)
@@ -68,11 +89,13 @@ calc_entropy_net <- function(pairs,
     # Make sure possible_targets is a superset of observed targets
     in_pairs_not_possible <- setdiff(obs, given)
     if(length(in_pairs_not_possible) > 0){
-      stop("The passed list of possible targets doesn't include some targets seen in pairs.")
+      stop("The passed list of possible targets doesn't include some targets seen in pairs")
     }
 
     # Replace all targets df with custom one
     all_targets <- dplyr::tibble(target = possible_targets)
+  } else{
+    status_update("Built list of possible targets with all observed targets in pairs data")
   }
 
   id_to_target <- dplyr::right_join(
@@ -91,29 +114,36 @@ calc_entropy_net <- function(pairs,
   # Set up parallel processing environment if requested .skip will avoid re-creating a
   # plan if one already exists (saves substantial time on subsequent runs)
   if(parallel){
+    status_update("Setting up parallel running environment")
     requireNamespace("future", quietly = TRUE)
     requireNamespace("furrr", quietly = TRUE)
 
     provided_plan <- "future" %in% class(parallel)
     provided_num_cores <- is.numeric(parallel)
     if(provided_plan){
+      status_update("Using custom supplied future execution plan")
       future::plan(parallel)
     } else if(provided_num_cores){
+      status_update(paste("Setting up parallel environment to use", verbose, "cores"))
       future::plan(future::tweak(future::multiprocess, workers = parallel))
     } else {
+      status_update("Setting up default future::multiprocess parallel environment")
       future::plan(future::multiprocess)
     }
 
     map_fn <- furrr::future_map_dfr
   } else {
     map_fn <- purrr::map_dfr
+    status_update("Running calculations in sequential mode")
   }
 
   id_combos <- expand_combinations(N_ids)
   if(subset_pairs){
     id_combos <- id_combos %>% sample_n(subset_pairs)
+    status_update(paste("Taking a random sample of", subset_pairs, "id pairs"))
   }
 
+  status_update("Starting information network calculation")
   purrr::pmap_dfr(
     id_combos,
     function(a_index, b_index){

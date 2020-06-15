@@ -8,10 +8,12 @@ calc_entropy_net(
   pairs,
   id_col,
   target_col,
+  count_col,
   info_func = entropynet::calc_mutual_info,
   possible_targets,
   parallel = TRUE,
-  subset_pairs = FALSE
+  subset_pairs = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -27,6 +29,10 @@ association network).}
 
 \item{target_col}{Name of the column containing the target for occurance
 (I.e. the data used to infer association between nodes).}
+
+\item{count_col}{Name of column containing count values as integers. If this
+is not set and no column with title \code{count} is included in \code{pairs} then
+entropy will be run on binary occurrence.}
 
 \item{info_func}{What information function should be used? Like all of the
 \verb{calc_*} functions in this package this takes as its arguments two paired
@@ -49,6 +55,8 @@ allows you to run on clusters etc..}
 possible combinations? Useful for making sure everything is good before
 running larger jobs. Set to the number of pairs you want to calculate
 strength for.}
+
+\item{verbose}{Information about steps is written to console.}
 }
 \value{
 

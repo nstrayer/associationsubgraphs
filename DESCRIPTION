@@ -16,7 +16,7 @@ Imports:
     future,
     rlang (>= 0.1.2)
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Suggests: 
     roxygen2
 Depends: 
