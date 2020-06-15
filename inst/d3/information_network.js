@@ -111,7 +111,7 @@ div.style("position", "relative");
 div.append("h2")
   .style("position", "absolute")
   .style("top", "-20px")
-  .text(`Top ${edges.length} comorbidity pairs by ${options.measure || "association"}`);
+  .text(`Top ${edges.length} ${options.measure || "association"} pairs`);
 
 // Get the device pixel ratio, falling back to 1.
 const dpr = window.devicePixelRatio || 1;
@@ -162,7 +162,12 @@ const tooltip = div.append("div")
 
 
 function show_tooltip(d){
-  const dont_show = ["id", "color", "subgraph_id", "subgraph_x", "subgraph_y", "index", "x", "y", "vx", "vy"];
+  const dont_show = [
+    "id", "color", "subgraph_id",
+    "subgraph_x", "subgraph_y", "index",
+    "fx", "fy",
+    "x", "y",
+    "vx", "vy"];
 
   const common_styles = `margin: 5px;`;
 
