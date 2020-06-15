@@ -50,6 +50,16 @@
 #'   subset_pairs = 100
 #' )
 #'
+#' # Run count-based association for vir-clasp rna-seq dataset
+#' calc_entropy_net(
+#'   pairs = virclasp_chikv,
+#'   id_col = id,
+#'   target_col = condition,
+#'   count_col = count,
+#'   parallel = FALSE,
+#'   subset_pairs = 100
+#' )
+#'
 calc_entropy_net <- function(pairs,
                              id_col,
                              target_col,
@@ -59,9 +69,7 @@ calc_entropy_net <- function(pairs,
                              parallel = TRUE,
                              subset_pairs = FALSE,
                              verbose = FALSE){
-  status_update <- function(msg){
-    if(verbose) cat(msg, "\n")
-  }
+  status_update <- function(msg){ if(verbose) cat(msg, "\n") }
 
   if(!missing(id_col)){
     pairs <- dplyr::rename(pairs, id := {{id_col}})
@@ -124,26 +132,25 @@ calc_entropy_net <- function(pairs,
       future::plan(parallel)
     } else if(provided_num_cores){
       status_update(paste("Setting up parallel environment to use", verbose, "cores"))
-      future::plan(future::tweak(future::multiprocess, workers = parallel))
+      future::plan(future::multiprocess, workers = parallel)
     } else {
       status_update("Setting up default future::multiprocess parallel environment")
       future::plan(future::multiprocess)
     }
 
-    map_fn <- furrr::future_map_dfr
+    map_fn <- furrr::future_pmap_dfr
   } else {
-    map_fn <- purrr::map_dfr
+    map_fn <- purrr::pmap_dfr
     status_update("Running calculations in sequential mode")
   }
 
   id_combos <- expand_combinations(N_ids)
   if(subset_pairs){
-    id_combos <- id_combos %>% sample_n(subset_pairs)
-    status_update(paste("Taking a random sample of", subset_pairs, "id pairs"))
+    status_update(paste("Taking a random sample of", subset_pairs, "id pairs out of a total of", nrow(id_combos)))
+    id_combos <- id_combos %>% dplyr::sample_n(subset_pairs)
   }
-
-  status_update("Starting information network calculation")
-  purrr::pmap_dfr(
+  status_update("Running information network calculation")
+  map_fn(
     id_combos,
     function(a_index, b_index){
       a_data <- id_to_target$data[[a_index]]
@@ -157,7 +164,7 @@ calc_entropy_net <- function(pairs,
         b_vec <- build_occurrence_vec(N_targets, b_data$int_id)
       }
 
-      tibble(
+      dplyr::tibble(
         a = id_to_target$id[a_index],
         b = id_to_target$id[b_index],
         strength = info_func(a_vec, b_vec)
