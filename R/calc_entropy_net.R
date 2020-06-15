@@ -43,7 +43,7 @@
 #'
 #' # Run association net on the virus-host dataset
 #' calc_entropy_net(
-#'   pairs = virus_host_net,
+#'   pairs = virus_host,
 #'   id_col = virus_id,
 #'   target_col = host_id,
 #'   parallel = FALSE,

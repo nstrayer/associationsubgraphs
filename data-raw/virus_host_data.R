@@ -6,7 +6,7 @@ library(here)
 # Dataset was found using the University of Colorado ICON system (https://icon.colorado.edu/#!/networks)
 # and downloaded from github (https://github.com/cjcarlson/brevity/tree/master/Olival%20Nature%202017%20Raw%20Data)
 
-virus_host_net_hosts <- read_csv(here("data-raw/mammal_virus_hosts.csv")) %>%
+virus_host_hosts <- read_csv(here("data-raw/mammal_virus_hosts.csv")) %>%
   select(
     host_id = hHostNameFinal,
     common_name = Common_names_Eng,
@@ -15,7 +15,7 @@ virus_host_net_hosts <- read_csv(here("data-raw/mammal_virus_hosts.csv")) %>%
   ) %>%
   mutate(host_index = row_number())
 
-virus_host_net_viruses <- read_csv(here("data-raw/mammal_virus_viruses.csv")) %>%
+virus_host_viruses <- read_csv(here("data-raw/mammal_virus_viruses.csv")) %>%
   select(
     virus_id = vVirusNameCorrected,
     avg_genome_length = vGenomeAveLength,

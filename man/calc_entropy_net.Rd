@@ -69,9 +69,19 @@ information network over all combinations of variables.
 
 # Run association net on the virus-host dataset
 calc_entropy_net(
-  pairs = virus_host_net,
+  pairs = virus_host,
   id_col = virus_id,
   target_col = host_id,
+  parallel = FALSE,
+  subset_pairs = 100
+)
+
+# Run count-based association for vir-clasp rna-seq dataset
+calc_entropy_net(
+  pairs = virclasp_chikv,
+  id_col = id,
+  target_col = condition,
+  count_col = count,
   parallel = FALSE,
   subset_pairs = 100
 )
