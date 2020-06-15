@@ -157,7 +157,7 @@ const tooltip = div.append("div")
 
 
 function show_tooltip(d){
-  const dont_show = ["id", "subgraph_id", "subgraph_x", "subgraph_y", "index", "x", "y", "vx", "vy"];
+  const dont_show = ["id", "color", "subgraph_id", "subgraph_x", "subgraph_y", "index", "x", "y", "vx", "vy"];
 
   const common_styles = `margin: 5px;`;
 
@@ -175,7 +175,6 @@ function show_tooltip(d){
     border-width: 0 0 1px 0;
     border-bottom: 1px solid #cbcbcb;
   `;
-
 
   const n_neighbors = options.n_neighbors || 5;
   const neighbors_table = edges
