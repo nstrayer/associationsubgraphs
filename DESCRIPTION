@@ -10,6 +10,9 @@ Encoding: UTF-8
 LazyData: true
 Imports: 
     dplyr,
-    purrr
+    purrr,
+    magrittr,
+    furrr,
+    future
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
