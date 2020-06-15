@@ -25,6 +25,12 @@
 #' @export
 #'
 #' @examples
+#'
+#' virus_net %>%
+#'   dplyr::arrange(desc(strength)) %>%
+#'   head(300) %>%
+#'   visualize_association_network()
+#'
 visualize_association_network <- function(association_pairs,
                                           node_info,
                                           measure_title = "association",
