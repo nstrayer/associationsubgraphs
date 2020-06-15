@@ -1,4 +1,7 @@
-#' Title
+#' Calculate entropy network
+#'
+#' Takes a dataset of occurence or count observations and runs a pair-wise
+#' information network over all combinations of variables.
 #'
 #' @param pairs Dataframe with at least two columns: `id` and `target`. `id`
 #'   corresponds to the variables to be associated with each other and `target`
@@ -33,10 +36,20 @@
 #' @export
 #'
 #' @examples
+#'
+#' # Run association net on the virus-host dataset
+#' calc_entropy_net(
+#'   pairs = virus_host_net,
+#'   id_col = virus_id,
+#'   target_col = host_id,
+#'   parallel = FALSE,
+#'   subset_pairs = 100
+#' )
+#'
 calc_entropy_net <- function(pairs,
                              id_col,
                              target_col,
-                             info_func = calc_mutual_info,
+                             info_func = entropynet::calc_mutual_info,
                              possible_targets,
                              parallel = TRUE,
                              subset_pairs = FALSE){

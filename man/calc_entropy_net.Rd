@@ -2,13 +2,13 @@
 % Please edit documentation in R/calc_entropy_net.R
 \name{calc_entropy_net}
 \alias{calc_entropy_net}
-\title{Title}
+\title{Calculate entropy network}
 \usage{
 calc_entropy_net(
   pairs,
   id_col,
   target_col,
-  info_func = calc_mutual_info,
+  info_func = entropynet::calc_mutual_info,
   possible_targets,
   parallel = TRUE,
   subset_pairs = FALSE
@@ -54,5 +54,18 @@ strength for.}
 
 }
 \description{
-Title
+Takes a dataset of occurence or count observations and runs a pair-wise
+information network over all combinations of variables.
+}
+\examples{
+
+# Run association net on the virus-host dataset
+calc_entropy_net(
+  pairs = virus_host_net,
+  id_col = virus_id,
+  target_col = host_id,
+  parallel = FALSE,
+  subset_pairs = 100
+)
+
 }
