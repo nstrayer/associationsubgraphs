@@ -19,3 +19,5 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
 Suggests: 
     roxygen2
+Depends: 
+    R (>= 2.10)
