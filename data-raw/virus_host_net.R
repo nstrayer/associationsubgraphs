@@ -1,5 +1,4 @@
 ## code to prepare `virus_host_net` dataset goes here
-## code to prepare `virclasp_protein_net` dataset goes here
 library(entropynet)
 
 virus_net <- calc_entropy_net(
