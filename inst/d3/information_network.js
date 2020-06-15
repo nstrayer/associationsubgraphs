@@ -52,10 +52,15 @@ const subgraph_grid_side = Math.ceil(Math.sqrt(subgraphs.size));
 let i = 0;
 const grid_side_length = Math.min(width, height);
 const gap_size = grid_side_length/subgraph_grid_side;
+const is_giant_component = subgraphs.size == 1;
 
 subgraphs.forEach(function(subgraph, subgraph_id){
-  const row = (i % subgraph_grid_side)*gap_size;
-  const col = Math.floor(i / subgraph_grid_side)*gap_size;
+  const row = is_giant_component
+    ? width/2
+    : (i % subgraph_grid_side)*gap_size;
+  const col = is_giant_component
+    ? height/2
+    : Math.floor(i / subgraph_grid_side)*gap_size;
   i++;
   subgraph.forEach(node => {
     node.subgraph_x = row;
@@ -148,7 +153,7 @@ const node = g.append("g")
 
 
 const tooltip = div.append("div")
-  .style("width", "150px")
+  .style("width", "auto")
   .style("border", "1px solid black")
   .style("background", "white")
   .style("position", "absolute")
@@ -165,9 +170,9 @@ function show_tooltip(d){
     border-collapse: collapse;
     border-spacing: 0;
     empty-cells: show;
-    border: 1px solid #cbcbcb;
     width: calc(100% - 10px);
-    margin-top: 0px;
+    margin-top: 3px;
+    font-size: 0.9rem;
   `;
 
   const table_row_styles = `
@@ -187,16 +192,16 @@ function show_tooltip(d){
     .filter((d, i) => i < n_neighbors)
     .reduce((content, {neighbor, strength}) => `
       ${content}
-      <tr style = "${table_row_styles}">
-        <td style ="${table_row_styles}">${neighbor}</td>
-        <td style ="${table_row_styles}">${d3.format(".3f")(strength)}</td>
+      <tr >
+        <td style="${table_row_styles}">${neighbor}</td>
+        <td style="${table_row_styles}">${d3.format(".3f")(strength)}</td>
       </tr>
     `,`
     <span style = "${common_styles} font-style: italic; font-size: 0.8rem;">Top ${n_neighbors} associations</span>
     <table style = "${common_styles} ${table_styles}">
-      <tr style = "${table_row_styles}">
-        <th>Neighbor</th>
-        <th>Strength</th>
+      <tr>
+        <th style="${table_row_styles}; text-align:left;">Neighbor</th>
+        <th style="${table_row_styles}; text-align:left;">Strength</th>
       </tr>`) + "</table>";
 
   const make_entry = key => `
