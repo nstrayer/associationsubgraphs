@@ -33,7 +33,7 @@
 #' @param subset_pairs Should the algorithm be run on a random subset of
 #'   possible combinations? Useful for making sure everything is good before
 #'   running larger jobs. Set to the number of pairs you want to calculate
-#'   strength for.
+#'   strength for. If reproducability is desired use `set.seed()`.
 #' @param verbose Information about steps is written to console.
 #'
 #' @return
@@ -103,10 +103,9 @@ calc_entropy_net <- function(pairs,
       dplyr::mutate(all_targets, int_id = dplyr::row_number()),
       by = c("target")
     ) %>%
-    dplyr::select(id, int_id) %>%
+    dplyr::select(matches("id|count")) %>%
     dplyr::group_by(id) %>%
-    tidyr::nest() %>%
-    mutate(data = map(data, ~.x$int_id))
+    tidyr::nest()
 
   N_targets <- nrow(all_targets)
   N_ids <- nrow(id_to_target)
@@ -147,8 +146,17 @@ calc_entropy_net <- function(pairs,
   purrr::pmap_dfr(
     id_combos,
     function(a_index, b_index){
-      a_vec <- build_occurrence_vec(N_targets, id_to_target$data[[a_index]])
-      b_vec <- build_occurrence_vec(N_targets, id_to_target$data[[b_index]])
+      a_data <- id_to_target$data[[a_index]]
+      b_data <- id_to_target$data[[b_index]]
+
+      if(count_mode){
+        a_vec <- build_count_vec(N_targets, a_data$int_id, a_data$count)
+        b_vec <- build_count_vec(N_targets, b_data$int_id, b_data$count)
+      } else {
+        a_vec <- build_occurrence_vec(N_targets, a_data$int_id)
+        b_vec <- build_occurrence_vec(N_targets, b_data$int_id)
+      }
+
       tibble(
         a = id_to_target$id[a_index],
         b = id_to_target$id[b_index],
