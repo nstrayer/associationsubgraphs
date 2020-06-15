@@ -1,0 +1,51 @@
+---
+title: "calculating_mutual_information_network"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{calculating_mutual_information_network}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(entropynet)
+library(tidyverse)
+
+# protein_net <- calc_entropy_net(
+#   pairs = virclasp_chikv,
+#   id_col = id,
+#   target_col = condition,
+#   count_col = count,
+#   parallel = TRUE,
+#   subset_pairs = 50000,
+#   verbose = TRUE
+# )
+
+sorted_by_strength <- virclasp_protein_net %>% 
+  as_tibble() %>% 
+  arrange(desc(strength))
+
+
+
+```
+
+```{r}
+sorted_by_strength %>% 
+  ggplot(aes(x = strength)) +
+  geom_histogram(bins = 200)
+```
+
+```{r}
+sorted_by_strength %>% 
+  head(2000) %>% 
+  visualize_association_network()
+```
+
+
