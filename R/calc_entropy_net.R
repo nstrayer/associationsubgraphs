@@ -6,6 +6,10 @@
 #'   of an tabular dataset with columns as `id` and rows as `target`. If data is
 #'   count based an addition `count` column can be included. (Not yet
 #'   implemented).
+#' @param id_col Name of column containing variable id (I.e. nodes of the
+#'   association network).
+#' @param target_col Name of the column containing the target for occurance
+#'   (I.e. the data used to infer association between nodes).
 #' @param info_func What information function should be used? Like all of the
 #'   `calc_*` functions in this package this takes as its arguments two paired
 #'   vectors of observations as input and returns a number corresponding to
@@ -30,10 +34,19 @@
 #'
 #' @examples
 calc_entropy_net <- function(pairs,
+                             id_col,
+                             target_col,
                              info_func = calc_mutual_info,
                              possible_targets,
                              parallel = TRUE,
                              subset_pairs = FALSE){
+
+  if(!missing(id_col)){
+    pairs <- dplyr::rename(pairs, id := {{id_col}})
+  }
+  if(!missing(target_col)){
+    pairs <- dplyr::rename(pairs, target := {{target_col}})
+  }
 
   all_targets <- dplyr::distinct(pairs, target)
 
