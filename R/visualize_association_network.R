@@ -36,12 +36,8 @@ visualize_association_network <- function(association_pairs,
                                           measure_title = "association",
                                           alphaDecay = 0.01,
                                           n_neighbors = 5) {
-  unique_nodes <- dplyr::count(dplyr::bind_rows(
-      dplyr::select(association_pairs, id = a),
-      dplyr::select(association_pairs, id = b)
-    ),
-    id, name = "degree")
 
+  unique_nodes <- gather_unique_nodes(association_pairs)
   if (missing(node_info)) {
     nodes <- unique_nodes
   } else {
@@ -50,6 +46,7 @@ visualize_association_network <- function(association_pairs,
 
   r2d3::r2d3(
     system.file("d3/information_network.js", package = "entropynet"),
+    dependencies = system.file("d3/find_subgraphs.js", package = "entropynet"),
     data = list(
       nodes = nodes,
       edges = dplyr::select(

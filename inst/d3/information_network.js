@@ -1,4 +1,4 @@
-// !preview r2d3 data=entropy_network, container = "div", options = list()
+// !preview r2d3 data=entropy_network, container = "div", options = list(), dependencies = system.file("d3/find_subgraphs.js", package = "entropynet")
 
 const padding = 50;
 const node_r = 3;
@@ -6,47 +6,10 @@ const node_r = 3;
 // and that the nodes has an id column that matches the values
 // in that column
 const edges = HTMLWidgets.dataframeToD3(data.edges);
-const nodes = HTMLWidgets.dataframeToD3(data.nodes);
+const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-// Start with every node as their own "subgraph"
-const subgraphs = new Map();
-nodes.forEach(node => {
-  subgraphs.set(node.id, [node]);
-  node.subgraph_id = node.id;
-});
+const {nodes, subgraphs} = find_subgraphs(nodes_raw, edges);
 
-// Loop over each link in the data
-edges.forEach(({source, target}) => {
-  // Grab each node
-  const source_node = nodes.find(n => n.id == source);
-  const target_node = nodes.find(n => n.id == target);
-
-  // Are both nodes in the same subgraph?
-  const different_subgraphs = source_node.subgraph_id !== target_node.subgraph_id;
-
-  if(different_subgraphs){
-
-    const source_subgraph = subgraphs.get(source_node.subgraph_id);
-    const target_subgraph = subgraphs.get(target_node.subgraph_id);
-
-    const source_subgraph_is_larger = source_subgraph.length > target_subgraph.length;
-
-    const absorbing_subgraph_id = source_subgraph_is_larger ? source_node.subgraph_id : target_node.subgraph_id;
-    const culled_subgraph_id = source_subgraph_is_larger ? target_node.subgraph_id : source_node.subgraph_id;
-
-    const absorbing_subgraph = source_subgraph_is_larger ? source_subgraph : target_subgraph;
-    const culled_subgraph = source_subgraph_is_larger ? target_subgraph : source_subgraph;
-
-    // Move all nodes in the target subgraph to source subgraph
-    culled_subgraph.forEach(n => {
-      n.subgraph_id = absorbing_subgraph_id;
-      absorbing_subgraph.push(n);
-    });
-
-    // Delete the target subgraph
-    subgraphs.delete(culled_subgraph_id);
-  }
-});
 
 const subgraph_grid_side = Math.ceil(Math.sqrt(subgraphs.size));
 let i = 0;
@@ -306,3 +269,5 @@ function drag(simulation){
       .on("drag", dragged)
       .on("end", dragended);
 }
+
+
