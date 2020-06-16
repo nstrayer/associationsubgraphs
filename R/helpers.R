@@ -87,3 +87,11 @@ build_count_vec <- function(n, fill_indices, fill_values){
   vec
 }
 
+gather_unique_nodes <- function(pairs){
+  dplyr::count(dplyr::bind_rows(
+    dplyr::select(pairs, id = a),
+    dplyr::select(pairs, id = b)
+  ),
+  id,
+  name = "degree")
+}
