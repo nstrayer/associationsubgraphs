@@ -140,7 +140,6 @@ function show_tooltip(d){
     empty-cells: show;
     width: calc(100% - 10px);
     margin-top: 3px;
-    font-size: 0.9rem;
   `;
 
   const table_row_styles = `
@@ -150,22 +149,25 @@ function show_tooltip(d){
   `;
 
   const n_neighbors = options.n_neighbors || 5;
-  const neighbors_table = edges
+
+  const neighbors = edges
     .filter(edge => edge.source === d || edge.target === d)
     .map(({source, target, strength}) => ({
       neighbor: source.id == d.id ? target.id : source.id,
       strength
     }))
     .sort((a,b) => b.strength - a.strength)
-    .filter((d, i) => i < n_neighbors)
-    .reduce((content, {neighbor, strength}) => `
+    .filter((d, i) => i < n_neighbors);
+
+
+  const neighbors_table = neighbors.reduce((content, {neighbor, strength}) => `
       ${content}
       <tr >
         <td style="${table_row_styles}">${neighbor}</td>
         <td style="${table_row_styles}">${d3.format(".3f")(strength)}</td>
       </tr>
     `,`
-    <span style = "${common_styles} font-style: italic; font-size: 0.8rem;">Top ${n_neighbors} associations</span>
+    <span style = "${common_styles} font-style: italic; font-size: 0.9rem;">Top ${neighbors.length} associations</span>
     <table style = "${common_styles} ${table_styles}">
       <tr>
         <th style="${table_row_styles}; text-align:left;">Neighbor</th>
@@ -182,7 +184,7 @@ function show_tooltip(d){
     .filter(key => !dont_show.includes(key))
     .reduce(
       (content, key) => `${content} ${make_entry(key)}`,
-      `<p style = "${common_styles} font-size:1.1rem;">${d.id}</p>`);
+      `<h3 style = "${common_styles};">${d.id}</h3>`);
 
   const content = `
     ${node_information}
@@ -190,8 +192,8 @@ function show_tooltip(d){
   `;
 
   tooltip
-    .style("left", `${d3.event.clientX}px`)
-    .style("top", `${d3.event.clientY}px`)
+    .style("left", `${d3.event.offsetX + 10}px`)
+    .style("top", `${d3.event.offsetY + 10}px`)
     .style("display", "block")
     .html(content);
 }
