@@ -1,6 +1,6 @@
 // !preview r2d3 data=subgraph_results
 
-const margin = {left: 20, right: 1, top: 20, bottom: 35, middle: 10};
+const margin = {left: 20, right: 1, top: 20, bottom: 35, middle: 15};
 const h = height - margin.top - margin.bottom;
 const w = width - margin.left - margin.right;
 const unique_subgraph_ids = new Set();
@@ -12,7 +12,6 @@ const merger_bars_color = "orangered";
 const g = svg.append('g')
   .style('isolation', 'isolate')
   .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
 
 // Control grid sizing
 const units = {stream: 5,
@@ -33,18 +32,17 @@ const num_subgraphs_at_step = [];
 const merger_magnitudes = [];
 let max_merger_magnitude = 0;
 let max_num_subgraphs = 0;
-data.forEach(({subgraphs, n, n_mergers, total_merger_magnitude}, i) => {
+data.forEach(({subgraphs, cutoff, n, n_mergers, total_merger_magnitude}, i) => {
   const step = i+1;
   const step_map = {step};
 
-  HTMLWidgets.dataframeToD3(subgraphs)
-    .forEach(({node,subgraph}) => {
-      step_map[subgraph] = step_map[subgraph] + 1 | 1;
-      unique_subgraph_ids.add(subgraph);
-    });
+  subgraphs.subgraph.forEach(subgraph_id => {
+    step_map[subgraph_id] = (step_map[subgraph_id] | 0) + 1;
+    unique_subgraph_ids.add(subgraph_id);
+  });
   steps.push(step_map);
 
-  num_subgraphs_at_step.push({step, n});
+  num_subgraphs_at_step.push({step, n, cutoff});
   max_num_subgraphs = Math.max(max_num_subgraphs, n);
 
   if(n_mergers > 0){
@@ -68,17 +66,16 @@ const y = d3.scaleLinear()
 
 const n_subgraphs_y = d3.scaleLinear()
   .domain([0, max_num_subgraphs])
-  .range([heights.n_subgraphs, 0])
+  .range([heights.n_subgraphs, 10])
   .nice();
 
 const x = d3.scaleLinear()
   .domain([1, steps.length])
-  .range([0,w])
-  .nice();
+  .range([0,w]);
 
 const merger_sizes = d3.scaleLog()
   .domain([1, max_merger_magnitude])
-  .range([1, heights.mergers*0.9]);
+  .range([2, heights.mergers*0.9]);
 
 const palette = d3.schemePaired;
 const color_subgraph = id => palette[id % palette.length];
@@ -126,9 +123,8 @@ mergers_g
   .data(merger_magnitudes)
   .enter().append('rect')
   .attr('transform', d => `translate(${x(d.step)+1},0)` )
-  //.attr('y', d => -merger_sizes(d.magnitude)/2)
   .attr('height', d => merger_sizes(d.magnitude))
-  .attr('width', bar_width-2)
+  .attr('width', bar_width)
   .attr('fill', merger_bars_color)
   .append('title')
     .text(d => `Step ${d.step}: Subgraph ${d.smaller}(n:${d.smaller_n}) merged with ${d.larger}(n:${d.larger_n}).`);
@@ -145,6 +141,61 @@ n_subgraphs_g.append('path')
   .attr('fill', 'none')
   .attr('stroke-width', 2)
   .attr('stroke', line_color);
+
+// ===============================================================
+// Draw Interaction bars for each step
+
+const interaction_bars = g.append('g').attr('id', 'interaction_bars');
+
+const subgraph_count_callout = n_subgraphs_g.append('g');
+const subgraph_count_background = subgraph_count_callout.append('rect')
+  .attr('fill', 'white')
+  .attr('fill-opacity', 0.65);
+const subgraph_count_text = subgraph_count_callout.append('text');
+
+subgraph_count_callout.append('circle')
+  .attr('r', 5)
+  .attr('fill', 'none')
+  .attr('stroke', 'black')
+  .attr('stroke-width', 2);
+
+const place_count_ball = function({step, n, cutoff}){
+
+  const x_pos = x(step);
+  const past_halfway = x_pos > w/2;
+
+  subgraph_count_callout.attr('transform',`translate(${x_pos},${n_subgraphs_y(n)})`);
+  subgraph_count_text
+    .text(`${n} subgraphs w/ cutoff ${d3.format(".3f")(cutoff)}`)
+    .attr('text-anchor', past_halfway ? "end": "start")
+    .attr('x', past_halfway ? -10: 10);
+
+  const text_bbox = subgraph_count_text.node().getBBox();
+  subgraph_count_background
+    .attr('width', text_bbox.width)
+    .attr('height', text_bbox.height)
+    .attr('x', text_bbox.x)
+   .attr('y', text_bbox.y);
+};
+
+const max_step = num_subgraphs_at_step.find(({step, n}) => n === max_num_subgraphs);
+const default_count_callout = function(){
+  place_count_ball(max_step);
+};
+
+default_count_callout();
+
+interaction_bars.on('mouseout', default_count_callout);
+
+interaction_bars.selectAll('rect')
+  .data(num_subgraphs_at_step)
+  .enter().append('rect')
+  .attr('transform', d => `translate(${x(d.step)},0)` )
+  .attr('width', bar_width)
+  .attr('height', h)
+  .attr('fill', 'forestgreen')
+  .attr('fill-opacity', 0)
+  .on('mouseover', place_count_ball);
 
 
 // =============================================
@@ -172,13 +223,6 @@ n_subgraphs_g
   .append("g")
   .call(d3.axisRight(n_subgraphs_y).ticks(3))
   .attr('transform', `translate(-10,0)`)
-  .call(
-    add_label_to_axis({
-      label: `Number of subgraphs = `,
-      which_tick: 'last',
-      before_val: true
-    })
-  )
 .call(extend_ticks, w)
 .call(remove_domain)
   .selectAll('text')
@@ -202,28 +246,15 @@ g
   .style('font-size', '1rem');
 
 
-//const interaction_bars = g.append('g').attr('id', 'interaction_bars');
-//interaction_bars.selectAll('g')
-//  .data(num_subgraphs_at_step)
-//  .enter().append('g')
-//  .attr('transform', d => `translate(${x(d.step)},0)` )
-//  .each(function(d){
-//    d3.select(this)
-//    .append('rect')
-//    .attr('width', bar_width)
-//    .attr('height', h)
-//    .attr('fill', 'forestgreen')
-//    .attr('fill-opacity', 0);
-//    })
-//.append('title')
-//    .text(d => `Step ${d.step}`);
+
+
 
 
 g.selectAll('text')
   .style('font-size', '0.95rem')
-  .style('font-family', 'sans-serif')
+  .style('font-family', 'sans-serif');
 
-return svg.node();
+//return svg.node();
 
 function add_label_to_axis({ label, which_tick, before_val }) {
   return g =>
