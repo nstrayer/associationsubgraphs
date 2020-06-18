@@ -9,7 +9,8 @@ visualize_association_network(
   node_info,
   measure_title = "association",
   alphaDecay = 0.01,
-  n_neighbors = 5
+  n_neighbors = 5,
+  warn_of_mismatches = TRUE
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ Lower values mean a better but slower layout, higher means faster. See the
 more info.}
 
 \item{n_neighbors}{How many neighbors for a hovered node should be shown?}
+
+\item{warn_of_mismatches}{If there are differences in the ids present in
+\code{association_pairs} and \code{node_info} should a warning be issued?}
 }
 \value{
 Interactive javascript visualization of association network

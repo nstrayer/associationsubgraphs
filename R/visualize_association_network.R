@@ -20,6 +20,8 @@
 #'   [d3-force docs](https://github.com/d3/d3-force#simulation_alphaDecay) for
 #'   more info.
 #' @param n_neighbors How many neighbors for a hovered node should be shown?
+#' @param warn_of_mismatches If there are differences in the ids present in
+#'   `association_pairs` and `node_info` should a warning be issued?
 #'
 #' @return Interactive javascript visualization of association network
 #' @export
@@ -35,13 +37,29 @@ visualize_association_network <- function(association_pairs,
                                           node_info,
                                           measure_title = "association",
                                           alphaDecay = 0.01,
-                                          n_neighbors = 5) {
-
+                                          n_neighbors = 5,
+                                          warn_of_mismatches = TRUE) {
+  # browser()
   unique_nodes <- gather_unique_nodes(association_pairs)
   if (missing(node_info)) {
     nodes <- unique_nodes
   } else {
-    nodes <- dplyr::filter(node_info, id %in% unique_nodes$id)
+    all_passed_nodes <- unique(nodes_info$id)
+    in_edges <- unique_nodes$id
+
+    n_not_in_edges <- dplyr::setdiff(all_passed_nodes, in_edges) %>% length()
+    n_not_in_info <- dplyr::setdiff(in_edges, all_passed_nodes) %>% length()
+
+    if(n_not_in_edges > 0 & warn_of_mismatches){
+      warning(glue::glue("There are {n_not_in_edges} ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
+    }
+
+    if(n_not_in_info > 0 & warn_of_mismatches){
+      warning(glue::glue("There are {n_not_in_info} ids in the association_pairs dataframe that are not in the node_info dataframe."))
+    }
+
+    # unique_nodes
+    nodes <- dplyr::right_join(node_info, unique_nodes, by = "id")
   }
 
   r2d3::r2d3(
