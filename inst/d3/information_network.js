@@ -13,6 +13,10 @@ const { nodes, subgraphs } = find_subgraphs(nodes_raw, edges);
 const subgraph_grid_side = Math.ceil(Math.sqrt(subgraphs.size));
 let i = 0;
 const grid_side_length = Math.min(width, height);
+const margins = {
+  horizontal: (width - grid_side_length)/2,
+  vertical: (height - grid_side_length)/2,
+};
 const gap_size = grid_side_length / subgraph_grid_side;
 const is_giant_component = subgraphs.size == 1;
 
@@ -25,8 +29,8 @@ subgraphs.forEach(function (subgraph, subgraph_id) {
     : Math.floor(i / subgraph_grid_side) * gap_size;
   i++;
   subgraph.forEach((node) => {
-    node.subgraph_x = row;
-    node.subgraph_y = col;
+    node.subgraph_x = row + margins.horizontal;
+    node.subgraph_y = col + margins.vertical;
   });
 });
 
