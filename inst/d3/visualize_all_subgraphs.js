@@ -247,14 +247,15 @@ g
 
 
 
-
-
+// =============================================
+// Style all text
 
 g.selectAll('text')
   .style('font-size', '0.95rem')
   .style('font-family', 'sans-serif');
 
-//return svg.node();
+// =============================================
+// Helper functions for axes
 
 function add_label_to_axis({ label, which_tick, before_val }) {
   return g =>
