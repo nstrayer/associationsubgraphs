@@ -1,0 +1,56 @@
+---
+title: "calculating_mutual_information_network"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{calculating_mutual_information_network}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(entropynet)
+library(tidyverse)
+
+
+contaminants <- "FLN|PLEC|TLN|MVP"
+
+virclasp_clean <- virclasp_protein_net %>% 
+  dplyr::filter(!(stringr::str_detect(a, contaminants) | stringr::str_detect(b, contaminants)))
+
+virclasp_strengths <- dplyr::bind_rows(
+  dplyr::rename(virclasp_clean, id = a, target = b),
+  dplyr::rename(virclasp_clean, id = b, target = a)
+) %>% 
+  dplyr::group_by(id) %>% 
+  dplyr::summarise(avg_strength = mean(strength))
+
+```
+
+```{r}
+virclasp_clean %>% 
+  ggplot(aes(x = strength)) +
+  geom_histogram(bins = 200)
+```
+
+```{r}
+virclasp_by_strength <- virclasp_clean %>% 
+  left_join(virclasp_strengths, by = c("a" = "id")) %>% 
+  rename(a_avg = avg_strength) %>% 
+  left_join(virclasp_strengths, by = c("b" = "id")) %>% 
+  rename(b_avg = avg_strength) %>% 
+  mutate(relative_strength = strength / (a_avg + b_avg)) %>% 
+  arrange(desc(relative_strength))
+
+virclasp_by_strength %>% 
+  head(50) %>%
+  visualize_association_network()
+```
+
+
