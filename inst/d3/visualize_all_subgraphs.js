@@ -14,8 +14,18 @@ const merger_bars_color = "orangered";
 // Place margined g
 
 const units = [
-  { id: "stream", unit: 2, color: "forestgreen", y: d3.scaleLinear() },
-  { id: "mergers", unit: 0.5, color: "steelblue", y: d3.scaleLinear() },
+  {
+    id: "stream",
+    unit: 2,
+    color: "forestgreen",
+    y: d3.scaleLinear(),
+  },
+  {
+    id: "mergers",
+    unit: 0.5,
+    color: "steelblue",
+    y: d3.scaleLinear(),
+  },
   {
     id: "n_in_subgraphs",
     unit: 2,
@@ -131,12 +141,6 @@ charts.stream.y.domain([
 const palette = d3.schemePaired;
 const color_subgraph = (id) => palette[id % palette.length];
 
-const area = d3
-  .area()
-  .x((d, i) => x(i + 1))
-  .y0((d) => charts.stream.y(d[0]))
-  .y1((d) => charts.stream.y(d[1]));
-
 charts.stream.g
   .append("g")
   .selectAll("path")
@@ -146,7 +150,14 @@ charts.stream.g
   .attr("fill", ({ key }) => color_subgraph(key))
   .attr("stroke", "white")
   .attr("stroke-width", 0.5)
-  .attr("d", area)
+  .attr(
+    "d",
+    d3
+      .area()
+      .x((d, i) => x(i + 1))
+      .y0((d) => charts.stream.y(d[0]))
+      .y1((d) => charts.stream.y(d[1]))
+  )
   .append("title")
   .text(({ key }) => key);
 
