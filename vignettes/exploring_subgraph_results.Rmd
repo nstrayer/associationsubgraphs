@@ -1,0 +1,66 @@
+---
+title: "Structure of subgraphs results"
+author: "Nick Strayer"
+date: "6/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, out.width = "100%")
+library(dplyr)
+library(tidyverse)
+library(phewasHelper)
+library(entropynet)
+
+
+association_pairs <- virus_net %>% 
+  arrange(desc(strength))
+
+```
+
+
+## Finding all subgraphs
+
+First we will run subgraph finding algorithm across the associations
+
+```{r, cache = TRUE}
+subgraphs <- find_all_subgraphs(association_pairs)
+
+subgraphs %>% 
+  select(-subgraphs) %>% 
+  head() %>% 
+  knitr::kable()
+```
+
+## Visualizing subgraphs search
+
+Next we can investigate the subgraph structure over search
+
+```{r}
+visualize_all_subgraphs(subgraphs)
+```
+
+## Maximum diverse split
+
+We will then subset to the stage with the greatest number of unique subgraphs and plot the network for exploration.
+
+```{r cars}
+max_cut <- subgraphs %>% 
+  filter(n == max(n)) %>% 
+  pull(cutoff) %>% 
+  pluck(1)
+
+best_cut <- association_pairs %>% 
+  filter(strength >= max_cut)
+
+nodes_info <- virus_host_viruses %>% 
+  rename(id = virus_id) %>% 
+  mutate(color = ifelse(type == "RNA", "orangered", "steelblue"))
+
+visualize_association_network(
+  association_pairs = best_cut,
+  node_info = nodes_info,
+  measure_title = "mutual information",
+  warn_of_mismatches = FALSE
+)
+```
