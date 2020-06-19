@@ -25,7 +25,7 @@ First we will run subgraph finding algorithm across the associations
 
 ```{r, cache = TRUE}
 subgraphs <- find_all_subgraphs(association_pairs)
-
+subgraphs
 subgraphs %>% 
   select(-subgraphs) %>% 
   head() %>% 
