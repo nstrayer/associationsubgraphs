@@ -16,7 +16,8 @@ Imports:
     furrr,
     future,
     rlang (>= 0.1.2),
-    V8
+    V8,
+    Rcpp
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.0
 Suggests: 
@@ -27,3 +28,5 @@ Suggests:
 Depends: 
     R (>= 2.10)
 VignetteBuilder: knitr
+LinkingTo: 
+    Rcpp
