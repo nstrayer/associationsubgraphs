@@ -85,6 +85,40 @@ find_all_subgraphs <- function(association_pairs){
 }
 
 
+#' Find all components in pairs for every subset of edges (c++ version)
+#'
+#' Given a dataframe of edges with strength between nodes this function returns
+#' info on every subgraph state achieved by adding nodes in one-at-a-time in
+#' descending order of strength.
+#'
+#' @inheritParams visualize_association_network
+#'
+#' @return Dataframe with the following columns for the subgraph info
+#' @export
+#'
+#' @examples
+#' virus_net %>%
+#'   dplyr::arrange(dplyr::desc(strength)) %>%
+#'     head(1000) %>%
+#'     explore_component_structure()
+#'
+explore_component_structure <- function(association_pairs){
+  dplyr::mutate(
+    find_components(
+      association_pairs$a,
+      association_pairs$b,
+      association_pairs$strength
+    ),
+    step = dplyr::row_number(),
+    avg_density = n_nodes_seen/step,
+    density_score = avg_density*n_components,
+    avg_size = n_nodes_seen/n_components,
+    rel_max_size = max_size/n_nodes_seen
+  )
+}
+
+
+
 #' Visualize all possible subgraphs
 #'
 #' Companion function to \code{\link{find_all_subgraphs}} to visualize results.
