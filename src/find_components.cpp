@@ -20,7 +20,7 @@ struct Component {
 };
 
 // [[Rcpp::export]]
-DataFrame find_components(CharacterVector a, CharacterVector b, NumericVector w) {
+List find_components(CharacterVector a, CharacterVector b, NumericVector w) {
 
   std::map<int, Component> components;
   std::map<String, int> node_to_component;
@@ -31,8 +31,13 @@ DataFrame find_components(CharacterVector a, CharacterVector b, NumericVector w)
   // Vectors we will return as df columns
   IntegerVector n_components(n);
   IntegerVector n_nodes_seen(n);
+  NumericVector avg_size(n);
   IntegerVector max_size(n);
+  NumericVector rel_max_size(n);
   NumericVector max_density(n);
+  NumericVector avg_density(n);
+  NumericVector density_score(n);
+  List step_component_info(n);
 
   for (int i = 0; i < n; i++) {
     const String& a_id = a[i];
@@ -113,31 +118,51 @@ DataFrame find_components(CharacterVector a, CharacterVector b, NumericVector w)
       node_to_component[a_id] = b_component_id_loc->second;
     }
 
+    const int nodes_seen = node_to_component.size();
+    const int num_components = components.size();
+
+    IntegerVector ids(num_components);
+    IntegerVector sizes(num_components);
+    NumericVector densities(num_components);
+
     int step_max_size = 0;
     double step_max_density = 0;
+    int k = 0;
     for (const auto& component_itt : components) {
       const int Nv = component_itt.second.num_members();
       const double dens = double(Nv)/double(component_itt.second.num_edges);
-      if(Nv > step_max_size){
-        step_max_size = Nv;
-      }
-      if(dens > step_max_density){
-        step_max_density = dens;
-      }
+      ids[k] = component_itt.first;
+      sizes[k] = Nv;
+      densities[k] = dens;
+      k++;
+      if(Nv > step_max_size) step_max_size = Nv;
+      if(dens > step_max_density) step_max_density = dens;
     }
 
-    n_components[i] = components.size();
-    n_nodes_seen[i] = node_to_component.size();
+    n_nodes_seen[i] = nodes_seen;
+    n_components[i] = num_components;
     max_size[i] = step_max_size;
+    rel_max_size[i] = double(step_max_size)/double(nodes_seen);
+    avg_size = double(nodes_seen)/double(num_components);
     max_density[i] = step_max_density;
+    avg_density[i] = double(nodes_seen)/double(i);
+    step_component_info[i] = DataFrame::create(
+      _["size"] = sizes,
+      _["density"] = densities
+    );
   }
 
-  return DataFrame::create(
-    _["n_components"] = n_components,
+  return List::create(
+    _["step"] = seq(1,n),
+    _["strength"] = w,
     _["n_nodes_seen"] = n_nodes_seen,
+    _["n_components"] = n_components,
     _["max_size"] = max_size,
+    _["rel_max_size"] = rel_max_size,
+    _["avg_size"] = avg_size,
     _["max_density"] = max_density,
-    _["strength"] = w
+    _["avg_density"] = avg_density,
+    _["components"] = step_component_info
   );
 }
 
@@ -148,11 +173,10 @@ DataFrame find_components(CharacterVector a, CharacterVector b, NumericVector w)
 //
 
 /*** R
-data <- virus_net %>%
- dplyr::arrange(dplyr::desc(strength)) %>%
-   head(1500)
+# library(entropynet)
+data <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 1500)
 
-res <- find_components(data$a, data$b, data$strength)
+res <- dplyr::as_tibble(find_components(data$a, data$b, data$strength))
 
 
 #
