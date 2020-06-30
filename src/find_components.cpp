@@ -78,6 +78,7 @@ List find_components(CharacterVector a, CharacterVector b, NumericVector w) {
 
   // Vectors we will return as df columns
   IntegerVector n_components(n);
+  IntegerVector n_triples(n);
   IntegerVector n_nodes_seen(n);
   NumericVector avg_size(n);
   IntegerVector max_size(n);
@@ -141,39 +142,48 @@ List find_components(CharacterVector a, CharacterVector b, NumericVector w) {
     NumericVector densities(num_components);
     NumericVector strengths(num_components);
 
+    int step_num_triples = 0;
     int step_max_size = 0;
     double total_density = 0;
     int k = 0;
     for (const auto& component_itt : components) {
       const int Nv = component_itt.second.num_members();
-      const double dens =
-          double(component_itt.second.num_edges) / double(Nv * (Nv - 1)) / 2.0;
+      const double Ne = component_itt.second.num_edges;
+      const double dens = Ne / double(Nv * (Nv - 1)) / 2.0;
       ids[k] = component_itt.first;
       sizes[k] = Nv;
       densities[k] = dens;
-      strengths[k] = component_itt.second.total_edge_w;
+      strengths[k] = component_itt.second.total_edge_w/Ne;
       total_density += dens;
+      if(Nv > 2) step_num_triples++;
+      if (Nv > step_max_size) step_max_size = Nv;
       k++;
-      if (Nv > step_max_size)
-        step_max_size = Nv;
     }
 
     n_nodes_seen[i] = nodes_seen;
     n_components[i] = num_components;
+    n_triples[i] = step_num_triples;
     max_size[i] = step_max_size;
     rel_max_size[i] = double(step_max_size) / double(nodes_seen);
     avg_size[i] = double(nodes_seen) / double(num_components);
     avg_density[i] = total_density / double(num_components);
     step_component_info[i] =
-        DataFrame::create(_["id"] = ids, _["size"] = sizes,
-                          _["density"] = densities, _["strength"] = strengths);
+        DataFrame::create(_["id"] = ids,
+                          _["size"] = sizes,
+                          _["density"] = densities,
+                          _["strength"] = strengths);
   }
 
   return List::create(
-      _["n_edges"] = seq_len(n), _["strength"] = w,
-      _["n_nodes_seen"] = n_nodes_seen, _["n_components"] = n_components,
-      _["max_size"] = max_size, _["rel_max_size"] = rel_max_size,
-      _["avg_size"] = avg_size, _["avg_density"] = avg_density,
+      _["n_edges"] = seq_len(n),
+      _["strength"] = w,
+      _["n_nodes_seen"] = n_nodes_seen,
+      _["n_components"] = n_components,
+      _["max_size"] = max_size,
+      _["rel_max_size"] = rel_max_size,
+      _["avg_size"] = avg_size,
+      _["avg_density"] = avg_density,
+      _["n_triples"] = n_triples,
       _["components"] = step_component_info);
 }
 
