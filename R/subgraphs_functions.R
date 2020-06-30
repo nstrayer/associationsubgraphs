@@ -97,24 +97,23 @@ find_all_subgraphs <- function(association_pairs){
 #' @export
 #'
 #' @examples
+#'
 #' virus_net %>%
 #'   dplyr::arrange(dplyr::desc(strength)) %>%
 #'     head(1000) %>%
 #'     explore_component_structure()
 #'
 explore_component_structure <- function(association_pairs){
-  dplyr::mutate(
-    find_components(
-      association_pairs$a,
-      association_pairs$b,
-      association_pairs$strength
-    ),
-    step = dplyr::row_number(),
-    avg_density = n_nodes_seen/step,
-    density_score = avg_density*n_components,
-    avg_size = n_nodes_seen/n_components,
-    rel_max_size = max_size/n_nodes_seen
-  )
+  find_components(
+    association_pairs$a,
+    association_pairs$b,
+    association_pairs$strength
+  ) %>%
+    dplyr::as_tibble() %>%
+    dplyr::group_by(strength) %>%
+    dplyr::filter(dplyr::row_number() == dplyr::n()) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(step = dplyr::row_number())
 }
 
 
