@@ -20,9 +20,5 @@ info on every subgraph state achieved by adding nodes in one-at-a-time in
 descending order of strength.
 }
 \examples{
-virus_net \%>\%
-  dplyr::arrange(dplyr::desc(strength)) \%>\%
-    head(1000) \%>\%
-    explore_component_structure()
 
 }

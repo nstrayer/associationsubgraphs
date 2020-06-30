@@ -12,10 +12,8 @@ library(tidyverse)
 library(phewasHelper)
 library(entropynet)
 
-
 association_pairs <- virus_net %>% 
   arrange(desc(strength))
-
 ```
 
 
@@ -24,10 +22,11 @@ association_pairs <- virus_net %>%
 First we will run subgraph finding algorithm across the associations
 
 ```{r, cache = TRUE}
-subgraphs <- find_all_subgraphs(association_pairs)
-subgraphs
-subgraphs %>% 
-  select(-subgraphs) %>% 
+
+components <- association_pairs %>% head(10000) %>% explore_component_structure()
+
+components %>% 
+  select(-components) %>% 
   head() %>% 
   knitr::kable()
 ```
@@ -37,30 +36,94 @@ subgraphs %>%
 Next we can investigate the subgraph structure over search
 
 ```{r}
-visualize_all_subgraphs(subgraphs)
+
+min_rel <- components %>%
+  filter(rel_max_size == min(rel_max_size)) %>%
+  tail(1)
+
+max_num_components <- components %>%
+  filter(n_components == max(n_components)) %>%
+  tail(1)
+
+max_num_triples <- components %>%
+  filter(n_triples == max(n_triples)) %>%
+  tail(1)
+
+components %>%
+  # filter(rel_max_size < 0.5) %>%
+  select(
+    strength,
+    n_components,
+    max_size,
+    rel_max_size,
+    avg_density,
+    n_triples,
+    step
+  ) %>% 
+  pivot_longer(-step) %>%
+  ggplot(aes(x = step, y = value)) +
+  geom_step() +
+  geom_vline(xintercept = min_rel$step, color = 'orangered') +
+  geom_vline(xintercept = max_num_components$step, color = 'forestgreen') +
+  geom_vline(xintercept = max_num_triples$step, color = 'steelblue') +
+  facet_grid(rows = vars(name), scales = "free_y")
+
 ```
 
-## Maximum diverse split
+```{r}
+plot_component_info <- function(step_row, title) {
+  step_row %>%
+    pluck("components", 1) %>%
+    arrange(-size,-strength) %>%
+    mutate(id = forcats::fct_inorder(factor(id))) %>%
+    ggplot(aes(
+      x = id,
+      y = size,
+      fill = strength,
+      alpha = density
+    )) +
+    geom_col() +
+    theme_phewas() +
+    labs(x = "component",
+         title = title)
+}
 
-We will then subset to the stage with the greatest number of unique subgraphs and plot the network for exploration.
-
-```{r cars}
-max_cut <- subgraphs %>% 
-  filter(n == max(n)) %>% 
-  pull(cutoff) %>% 
-  pluck(1)
-
-best_cut <- association_pairs %>% 
-  filter(strength >= max_cut)
+plot_component_info(min_rel, "Component structure for minimum relative cut")
 
 nodes_info <- virus_host_viruses %>% 
   rename(id = virus_id) %>% 
   mutate(color = ifelse(type == "RNA", "orangered", "steelblue"))
 
 visualize_association_network(
-  association_pairs = best_cut,
+  association_pairs = head(association_pairs, min_rel$n_edges),
   node_info = nodes_info,
-  measure_title = "mutual information",
-  warn_of_mismatches = FALSE
+  measure_title = "relative smoothed mutual information",
+  warn_of_mismatches = FALSE,
+  alphaDecay = 0.01
+)
+```
+
+```{r}
+plot_component_info(max_num_components, "Component structure for max number of components")
+
+visualize_association_network(
+  association_pairs = head(association_pairs, max_num_components$n_edges),
+  node_info = nodes_info,
+  measure_title = "relative smoothed mutual information",
+  warn_of_mismatches = FALSE,
+  alphaDecay = 0.01
+)
+```
+
+
+```{r}
+plot_component_info(max_num_triples, "Component structure for max number of components larger than 2 nodes")
+
+visualize_association_network(
+  association_pairs = head(association_pairs, max_num_triples$n_edges),
+  node_info = nodes_info,
+  measure_title = "relative smoothed mutual information",
+  warn_of_mismatches = FALSE,
+  alphaDecay = 0.01
 )
 ```
