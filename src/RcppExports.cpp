@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // find_components
-DataFrame find_components(CharacterVector a, CharacterVector b, NumericVector w);
+List find_components(CharacterVector a, CharacterVector b, NumericVector w);
 RcppExport SEXP _entropynet_find_components(SEXP aSEXP, SEXP bSEXP, SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
