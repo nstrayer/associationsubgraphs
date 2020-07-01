@@ -104,16 +104,7 @@ find_all_subgraphs <- function(association_pairs){
 #'     explore_component_structure()
 #'
 explore_component_structure <- function(association_pairs){
-  find_components(
-    association_pairs$a,
-    association_pairs$b,
-    association_pairs$strength
-  ) %>%
-    dplyr::as_tibble() %>%
-    dplyr::group_by(strength) %>%
-    dplyr::filter(dplyr::row_number() == dplyr::n()) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(step = dplyr::row_number())
+  dplyr::as_tibble(find_components(association_pairs))
 }
 
 

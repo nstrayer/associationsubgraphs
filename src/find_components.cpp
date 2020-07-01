@@ -68,26 +68,36 @@ inline void merge_components(Component& C_a,
   all_components.erase(all_components.find(C_small.id));
 }
 
-// [[Rcpp::export]]
-List find_components(CharacterVector a, CharacterVector b, NumericVector w) {
-  std::map<int, Component> components;
-  Node_to_Component node_to_component;
 
-  int component_id_counter = 0;
-  const int n = a.length();
+// [[Rcpp::export]]
+List find_components(DataFrame associations, const String& a_col = "a", const String& b_col = "b", const String& w_col = "w") {
+  CharacterVector a = associations[a_col];
+  CharacterVector b = associations[b_col];
+  NumericVector w = associations[w_col];
+
+  // We only want to record a step for each unique weight
+  NumericVector unique_w = unique(w);
+  const int n_steps = unique_w.length();
 
   // Vectors we will return as df columns
-  IntegerVector n_components(n);
-  IntegerVector n_triples(n);
-  IntegerVector n_nodes_seen(n);
-  NumericVector avg_size(n);
-  IntegerVector max_size(n);
-  NumericVector rel_max_size(n);
-  NumericVector avg_density(n);
-  NumericVector density_score(n);
-  List step_component_info(n);
+  IntegerVector n_components(n_steps);
+  IntegerVector n_triples(n_steps);
+  IntegerVector n_nodes_seen(n_steps);
+  IntegerVector n_edges(n_steps);
+  NumericVector avg_size(n_steps);
+  IntegerVector max_size(n_steps);
+  NumericVector rel_max_size(n_steps);
+  NumericVector avg_density(n_steps);
+  NumericVector density_score(n_steps);
+  List step_component_info(n_steps);
 
-  for (int i = 0; i < n; i++) {
+
+  std::map<int, Component> components;
+  Node_to_Component node_to_component;
+  int component_id_counter = 0;
+  int step_i = 0;
+
+  for (int i = 0; i < a.length(); i++) {
     const String& a_id = a[i];
     const String& b_id = b[i];
     const double w_i = w[i];
@@ -134,65 +144,80 @@ List find_components(CharacterVector a, CharacterVector b, NumericVector w) {
                                                       node_to_component);
     }
 
-    const int nodes_seen = node_to_component.size();
-    const int num_components = components.size();
+    const bool last_edge_at_strength = w_i != w[i+1];
+    if(last_edge_at_strength){
+      const int nodes_seen = node_to_component.size();
+      const int num_components = components.size();
 
-    IntegerVector ids(num_components);
-    IntegerVector sizes(num_components);
-    NumericVector densities(num_components);
-    NumericVector strengths(num_components);
+      IntegerVector ids(num_components);
+      IntegerVector sizes(num_components);
+      NumericVector densities(num_components);
+      NumericVector strengths(num_components);
 
-    int step_num_triples = 0;
-    int step_max_size = 0;
-    double total_density = 0;
-    int k = 0;
-    for (const auto& component_itt : components) {
-      const int Nv = component_itt.second.num_members();
-      const double Ne = component_itt.second.num_edges;
-      const double dens = Ne / double(Nv * (Nv - 1)) / 2.0;
-      ids[k] = component_itt.first;
-      sizes[k] = Nv;
-      densities[k] = dens;
-      strengths[k] = component_itt.second.total_edge_w/Ne;
-      total_density += dens;
-      if(Nv > 2) step_num_triples++;
-      if (Nv > step_max_size) step_max_size = Nv;
-      k++;
-    }
+      int step_num_triples = 0;
+      int step_max_size = 0;
+      double total_density = 0;
+      int k = 0;
+      for (const auto& component_itt : components) {
+        const int Nv = component_itt.second.num_members();
+        const double Ne = component_itt.second.num_edges;
+        const double dens = Ne / double(Nv * (Nv - 1)) / 2.0;
+        ids[k] = component_itt.first;
+        sizes[k] = Nv;
+        densities[k] = dens;
+        strengths[k] = component_itt.second.total_edge_w/Ne;
+        total_density += dens;
+        if(Nv > 2) step_num_triples++;
+        if (Nv > step_max_size) step_max_size = Nv;
+        k++;
+      }
 
-    n_nodes_seen[i] = nodes_seen;
-    n_components[i] = num_components;
-    n_triples[i] = step_num_triples;
-    max_size[i] = step_max_size;
-    rel_max_size[i] = double(step_max_size) / double(nodes_seen);
-    avg_size[i] = double(nodes_seen) / double(num_components);
-    avg_density[i] = total_density / double(num_components);
-    step_component_info[i] =
+      n_nodes_seen[step_i] = nodes_seen;
+      n_components[step_i] = num_components;
+      n_triples[step_i] = step_num_triples;
+      max_size[step_i] = step_max_size;
+      rel_max_size[step_i] = double(step_max_size) / double(nodes_seen);
+      avg_size[step_i] = double(nodes_seen) / double(num_components);
+      avg_density[step_i] = total_density / double(num_components);
+      step_component_info[step_i] =
         DataFrame::create(_["id"] = ids,
                           _["size"] = sizes,
                           _["density"] = densities,
                           _["strength"] = strengths);
+
+      step_i++;
+    }
   }
 
   return List::create(
-      _["n_edges"] = seq_len(n),
-      _["strength"] = w,
-      _["n_nodes_seen"] = n_nodes_seen,
-      _["n_components"] = n_components,
-      _["max_size"] = max_size,
-      _["rel_max_size"] = rel_max_size,
-      _["avg_size"] = avg_size,
-      _["avg_density"] = avg_density,
-      _["n_triples"] = n_triples,
-      _["components"] = step_component_info);
+    _["step"] = seq_len(n_steps),
+    _["n_edges"] = n_edges,
+    _["strength"] = unique_w,
+    _["n_nodes_seen"] = n_nodes_seen,
+    _["n_components"] = n_components,
+    _["max_size"] = max_size,
+    _["rel_max_size"] = rel_max_size,
+    _["avg_size"] = avg_size,
+    _["avg_density"] = avg_density,
+    _["n_triples"] = n_triples,
+    _["components"] = step_component_info);
 }
 
 /*** R
 # library(entropynet)
 data <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 1000)
-res <- dplyr::as_tibble(find_components(data$a, data$b, data$strength))
 
+df_input <- dplyr::as_tibble(find_components(data, w_col = "strength"))
+# library(bench)
+# comparison <- bench::mark(
+#   vector_input = dplyr::as_tibble(find_components(data$a, data$b, data$strength)),
+#   ,
+#   filter_gc = FALSE,
+#   min_iterations = 5
+# )
+#
+# plot(comparison)
 
-res$components %>% pluck(5)
+# res$components %>% pluck(5)
 
 */
