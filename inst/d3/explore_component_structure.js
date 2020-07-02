@@ -31,11 +31,16 @@ const timeline_settings = {
   callout_r: 3,
 };
 
-const all_settings = [timeline_settings, component_settings, network_settings];
+// Order of this vector decides order of placement
+const all_settings = [network_settings, component_settings, timeline_settings];
+
 const total_units = all_settings.reduce((sum, { rel_h }) => sum + rel_h, 0);
-all_settings.forEach(
-  (settings) => (settings.h = h * (settings.rel_h / total_units))
-);
+let current_h = 0;
+all_settings.forEach((settings) => {
+  settings.start_h = current_h;
+  settings.h = h * (settings.rel_h / total_units);
+  current_h += settings.h;
+});
 
 let default_step = 50;
 const structure_data = HTMLWidgets.dataframeToD3(data.structure);
@@ -44,15 +49,12 @@ const structure_data = HTMLWidgets.dataframeToD3(data.structure);
 const components_g = g
   .append("g")
   .classed("components_chart", true)
-  .attr(
-    "transform",
-    `translate(0, ${h - timeline_settings.h - component_settings.h})`
-  );
+  .attr("transform", `translate(0, ${component_settings.start_h})`);
 
 const timelines_g = g
   .append("g")
   .classed("timelines_chart", true)
-  .attr("transform", `translate(0, ${h - timeline_settings.h})`);
+  .attr("transform", `translate(0, ${timeline_settings.start_h})`);
 
 const network_g = g.append("g").classed("network_plot", true);
 
