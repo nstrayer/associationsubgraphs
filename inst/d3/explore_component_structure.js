@@ -29,8 +29,11 @@ const components_g = g
   .attr("width", w)
   .attr("height", h * component_settings.rel_height);
 
-const current_components = data[50].components;
-components_g.call(draw_components, current_components, component_settings);
+function draw_steps_components(step_i) {
+  const current_components = data[step_i].components;
+  components_g.call(draw_components, current_components, component_settings);
+}
+draw_steps_components(50);
 
 function draw_components(g, components, settings) {
   const { rel_height, bar_color, padding = 3, strength_r = 4 } = settings;
@@ -50,12 +53,16 @@ function draw_components(g, components, settings) {
   for (let measure in units) {
     sizes[measure] = (total_h * units[measure]) / total_units;
   }
+  const components_df = HTMLWidgets.dataframeToD3(components).sort(
+    (c_a, c_b) => c_b.size - c_a.size
+  );
 
   const X = d3
     .scaleBand()
-    .domain(components.id)
+    .domain(components_df.map((d) => d.id))
     .range([0, w])
     .paddingInner(0.03);
+
   const component_w = X.bandwidth();
 
   const sizes_Y = d3
@@ -73,8 +80,9 @@ function draw_components(g, components, settings) {
     .domain([0, d3.max(components.strength)])
     .range([0, sizes.strength - strength_r]);
 
-  g.selectAll("g.component_stats")
-    .data(HTMLWidgets.dataframeToD3(components))
+  g.html("")
+    .selectAll("g.component_stats")
+    .data(components_df)
     .enter()
     .append("g")
     .classed("component_stats", true)
@@ -144,8 +152,6 @@ function draw_components(g, components, settings) {
     )
     .call(d3.axisLeft(strengths_Y).ticks(2));
 }
-
-//debugger;
 
 g.call(draw_timelines, data, timeline_settings, { w, h });
 
@@ -243,6 +249,8 @@ function draw_timelines(g, data, settings, { w, h }) {
 
   function on_mousemove() {
     const step_i = get_step_i(d3.mouse(this));
+    draw_steps_components(step_i);
+
     callout_line
       .attr("visibility", "visible")
       .attr("transform", `translate(${X(step_i)}, 0)`);
@@ -251,9 +259,12 @@ function draw_timelines(g, data, settings, { w, h }) {
   function on_mouseout() {
     callout_line.attr("visibility", "hidden");
     step_metrics.forEach((m) => m.hide_callout());
+    draw_steps_components(50);
   }
   function on_click() {
     const step_i = get_step_i(d3.mouse(this));
+    draw_steps_components(step_i);
+
     console.log(`Selected step ${step_i}`);
   }
   function draw_metric_line({ g, d, settings }) {
