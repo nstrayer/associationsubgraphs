@@ -1,4 +1,4 @@
-// !preview r2d3 data=entropynet::virus_component_results, container = "div", dependencies = c("inst/d3/d3_helpers.js")
+// !preview r2d3 data=list(edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js"), d3_version = "5"
 
 const margins = { left: 30, right: 10, top: 20, bottom: 10 };
 const { canvas, context, svg, g, w, h } = setup_svg_canvas_overlap({
@@ -15,38 +15,62 @@ const timeline_settings = {
   background_alpha: 0.1,
   line_width: 1,
   line_color: "steelblue",
-  rel_height: 1 / 2.5,
+  w,
+  h: h * (1 / 3),
   callout_r: 3,
 };
 
 const component_settings = {
-  rel_height: 1 / 2,
+  w,
+  h: h * (1 / 4),
   bar_color: "grey",
 };
 
 let default_step = 50;
+const structure_data = HTMLWidgets.dataframeToD3(data.structure);
 
+// Setup and start the component charts;
 const components_g = g
   .append("g")
-  .attr("width", w)
-  .attr("height", h * component_settings.rel_height);
+  .attr(
+    "transform",
+    `translate(0, ${h - timeline_settings.h - component_settings.h})`
+  );
 
-function draw_steps_components(step_i) {
-  const current_components = data[step_i].components;
-  components_g.call(draw_components, current_components, component_settings);
-}
-draw_steps_components(default_step);
+const timelines_g = g
+  .append("g")
+  .attr("transform", `translate(0, ${h - timeline_settings.h})`);
 
-function draw_components(g, components, settings) {
-  const { rel_height, bar_color, padding = 3, strength_r = 4 } = settings;
-  const h = +g.attr("height");
-  const w = +g.attr("width");
+const update_components_chart = function (step_i) {
+  components_g.call(
+    draw_components_chart,
+    structure_data[step_i].components,
+    component_settings
+  );
+};
+update_components_chart(default_step);
 
-  const units = {
-    size: 2,
-    density: 1,
-    strength: 2,
-  };
+// Setup and start the timeline charts
+timelines_g.call(
+  draw_timelines,
+  structure_data,
+  timeline_settings,
+  update_components_chart
+);
+
+function draw_components_chart(g, components, settings) {
+  const {
+    w,
+    h,
+    bar_color,
+    padding = 3,
+    strength_r = 4,
+    units = {
+      size: 2,
+      density: 1,
+      strength: 2,
+    },
+  } = settings;
 
   const total_units = Object.values(units).reduce((tot, u) => tot + u, 0);
   const total_h = h - padding * 2;
@@ -82,71 +106,91 @@ function draw_components(g, components, settings) {
     .domain([0, d3.max(components.strength)])
     .range([0, sizes.strength - strength_r]);
 
-  g.html("")
+  const setup_new_subgraph_g = function (enter) {
+    const main_g = enter.append("g");
+
+    // We have a size bar
+    main_g.append("rect").classed("size_bar", true);
+
+    // We hav a two rectangle density g element in the middle
+    const density_g = main_g.append("g").classed("density_chart", true);
+    density_g.append("rect").classed("background", true);
+    density_g.append("rect").classed("density_fill", true);
+
+    // Finally we have a lollypop plot for strength on bottom
+    const strength_g = main_g.append("g").classed("strength_lollypop", true);
+    strength_g.append("line").classed("lollypop_stick", true);
+    strength_g.append("circle").classed("lollypop_head", true);
+
+    return main_g;
+  };
+
+  const component_g = g
     .selectAll("g.component_stats")
     .data(components_df)
-    .enter()
-    .append("g")
+    .join(
+      setup_new_subgraph_g,
+      (update) => update,
+      (exit) => exit.attr("opacity", 0).remove()
+    )
     .classed("component_stats", true)
-    .attr("transform", (d) => `translate(${X(d.id)}, 0)`)
-    .each(function (d) {
-      const component_g = d3.select(this);
+    .transition()
+    .duration(100)
+    .attr("transform", (d) => `translate(${X(d.id)}, 0)`);
 
-      component_g
-        .append("rect")
-        .attr("width", component_w)
-        .attr("y", sizes_Y(d.size))
-        .attr("height", sizes.size - sizes_Y(d.size))
-        .attr("fill", bar_color);
+  component_g
+    .select("rect.size_bar")
+    .attr("width", component_w)
+    .attr("y", (d) => sizes_Y(d.size))
+    .attr("height", (d) => sizes.size - sizes_Y(d.size))
+    .attr("fill", bar_color);
 
-      const density_g = component_g
-        .append("g")
-        .attr("transform", `translate(0, ${sizes.size + padding})`);
+  const density_g = component_g
+    .select("g.density_chart")
+    .attr("transform", `translate(0, ${sizes.size + padding})`);
 
-      density_g
-        .append("rect")
-        .attr("height", sizes.density)
-        .attr("width", component_w)
-        .attr("fill", "grey")
-        .attr("fill-opacity", 0.5);
+  density_g
+    .select("rect.background")
+    .attr("height", sizes.density)
+    .attr("width", component_w)
+    .attr("fill", "grey")
+    .attr("fill-opacity", 0.5);
 
-      density_g
-        .append("rect")
-        .attr("y", densities_Y(d.density))
-        .attr("height", sizes.density - densities_Y(d.density))
-        .attr("width", component_w)
-        .attr("fill", bar_color);
+  density_g
+    .select("rect.density_fill")
+    .attr("y", (d) => densities_Y(d.density))
+    .attr("height", (d) => sizes.density - densities_Y(d.density))
+    .attr("width", component_w)
+    .attr("fill", bar_color);
 
-      const strength_g = component_g
-        .append("g")
-        .attr(
-          "transform",
-          `translate(0, ${total_h - sizes.strength + padding * 2})`
-        );
+  const strength_g = component_g
+    .select("g.strength_lollypop")
+    .attr(
+      "transform",
+      `translate(0, ${total_h - sizes.strength + padding * 2})`
+    );
+  strength_g
+    .select("line")
+    .attr("y1", (d) => strengths_Y(d.strength))
+    .attr("x1", component_w / 2)
+    .attr("x2", component_w / 2)
+    .attr("stroke", bar_color)
+    .attr("stroke-width", 1);
 
-      strength_g
-        .append("line")
-        .attr("y1", strengths_Y(d.strength))
-        .attr("x1", component_w / 2)
-        .attr("x2", component_w / 2)
-        .attr("stroke", bar_color)
-        .attr("stroke-width", 1);
+  strength_g
+    .select("circle")
+    .attr("cy", (d) => strengths_Y(d.strength))
+    .attr("cx", component_w / 2)
+    .attr("r", strength_r)
+    .attr("fill", bar_color);
 
-      strength_g
-        .append("circle")
-        .attr("cy", strengths_Y(d.strength))
-        .attr("cx", component_w / 2)
-        .attr("r", strength_r)
-        .attr("fill", bar_color);
-    });
-
-  g.append("g")
+  select_append(g, "g", "size_axis")
     .call(d3.axisLeft(sizes_Y).ticks(sizes_Y.domain()[1]))
     .call(extend_ticks, w, 0.4)
     .call(remove_domain)
     .call((g) => g.selectAll("text").remove());
 
-  g.append("g")
+  select_append(g, "g", "strength_axis")
     .attr(
       "transform",
       `translate(0, ${sizes.size + sizes.density + 2 * padding})`
@@ -154,14 +198,8 @@ function draw_components(g, components, settings) {
     .call(d3.axisLeft(strengths_Y).ticks(2));
 }
 
-g.call(draw_timelines, data, timeline_settings, { w, h });
-
-function draw_timelines(g, data, settings, { w, h }) {
-  const total_h = h * settings.rel_height;
-
-  const timeline_g = g
-    .append("g")
-    .attr("transform", `translate(0, ${h - total_h})`);
+function draw_timelines(timeline_g, data, settings, update_fn) {
+  const { w, h } = settings;
 
   const non_metric_keys = [
     "step",
@@ -174,7 +212,7 @@ function draw_timelines(g, data, settings, { w, h }) {
     (key) => !non_metric_keys.includes(key)
   );
 
-  const chart_h = total_h / all_metrics.length;
+  const chart_h = h / all_metrics.length;
   const chart_w = w - settings.margin_left;
   const X = d3.scaleLinear().domain([0, data.length]).range([0, chart_w]);
 
@@ -230,7 +268,7 @@ function draw_timelines(g, data, settings, { w, h }) {
   const callout_line = timeline_g
     .append("line")
     .attr("y1", settings.padding)
-    .attr("y2", total_h - settings.padding)
+    .attr("y2", h - settings.padding)
     .attr("stroke", "grey")
     .attr("stroke-opacity", 0.5)
     .attr("stroke-width", 1);
@@ -239,7 +277,7 @@ function draw_timelines(g, data, settings, { w, h }) {
     .append("rect")
     .attr("id", "interaction_rect")
     .attr("width", chart_w)
-    .attr("height", total_h)
+    .attr("height", h)
     .attr("fill", "forestgreen")
     .attr("fill-opacity", 0)
     .on("mousemove", on_mousemove)
@@ -256,14 +294,14 @@ function draw_timelines(g, data, settings, { w, h }) {
   function on_mousemove() {
     if (updating_alowed) {
       const step_i = get_step_i(d3.mouse(this));
-      draw_steps_components(step_i);
+      update_fn(step_i);
       move_callouts(step_i);
     }
   }
   function on_mouseout() {
     updating_alowed = true;
     move_callouts(default_step);
-    draw_steps_components(default_step);
+    update_fn(default_step);
   }
   function on_click() {
     updating_alowed = false;
