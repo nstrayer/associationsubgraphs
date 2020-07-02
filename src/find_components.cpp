@@ -78,6 +78,18 @@ inline void merge_components(Component& C_a,
   all_components.erase(all_components.find(C_small.id));
 }
 
+
+//' Find all components in pairs for every subset of edges (c++ version)
+//'
+//' Given a dataframe of edges with strength between nodes this function returns
+//' info on every component state achieved by adding nodes in one-at-a-time in
+//' descending order of strength.
+//'
+//' @param associations Dataframe of association between two ids with a strength
+//' @param a_col,b_col Names of columns that store the id's for the association pair
+//' @param w_col Name of the column storing the strength of association
+//'
+//' @export
 // [[Rcpp::export]]
 List find_components(DataFrame associations,
                      const String& a_col = "a",
@@ -96,6 +108,7 @@ List find_components(DataFrame associations,
   IntegerVector n_triples(n_steps);
   IntegerVector n_nodes_seen(n_steps);
   IntegerVector n_edges(n_steps);
+  NumericVector strengths(n_steps);
   NumericVector avg_size(n_steps);
   IntegerVector max_size(n_steps);
   NumericVector rel_max_size(n_steps);
@@ -164,7 +177,7 @@ List find_components(DataFrame associations,
       IntegerVector ids(num_components);
       IntegerVector sizes(num_components);
       NumericVector densities(num_components);
-      NumericVector strengths(num_components);
+      NumericVector total_strengths(num_components);
       IntegerVector first_edge(num_components);
 
       int step_num_triples = 0;
@@ -178,7 +191,7 @@ List find_components(DataFrame associations,
         ids[k] = component_itt.first;
         sizes[k] = Nv;
         densities[k] = dens;
-        strengths[k] = component_itt.second.total_edge_w / Ne;
+        total_strengths[k] = component_itt.second.total_edge_w / Ne;
         first_edge[k] = component_itt.second.edge_indices.front();
         total_density += dens;
         if (Nv > 2)
@@ -187,7 +200,7 @@ List find_components(DataFrame associations,
           step_max_size = Nv;
         k++;
       }
-
+      strengths[step_i] = w_i;
       n_nodes_seen[step_i] = nodes_seen;
       n_components[step_i] = num_components;
       n_triples[step_i] = step_num_triples;
@@ -199,7 +212,7 @@ List find_components(DataFrame associations,
           _["id"] = ids,
           _["size"] = sizes,
           _["density"] = densities,
-          _["strength"] = strengths,
+          _["strength"] = total_strengths,
           _["first_edge"] = first_edge);
 
       step_i++;
@@ -209,7 +222,7 @@ List find_components(DataFrame associations,
   return List::create(
       _["step"] = seq_len(n_steps),
       _["n_edges"] = n_edges,
-      _["strength"] = unique_w,
+      _["strength"] = strengths,
       _["n_nodes_seen"] = n_nodes_seen,
       _["n_components"] = n_components,
       _["max_size"] = max_size,

@@ -6,15 +6,16 @@
 using namespace Rcpp;
 
 // find_components
-List find_components(CharacterVector a, CharacterVector b, NumericVector w);
-RcppExport SEXP _entropynet_find_components(SEXP aSEXP, SEXP bSEXP, SEXP wSEXP) {
+List find_components(DataFrame associations, const String& a_col, const String& b_col, const String& w_col);
+RcppExport SEXP _entropynet_find_components(SEXP associationsSEXP, SEXP a_colSEXP, SEXP b_colSEXP, SEXP w_colSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< CharacterVector >::type a(aSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type b(bSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
-    rcpp_result_gen = Rcpp::wrap(find_components(a, b, w));
+    Rcpp::traits::input_parameter< DataFrame >::type associations(associationsSEXP);
+    Rcpp::traits::input_parameter< const String& >::type a_col(a_colSEXP);
+    Rcpp::traits::input_parameter< const String& >::type b_col(b_colSEXP);
+    Rcpp::traits::input_parameter< const String& >::type w_col(w_colSEXP);
+    rcpp_result_gen = Rcpp::wrap(find_components(associations, a_col, b_col, w_col));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -33,7 +34,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_entropynet_find_components", (DL_FUNC) &_entropynet_find_components, 3},
+    {"_entropynet_find_components", (DL_FUNC) &_entropynet_find_components, 4},
     {"_entropynet_edges_to_all_nodes", (DL_FUNC) &_entropynet_edges_to_all_nodes, 3},
     {NULL, NULL, 0}
 };
