@@ -40,6 +40,7 @@ function setup_svg_canvas_overlap({ div, width, height, margins }) {
     h: height - margins.top - margins.bottom,
   };
 }
+
 function extend_ticks(g, tick_width, tick_opacity = 0.8) {
   g.selectAll(`.tick line`)
     .attr("x2", tick_width)
@@ -48,16 +49,29 @@ function extend_ticks(g, tick_width, tick_opacity = 0.8) {
 
   g.selectAll(`.tick text`).attr("x", -2);
 }
+
 function remove_domain(els) {
   els.selectAll(".domain").remove();
 }
+
 function not_integer(x) {
   return x % 1 !== 0;
 }
+
 function add_blur_filter(svg) {
   svg.append("defs").html(`
     <filter id="blur_filter" x="0" y="0">
       <feGaussianBlur in="SourceGraphic" stdDeviation="10" />
     </filter>
   `);
+}
+
+function select_append(parent_el, new_el, el_class) {
+  let sel = parent_el.select(`${new_el}.${el_class}`);
+
+  if (sel.size() === 0) {
+    sel = parent_el.append(new_el).classed(el_class, true);
+  }
+
+  return sel.raise();
 }
