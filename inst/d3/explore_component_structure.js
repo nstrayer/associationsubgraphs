@@ -21,6 +21,7 @@ const timeline_settings = {
 
 const component_settings = {
   rel_height: 1 / 2,
+  bar_color: "grey",
 };
 
 const components_g = g
@@ -29,33 +30,48 @@ const components_g = g
   .attr("height", h * component_settings.rel_height);
 
 const current_components = data[50].components;
-components_g.call(draw_components, current_components);
+components_g.call(draw_components, current_components, component_settings);
 
-function draw_components(g, components) {
+function draw_components(g, components, settings) {
+  const { rel_height, bar_color, padding = 3, strength_r = 4 } = settings;
   const h = +g.attr("height");
   const w = +g.attr("width");
-  const sizes = {
-    size_bars: h * (2 / 5),
-    density_bars: h * (1 / 5),
-    strength_lines: h * (2 / 5),
+
+  const units = {
+    size: 2,
+    density: 1,
+    strength: 2,
   };
-  const X = d3.scaleBand().domain(components.id).range([0, w]);
+
+  const total_units = Object.values(units).reduce((tot, u) => tot + u, 0);
+  const total_h = h - padding * 2;
+
+  const sizes = {};
+  for (let measure in units) {
+    sizes[measure] = (total_h * units[measure]) / total_units;
+  }
+
+  const X = d3
+    .scaleBand()
+    .domain(components.id)
+    .range([0, w])
+    .paddingInner(0.03);
   const component_w = X.bandwidth();
 
   const sizes_Y = d3
     .scaleLinear()
     .domain([0, d3.max(components.size)])
-    .range([0, sizes.size_bars]);
+    .range([sizes.size, 0]);
 
   const densities_Y = d3
     .scaleLinear()
     .domain([0, d3.max(components.density)])
-    .range([0, sizes.density_bars]);
+    .range([sizes.density, 0]);
 
   const strengths_Y = d3
     .scaleLinear()
     .domain([0, d3.max(components.strength)])
-    .range([0, sizes.strength_lines]);
+    .range([0, sizes.strength - strength_r]);
 
   g.selectAll("g.component_stats")
     .data(HTMLWidgets.dataframeToD3(components))
@@ -69,17 +85,64 @@ function draw_components(g, components) {
       component_g
         .append("rect")
         .attr("width", component_w)
-        .attr("y", sizes.size_bars - sizes_Y(d.size))
-        .attr("height", sizes_Y(d.size))
-        .attr("fill", "steelblue");
+        .attr("y", sizes_Y(d.size))
+        .attr("height", sizes.size - sizes_Y(d.size))
+        .attr("fill", bar_color);
 
-      component_g
+      const density_g = component_g
+        .append("g")
+        .attr("transform", `translate(0, ${sizes.size + padding})`)
+        .on("mouseover", () => console.log(`Density ${d.density}`));
+
+      density_g
+        .append("rect")
+        .attr("height", sizes.density)
+        .attr("width", component_w)
+        .attr("fill", "grey")
+        .attr("fill-opacity", 0.5);
+
+      density_g
+        .append("rect")
+        .attr("y", densities_Y(d.density))
+        .attr("height", sizes.density - densities_Y(d.density))
+        .attr("width", component_w)
+        .attr("fill", bar_color);
+
+      const strength_g = component_g
+        .append("g")
+        .attr(
+          "transform",
+          `translate(0, ${total_h - sizes.strength + padding * 2})`
+        );
+
+      strength_g
+        .append("line")
+        .attr("y1", strengths_Y(d.strength))
+        .attr("x1", component_w / 2)
+        .attr("x2", component_w / 2)
+        .attr("stroke", bar_color)
+        .attr("stroke-width", 1);
+
+      strength_g
         .append("circle")
-        .attr("cy", h - sizes.strength_lines + strengths_Y(d.strength))
+        .attr("cy", strengths_Y(d.strength))
         .attr("cx", component_w / 2)
-        .attr("r", 5)
-        .attr("fill", "steelblue");
+        .attr("r", strength_r)
+        .attr("fill", bar_color);
     });
+
+  g.append("g")
+    .call(d3.axisLeft(sizes_Y).ticks(sizes_Y.domain()[1]))
+    .call(extend_ticks, w, 0.4)
+    .call(remove_domain)
+    .call((g) => g.selectAll("text").remove());
+
+  g.append("g")
+    .attr(
+      "transform",
+      `translate(0, ${sizes.size + sizes.density + 2 * padding})`
+    )
+    .call(d3.axisLeft(strengths_Y).ticks(2));
 }
 
 //debugger;
