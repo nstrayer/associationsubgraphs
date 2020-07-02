@@ -8,6 +8,17 @@ const { canvas, context, svg, g, w, h } = setup_svg_canvas_overlap({
   margins,
 });
 
+const network_settings = {
+  w,
+  rel_h: 1,
+};
+
+const component_settings = {
+  w,
+  rel_h: 2,
+  bar_color: "grey",
+};
+
 const timeline_settings = {
   padding: 5,
   margin_left: 85,
@@ -16,15 +27,15 @@ const timeline_settings = {
   line_width: 1,
   line_color: "steelblue",
   w,
-  h: h * (1 / 3),
+  rel_h: 1,
   callout_r: 3,
 };
 
-const component_settings = {
-  w,
-  h: h * (1 / 4),
-  bar_color: "grey",
-};
+const all_settings = [timeline_settings, component_settings, network_settings];
+const total_units = all_settings.reduce((sum, { rel_h }) => sum + rel_h, 0);
+all_settings.forEach(
+  (settings) => (settings.h = h * (settings.rel_h / total_units))
+);
 
 let default_step = 50;
 const structure_data = HTMLWidgets.dataframeToD3(data.structure);
@@ -32,6 +43,7 @@ const structure_data = HTMLWidgets.dataframeToD3(data.structure);
 // Setup and start the component charts;
 const components_g = g
   .append("g")
+  .classed("components_chart", true)
   .attr(
     "transform",
     `translate(0, ${h - timeline_settings.h - component_settings.h})`
@@ -39,7 +51,10 @@ const components_g = g
 
 const timelines_g = g
   .append("g")
+  .classed("timelines_chart", true)
   .attr("transform", `translate(0, ${h - timeline_settings.h})`);
+
+const network_g = g.append("g").classed("network_plot", true);
 
 const update_components_chart = function (step_i) {
   components_g.call(
@@ -98,7 +113,7 @@ function draw_components_chart(g, components, settings) {
 
   const densities_Y = d3
     .scaleLinear()
-    .domain([0, d3.max(components.density)])
+    .domain(d3.extent(components.density))
     .range([sizes.density, 0]);
 
   const strengths_Y = d3
