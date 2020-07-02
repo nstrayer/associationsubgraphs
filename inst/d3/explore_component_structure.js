@@ -24,6 +24,8 @@ const component_settings = {
   bar_color: "grey",
 };
 
+let default_step = 50;
+
 const components_g = g
   .append("g")
   .attr("width", w)
@@ -33,7 +35,7 @@ function draw_steps_components(step_i) {
   const current_components = data[step_i].components;
   components_g.call(draw_components, current_components, component_settings);
 }
-draw_steps_components(50);
+draw_steps_components(default_step);
 
 function draw_components(g, components, settings) {
   const { rel_height, bar_color, padding = 3, strength_r = 4 } = settings;
@@ -99,8 +101,7 @@ function draw_components(g, components, settings) {
 
       const density_g = component_g
         .append("g")
-        .attr("transform", `translate(0, ${sizes.size + padding})`)
-        .on("mouseover", () => console.log(`Density ${d.density}`));
+        .attr("transform", `translate(0, ${sizes.size + padding})`);
 
       density_g
         .append("rect")
@@ -245,27 +246,28 @@ function draw_timelines(g, data, settings, { w, h }) {
     .on("mouseout", on_mouseout)
     .on("click", on_click);
 
+  let updating_alowed = true;
   const get_step_i = (mouse_pos) => Math.round(X.invert(mouse_pos[0])) - 1;
 
-  function on_mousemove() {
-    const step_i = get_step_i(d3.mouse(this));
-    draw_steps_components(step_i);
-
-    callout_line
-      .attr("visibility", "visible")
-      .attr("transform", `translate(${X(step_i)}, 0)`);
+  const move_callouts = (step_i) => {
+    callout_line.attr("transform", `translate(${X(step_i)}, 0)`);
     step_metrics.forEach((m) => m.set_callout(step_i));
+  };
+  function on_mousemove() {
+    if (updating_alowed) {
+      const step_i = get_step_i(d3.mouse(this));
+      draw_steps_components(step_i);
+      move_callouts(step_i);
+    }
   }
   function on_mouseout() {
-    callout_line.attr("visibility", "hidden");
-    step_metrics.forEach((m) => m.hide_callout());
-    draw_steps_components(50);
+    updating_alowed = true;
+    move_callouts(default_step);
+    draw_steps_components(default_step);
   }
   function on_click() {
-    const step_i = get_step_i(d3.mouse(this));
-    draw_steps_components(step_i);
-
-    console.log(`Selected step ${step_i}`);
+    updating_alowed = false;
+    default_step = get_step_i(d3.mouse(this));
   }
   function draw_metric_line({ g, d, settings }) {
     const { X, Y } = d;
