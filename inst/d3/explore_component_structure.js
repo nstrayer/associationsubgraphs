@@ -10,7 +10,8 @@ const { canvas, context, svg, g, w, h } = setup_svg_canvas_overlap({
 
 const network_settings = {
   w,
-  rel_h: 1,
+  rel_h: 3,
+  padding: 50,
 };
 
 const component_settings = {
@@ -27,7 +28,7 @@ const timeline_settings = {
   line_width: 1,
   line_color: "steelblue",
   w,
-  rel_h: 1,
+  rel_h: 2,
   callout_r: 3,
 };
 
@@ -45,6 +46,8 @@ all_settings.forEach((settings) => {
 let default_step = 50;
 const structure_data = HTMLWidgets.dataframeToD3(data.structure);
 
+// =============================================================================
+// Setup the g elements that hold the separate plots
 // Setup and start the component charts;
 const components_g = g
   .append("g")
@@ -56,8 +59,12 @@ const timelines_g = g
   .classed("timelines_chart", true)
   .attr("transform", `translate(0, ${timeline_settings.start_h})`);
 
-const network_g = g.append("g").classed("network_plot", true);
+const network_g = g.append("g")
+  .classed("network_plot", true)
+  .attr("transform", `translate(${network_settings.padding}, ${network_settings.padding})`);
 
+// =============================================================================
+// Initialize the plots themselves
 const update_components_chart = function (step_i) {
   components_g.call(
     draw_components_chart,
@@ -77,32 +84,91 @@ timelines_g.call(
 
 network_g.call(draw_network_plot, data.edges, 50, network_settings);
 
-function draw_network_plot(g, edges, n_edges, settings) {
-  const { w, h } = settings;
+// =============================================================================
+// Functions for drawing each section of the plots
 
-  const edges_df = HTMLWidgets.dataframeToD3({
-    source: edges.a,
-    target: edges.b,
-    strength: edges.strength,
-  });
+function draw_network_plot(g, edge_vals, n_edges, settings) {
+  const { w, h, padding, node_r = 3, alphaDecay = 0.01 } = settings;
+
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-  const { nodes, subgraphs } = find_subgraphs({
+  const { nodes, edges, subgraphs} = find_subgraphs({
     nodes: nodes_raw,
-    source_edges: edges.a,
-    target_edges: edges.b,
+    edge_source: edge_vals.a,
+    edge_target: edge_vals.b,
+    edge_strength: edge_vals.strength,
     n_edges,
-    width: w,
-    height: h,
+    width: w - padding*2,
+    height: h - padding*2,
   });
 
   select_append(g, "rect", "background")
     .attr("width", w)
     .attr("height", h)
+    .attr("x", -padding)
+    .attr("y", -padding)
     .attr("fill", "forestgreen")
     .attr("fill-opacity", 0)
     .attr("stroke", "forestgreen")
     .attr("stroke-width", 2);
+
+  const link_dist = d3
+    .scaleLog()
+    .domain(d3.extent(edge_vals.strength))
+    .range([10, 1]);
+
+  let X = d3.scaleLinear().range([0, w]).domain([0, w]);
+  let Y = d3.scaleLinear().range([0, h]).domain([0, h]);
+  const scales = {X, Y};
+
+  const simulation = d3
+    .forceSimulation(nodes)
+    .force(
+      "link",
+      d3
+        .forceLink(edges)
+        .id((d) => d.id)
+        .distance((d) => link_dist(d.strength))
+    )
+    .force("charge", d3.forceManyBody())
+    .force(
+      "x",
+      d3
+        .forceX()
+        .strength(0.25)
+        .x((node) => node.subgraph_x)
+    )
+    .force(
+      "y",
+      d3
+        .forceY()
+        .strength(0.25)
+        .y((node) => node.subgraph_y)
+    )
+    .alphaDecay(alphaDecay)
+    .on("tick", ticked);
+
+  const node = g
+    .attr("stroke", "#fff")
+    .attr("stroke-width", node_r / 3)
+    .selectAll("circle")
+    .data(nodes)
+    .enter()
+    .append("circle")
+    .attr("r", node_r)
+    .attr("fill", (d) => d.color || "steelblue")
+    // .on("mouseover", show_tooltip)
+    // .on("mouseout", hide_tooltip)
+  //.call(drag(simulation));
+
+  function ticked() {
+    // update_edges();
+    update_nodes();
+  }
+
+  function update_nodes() {
+    node.attr("cx", (d) => scales.X(d.x)).attr("cy", (d) => scales.Y(d.y));
+  }
 }
 
 function draw_components_chart(g, components, settings) {
