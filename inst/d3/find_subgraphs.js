@@ -78,6 +78,7 @@ function find_subgraphs({
       target,
       strength: edge_strength[i],
       subgraph: edge_subgraph_id,
+      index: i,
     };
   }
 
