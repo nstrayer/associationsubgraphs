@@ -49,29 +49,44 @@ const structure_data = HTMLWidgets.dataframeToD3(data.structure);
 // =============================================================================
 // Setup the g elements that hold the separate plots
 // Setup and start the component charts;
-const components_g = g
+const components_holder = g
   .append("g")
   .classed("components_chart", true)
   .move_to({ y: component_settings.start_h });
 
-const timelines_g = g
+const timelines_holder = g
   .append("g")
   .classed("timelines_chart", true)
   .move_to({ y: timeline_settings.start_h });
 
-const network_g = g.append("g").classed("network_plot", true);
+const network_holder = g.append("g").classed("network_plot", true);
 
 // =============================================================================
 // Initialize the plots themselves
+let network_plot;
+
+const component_interactions = {
+  click: function (component) {
+    console.log("clicked!");
+  },
+  mouseover: function (component) {
+    network_plot.highlight_component(component.first_edge);
+  },
+  mouseoff: function (component) {
+    network_plot.reset_highlights();
+  },
+};
+
 const update_components_chart = function (step_i, update_network = false) {
-  components_g.call(
+  components_holder.call(
     draw_components_chart,
     structure_data[step_i].components,
-    component_settings
+    component_settings,
+    component_interactions
   );
 
   if (update_network) {
-    network_g.call(draw_network_plot, {
+    network_plot = draw_network_plot(network_holder, {
       edge_vals: data.edges,
       n_edges: structure_data[step_i].n_edges,
       settings: network_settings,
@@ -80,10 +95,11 @@ const update_components_chart = function (step_i, update_network = false) {
     });
   }
 };
+
 update_components_chart(default_step, true);
 
 // Setup and start the timeline charts
-timelines_g.call(
+timelines_holder.call(
   draw_timelines,
   structure_data,
   timeline_settings,
@@ -230,9 +246,22 @@ function draw_network_plot(
       .on("drag", dragged)
       .on("end", dragended);
   }
+
+  function highlight_component(edge_in_component) {
+    const subgraph_id = edges[edge_in_component].subgraph;
+
+    node.filter((d) => d.subgraph_id === subgraph_id).attr("r", node_r * 1.5);
+    node.filter((d) => d.subgraph_id !== subgraph_id).attr("r", node_r);
+  }
+
+  function reset_highlights() {
+    node.filter((d) => d.subgraph_id !== subgraph_id).attr("r", node_r);
+  }
+
+  return { highlight_component, reset_highlights };
 }
 
-function draw_components_chart(g, components, settings) {
+function draw_components_chart(g, components, settings, interaction_fns) {
   const {
     w,
     h,
@@ -307,11 +336,19 @@ function draw_components_chart(g, components, settings) {
       (update) => update,
       (exit) => exit.attr("opacity", 0).remove()
     )
-    .classed("component_stats", true)
+    .classed("component_stats", true);
+
+  // wire up the interactions
+  for (let type in interaction_fns) {
+    component_g.on(type, interaction_fns[type]);
+  }
+
+  component_g
     .transition()
     .duration(100)
     .attr("transform", (d) => `translate(${X(d.id)}, 0)`);
 
+  // component_g;
   component_g
     .select("rect.size_bar")
     .attr("width", component_w)
