@@ -72,8 +72,20 @@ const component_interactions = {
   mouseover: function (component) {
     network_plot.highlight_component(component.first_edge);
   },
-  mouseoff: function (component) {
+  mouseout: function (component) {
     network_plot.reset_highlights();
+  },
+};
+
+const network_interactions = {
+  click: function (node) {
+    console.log("clicked!");
+  },
+  mouseover: function (node) {
+    console.log("mousedover");
+  },
+  mouseoff: function (node) {
+    console.log("mousedoff");
   },
 };
 
@@ -111,7 +123,7 @@ timelines_holder.call(
 
 function draw_network_plot(
   g,
-  { edge_vals, n_edges, settings, context, margins }
+  { edge_vals, n_edges, settings, context, margins, interaction_fns }
 ) {
   const { w, h, padding, node_r = 3, alphaDecay = 0.01 } = settings;
   g.call(d3.zoom().on("zoom", zoomed));
@@ -255,7 +267,7 @@ function draw_network_plot(
   }
 
   function reset_highlights() {
-    node.filter((d) => d.subgraph_id !== subgraph_id).attr("r", node_r);
+    node.attr("r", node_r);
   }
 
   return { highlight_component, reset_highlights };
@@ -325,6 +337,9 @@ function draw_components_chart(g, components, settings, interaction_fns) {
     strength_g.append("line").classed("lollypop_stick", true);
     strength_g.append("circle").classed("lollypop_head", true);
 
+    // Place an invisible rectangle over the entire element space to make interactions more responsive
+    main_g.append("rect").classed("interaction_rect", true);
+
     return main_g;
   };
 
@@ -336,12 +351,19 @@ function draw_components_chart(g, components, settings, interaction_fns) {
       (update) => update,
       (exit) => exit.attr("opacity", 0).remove()
     )
-    .classed("component_stats", true);
+    .classed("component_stats", true)
+    .call(setup_interactions, interaction_fns);
 
-  // wire up the interactions
-  for (let type in interaction_fns) {
-    component_g.on(type, interaction_fns[type]);
-  }
+  // // wire up the interactions
+  // for (let type in interaction_fns) {
+  //   component_g.on(type, interaction_fns[type]);
+  // }
+
+  component_g
+    .select("rect.interaction_rect")
+    .attr("width", component_w)
+    .attr("height", h)
+    .attr("fill-opacity", 0);
 
   component_g
     .transition()
