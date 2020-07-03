@@ -90,3 +90,10 @@ function move_to(el, { x = 0, y = 0 }) {
   const eval_pos = (p) => (typeof p === "function" ? p(el.datum()) : p);
   return el.attr("transform", `translate(${eval_pos(x)},${eval_pos(y)})`);
 }
+
+function setup_interactions(el, interaction_fns) {
+  // wire up the interactions
+  for (let type in interaction_fns) {
+    el.on(type, interaction_fns[type]);
+  }
+}
