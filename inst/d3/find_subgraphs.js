@@ -117,5 +117,5 @@ function find_subgraphs({
     return nodes_w_subgraph;
   }, []);
 
-  return { nodes: nodes_to_return, edges, subgraphs };
+  return { nodes: nodes_to_return, edges, subgraphs, node_to_subgraph };
 }
