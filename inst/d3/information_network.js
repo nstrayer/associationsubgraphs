@@ -1,7 +1,6 @@
 // !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 500)), container = "div", options = list(source_id = "a", target_id = "b"), dependencies = c("inst/d3/find_subgraphs.js")
 
-
-const margins = {top: 130, bottom: 50, left: 100, right: 100};
+const margins = { top: 130, bottom: 50, left: 100, right: 100 };
 const w = width - margins.left - margins.right;
 const h = height - margins.top - margins.bottom;
 const node_r = 3;
@@ -10,12 +9,11 @@ const node_r = 3;
 // in that column
 const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-
-const { nodes, edges, subgraphs} = find_subgraphs({
+const { nodes, edges, subgraphs } = find_subgraphs({
   nodes: nodes_raw,
   edge_source: data.edges[options.source_id],
-  edge_target:  data.edges[options.target_id],
-  edge_strength:  data.edges.strength,
+  edge_target: data.edges[options.target_id],
+  edge_strength: data.edges.strength,
   width: width - margins.left - margins.right,
   height: height - margins.top - margins.bottom,
 });
@@ -27,15 +25,9 @@ const link_dist = d3
   .domain(d3.extent(edges, (d) => d.strength))
   .range([Math.max(2, grid_side_length / 13), 1]);
 
-let X = d3
-  .scaleLinear()
-  .range([margins.left, w])
-  .domain([margins.left, w]);
+let X = d3.scaleLinear().range([margins.left, w]).domain([margins.left, w]);
 
-let Y = d3
-  .scaleLinear()
-  .range([margins.top, h])
-  .domain([margins.top, h]);
+let Y = d3.scaleLinear().range([margins.top, h]).domain([margins.top, h]);
 
 let scales = { X, Y };
 
@@ -100,7 +92,6 @@ const svg = div
   .style("position", "absolute")
   .style("left", 0)
   .style("top", 0);
-
 
 const g = svg.append("g");
 
