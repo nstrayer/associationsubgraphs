@@ -52,12 +52,12 @@ const structure_data = HTMLWidgets.dataframeToD3(data.structure);
 const components_g = g
   .append("g")
   .classed("components_chart", true)
-  .attr("transform", `translate(0, ${component_settings.start_h})`);
+  .move_to({ y: component_settings.start_h });
 
 const timelines_g = g
   .append("g")
   .classed("timelines_chart", true)
-  .attr("transform", `translate(0, ${timeline_settings.start_h})`);
+  .move_to({ y: timeline_settings.start_h });
 
 const network_g = g.append("g").classed("network_plot", true);
 
@@ -321,7 +321,7 @@ function draw_components_chart(g, components, settings) {
 
   const density_g = component_g
     .select("g.density_chart")
-    .attr("transform", `translate(0, ${sizes.size + padding})`);
+    .call(move_to, { y: sizes.size + padding });
 
   density_g
     .select("rect.background")
@@ -339,10 +339,8 @@ function draw_components_chart(g, components, settings) {
 
   const strength_g = component_g
     .select("g.strength_lollypop")
-    .attr(
-      "transform",
-      `translate(0, ${total_h - sizes.strength + padding * 2})`
-    );
+    .call(move_to, { y: total_h - sizes.strength + padding * 2 });
+
   strength_g
     .select("line")
     .attr("y1", (d) => strengths_Y(d.strength))
@@ -358,13 +356,13 @@ function draw_components_chart(g, components, settings) {
     .attr("r", strength_r)
     .attr("fill", bar_color);
 
-  select_append(g, "g", "size_axis")
+  g.select_append("g.size_axis")
     .call(d3.axisLeft(sizes_Y).ticks(sizes_Y.domain()[1]))
     .call(extend_ticks, w, 0.4)
     .call(remove_domain)
     .call((g) => g.selectAll("text").remove());
 
-  select_append(g, "g", "strength_axis")
+  g.select_append("g.strength_axis")
     .attr(
       "transform",
       `translate(0, ${sizes.size + sizes.density + 2 * padding})`
@@ -439,6 +437,14 @@ function draw_timelines(timeline_g, data, settings, update_fn) {
       draw_metric_line({ g: d3.select(this), d, settings });
     });
 
+  const pinned_step_line = timeline_g
+    .select_append("line.pinned_step")
+    .attr("y1", settings.padding)
+    .attr("y2", h - settings.padding)
+    .attr("stroke", "steelblue")
+    .attr("stroke-opacity", 0.5)
+    .attr("stroke-width", 1);
+
   const callout_line = timeline_g
     .append("line")
     .attr("y1", settings.padding)
@@ -458,28 +464,23 @@ function draw_timelines(timeline_g, data, settings, update_fn) {
     .on("mouseout", on_mouseout)
     .on("click", on_click);
 
-  let updating_alowed = true;
   const get_step_i = (mouse_pos) => Math.round(X.invert(mouse_pos[0])) - 1;
 
   const move_callouts = (step_i) => {
     callout_line.attr("transform", `translate(${X(step_i)}, 0)`);
     step_metrics.forEach((m) => m.set_callout(step_i));
+    update_fn(step_i);
   };
   function on_mousemove() {
-    if (updating_alowed) {
-      const step_i = get_step_i(d3.mouse(this));
-      update_fn(step_i);
-      move_callouts(step_i);
-    }
+    const step_i = get_step_i(d3.mouse(this));
+    move_callouts(step_i);
   }
   function on_mouseout() {
-    updating_alowed = true;
     move_callouts(default_step);
-    update_fn(default_step);
   }
   function on_click() {
-    updating_alowed = false;
     default_step = get_step_i(d3.mouse(this));
+    pinned_step_line.move_to({ x: X(default_step) });
     update_fn(default_step, true);
   }
   function draw_metric_line({ g, d, settings }) {
@@ -549,7 +550,7 @@ function draw_timelines(timeline_g, data, settings, update_fn) {
 
       callout
         .attr("visibility", "visible")
-        .attr("transform", `translate(${x_pos}, ${Y(value_at_step)})`);
+        .move_to({ x: x_pos, y: Y(value_at_step) });
 
       callout_text
         .text(d3.format(d.is_integer ? ",i" : ".3f")(d.values[step_i]))
