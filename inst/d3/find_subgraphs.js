@@ -84,8 +84,10 @@ function find_subgraphs({
   const n = subgraphs.size;
   const n_in_col = Math.ceil(Math.sqrt((n * width) / height));
   const n_in_row = Math.ceil(n / n_in_col);
-  const get_x_pos = (i) => (width * (i % n_in_col)) / (n_in_col - 1);
-  const get_y_pos = (i) => (height * Math.floor(i / n_in_col)) / (n_in_row - 1);
+  const x_gap = width / Math.min(n_in_col, n);
+  const y_gap = height / Math.min(n_in_row, n);
+  const get_x_pos = (i) => (i % n_in_col) * x_gap + x_gap / 2;
+  const get_y_pos = (i) => Math.floor(i / n_in_col) * y_gap + y_gap / 2;
   let i = 0;
   const is_giant_component = subgraphs.size == 1;
   const subgraph_to_center = new Map();
