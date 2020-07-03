@@ -1,16 +1,17 @@
 function find_subgraphs({
   nodes,
-  source_edges,
-  target_edges,
+  edge_source,
+  edge_target,
+  edge_strength,
   n_edges,
   width,
   height,
 }) {
-  const stop_point = n_edges || source_edges.length;
+  const stop_point = n_edges || edge_source.length;
   const subgraphs = new Map();
   const node_to_subgraph = new Map();
+  const edges = Array.from({ length: stop_point });
 
-  const edge_subgraphs = Array.from({ length: stop_point });
   let subgraph_counter = 0;
 
   const get_subgraph_id = function (node_id) {
@@ -27,8 +28,8 @@ function find_subgraphs({
 
   // Loop over each link in the data
   for (let i = 0; i < stop_point; i++) {
-    const source = source_edges[i];
-    const target = target_edges[i];
+    const source = edge_source[i];
+    const target = edge_target[i];
 
     // Grab each node's subgraph
     const source_subgraph_id = get_subgraph_id(source);
@@ -72,7 +73,12 @@ function find_subgraphs({
       subgraphs.delete(culled_subgraph_id);
     }
 
-    edge_subgraphs[i] = edge_subgraph_id;
+    edges[i] = {
+      source,
+      target,
+      strength: edge_strength[i],
+      subgraph: edge_subgraph_id,
+    };
   }
 
   const n = subgraphs.size;
@@ -109,5 +115,5 @@ function find_subgraphs({
     return nodes_w_subgraph;
   }, []);
 
-  return { nodes: nodes_to_return, edge_subgraphs, subgraphs };
+  return { nodes: nodes_to_return, edges, subgraphs };
 }
