@@ -66,12 +66,26 @@ function add_blur_filter(svg) {
   `);
 }
 
-function select_append(parent_el, new_el, el_class) {
-  let sel = parent_el.select(`${new_el}.${el_class}`);
+d3.selection.prototype.select_append = function (query) {
+  const [el_type, specifier] = query.split(/\.|#/g);
 
+  let sel = this.select(query);
   if (sel.size() === 0) {
-    sel = parent_el.append(new_el).classed(el_class, true);
+    sel = this.append(el_type);
+    if (specifier) {
+      const specifier_is_id = query.includes("#");
+      sel.attr(specifier_is_id ? "id" : "class", specifier);
+    }
   }
 
   return sel.raise();
+};
+
+d3.selection.prototype.move_to = function (positions) {
+  return move_to(this, positions);
+};
+
+function move_to(el, { x = 0, y = 0 }) {
+  const eval_pos = (p) => (typeof p === "function" ? p(el.datum()) : p);
+  return el.attr("transform", `translate(${eval_pos(x)},${eval_pos(y)})`);
 }
