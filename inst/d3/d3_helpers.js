@@ -45,7 +45,8 @@ function extend_ticks(g, tick_width, tick_opacity = 0.8) {
   g.selectAll(`.tick line`)
     .attr("x2", tick_width)
     .attr("stroke", "white")
-    .attr("stroke-opacity", tick_opacity);
+    .attr("stroke-opacity", tick_opacity)
+    .attr("pointer-events", "none"); // dont let ticks mess up hover etc.
 
   g.selectAll(`.tick text`).attr("x", -2);
 }
