@@ -1,4 +1,4 @@
-// !preview r2d3 data=list(edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js"), d3_version = "5"
+// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_subgraphs.js"), d3_version = "5"
 
 const margins = { left: 30, right: 10, top: 20, bottom: 10 };
 const { canvas, context, svg, g, w, h } = setup_svg_canvas_overlap({
@@ -74,6 +74,36 @@ timelines_g.call(
   timeline_settings,
   update_components_chart
 );
+
+network_g.call(draw_network_plot, data.edges, 50, network_settings);
+
+function draw_network_plot(g, edges, n_edges, settings) {
+  const { w, h } = settings;
+
+  const edges_df = HTMLWidgets.dataframeToD3({
+    source: edges.a,
+    target: edges.b,
+    strength: edges.strength,
+  });
+  const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
+
+  const { nodes, subgraphs } = find_subgraphs({
+    nodes: nodes_raw,
+    source_edges: edges.a,
+    target_edges: edges.b,
+    n_edges,
+    width: w,
+    height: h,
+  });
+
+  select_append(g, "rect", "background")
+    .attr("width", w)
+    .attr("height", h)
+    .attr("fill", "forestgreen")
+    .attr("fill-opacity", 0)
+    .attr("stroke", "forestgreen")
+    .attr("stroke-width", 2);
+}
 
 function draw_components_chart(g, components, settings) {
   const {
