@@ -1,6 +1,9 @@
 // !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 500)), container = "div", options = list(source_id = "a", target_id = "b"), dependencies = c("inst/d3/find_subgraphs.js")
 
-const padding = 50;
+
+const margins = {top: 130, bottom: 50, left: 100, right: 100};
+const w = width - margins.left - margins.right;
+const h = height - margins.top - margins.bottom;
 const node_r = 3;
 // Expects that your edges have a source and target column
 // and that the nodes has an id column that matches the values
@@ -8,13 +11,13 @@ const node_r = 3;
 const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
 
-const { nodes, edges, subgraphs } = find_subgraphs({
+const { nodes, edges, subgraphs} = find_subgraphs({
   nodes: nodes_raw,
   edge_source: data.edges[options.source_id],
   edge_target:  data.edges[options.target_id],
   edge_strength:  data.edges.strength,
-  width: width - 2 * padding,
-  height: height - 2 * padding,
+  width: width - margins.left - margins.right,
+  height: height - margins.top - margins.bottom,
 });
 
 const grid_side_length = Math.min(width, height);
@@ -26,13 +29,13 @@ const link_dist = d3
 
 let X = d3
   .scaleLinear()
-  .range([padding, grid_side_length - padding])
-  .domain([-grid_side_length * (1 / 3), grid_side_length * 0.85]);
+  .range([margins.left, w])
+  .domain([margins.left, w]);
 
 let Y = d3
   .scaleLinear()
-  .range([padding, grid_side_length - padding])
-  .domain([-grid_side_length * (1 / 3), grid_side_length * 0.9]);
+  .range([margins.top, h])
+  .domain([margins.top, h]);
 
 let scales = { X, Y };
 
@@ -52,7 +55,7 @@ const simulation = d3
       .forceX()
       .strength(0.25)
       //.x(width/2)
-      .x((node) => node.subgraph_x)
+      .x((node) => node.subgraph_x + margins.left)
   )
   .force(
     "y",
@@ -60,7 +63,7 @@ const simulation = d3
       .forceY()
       .strength(0.25)
       //.y(height/2 + 14)
-      .y((node) => node.subgraph_y)
+      .y((node) => node.subgraph_y + margins.top)
   )
   .alphaDecay(options.alphaDecay || 0.0005)
   .on("tick", ticked);
@@ -97,6 +100,7 @@ const svg = div
   .style("position", "absolute")
   .style("left", 0)
   .style("top", 0);
+
 
 const g = svg.append("g");
 
