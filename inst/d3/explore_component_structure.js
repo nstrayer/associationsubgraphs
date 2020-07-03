@@ -18,6 +18,7 @@ const component_settings = {
   w,
   rel_h: 2,
   bar_color: "grey",
+  selection_color: "green",
 };
 
 const timeline_settings = {
@@ -64,6 +65,7 @@ const network_holder = g.append("g").classed("network_plot", true);
 // =============================================================================
 // Initialize the plots themselves
 let network_plot;
+let component_plot;
 
 const component_interactions = {
   click: function (component) {
@@ -78,24 +80,23 @@ const component_interactions = {
 };
 
 const network_interactions = {
-  click: function (node) {
-    console.log("clicked!");
+  click: function (component) {
+    // component_plot.highlight_component(component.edge_indices);
   },
-  mouseover: function (node) {
-    console.log("mousedover");
+  mouseover: function (component) {
+    component_plot.highlight_component(component.edge_indices);
   },
-  mouseoff: function (node) {
-    console.log("mousedoff");
+  mouseout: function (component) {
+    component_plot.reset_highlights();
   },
 };
 
 const update_components_chart = function (step_i, update_network = false) {
-  components_holder.call(
-    draw_components_chart,
-    structure_data[step_i].components,
-    component_settings,
-    component_interactions
-  );
+  component_plot = draw_components_chart(components_holder, {
+    components: structure_data[step_i].components,
+    settings: component_settings,
+    interaction_fns: component_interactions,
+  });
 
   if (update_network) {
     network_plot = draw_network_plot(network_holder, {
@@ -104,6 +105,7 @@ const update_components_chart = function (step_i, update_network = false) {
       settings: network_settings,
       context,
       margins,
+      interaction_fns: network_interactions,
     });
   }
 };
@@ -130,7 +132,7 @@ function draw_network_plot(
 
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-  const { nodes, edges } = find_subgraphs({
+  const { nodes, edges, node_to_subgraph } = find_subgraphs({
     nodes: nodes_raw,
     edge_source: edge_vals.a,
     edge_target: edge_vals.b,
@@ -139,6 +141,25 @@ function draw_network_plot(
     width: w - padding * 2,
     height: h - padding * 2,
   });
+
+  const subgraph_to_nodes = {};
+  nodes.forEach((node) => {
+    if (!subgraph_to_nodes[node.subgraph_id]) {
+      subgraph_to_nodes[node.subgraph_id] = [];
+    }
+    subgraph_to_nodes[node.subgraph_id].push(node);
+  });
+
+  const nodes_by_component = [];
+  for (let subgraph_id in subgraph_to_nodes) {
+    nodes_by_component.push({
+      id: subgraph_id,
+      nodes: subgraph_to_nodes[subgraph_id],
+      edge_indices: edges
+        .filter((e) => e.subgraph == subgraph_id)
+        .map((e) => e.index),
+    });
+  }
 
   const link_dist = d3
     .scaleLog()
@@ -177,17 +198,37 @@ function draw_network_plot(
     .alphaDecay(alphaDecay)
     .on("tick", ticked);
 
-  const node = g
+  const component_containers = g
     .attr("stroke", "#fff")
     .attr("stroke-width", node_r / 3)
+    .selectAll("g")
+    .data(nodes_by_component)
+    .join((enter) => {
+      const main_g = enter.append("g").attr("id", (d) => d.id);
+
+      main_g.append("g").attr("class", "node_container");
+
+      main_g
+        .append("rect")
+        .attr("class", "bounding_rect")
+        .attr("fill-opacity", 0);
+
+      return main_g;
+    })
+    .attr("id", (d) => d.id);
+
+  const bounding_rects = component_containers
+    .select("rect.bounding_rect")
+    .call(setup_interactions, interaction_fns);
+
+  const all_nodes = component_containers
+    .select("g.node_container")
     .selectAll("circle")
-    .data(nodes)
+    .data((component) => component.nodes)
     .join("circle")
     .attr("r", node_r)
     .attr("fill", (d) => d.color || "steelblue")
     .call(drag(simulation));
-  // .on("mouseover", show_tooltip)
-  // .on("mouseout", hide_tooltip)
 
   function ticked() {
     update_edges();
@@ -220,7 +261,25 @@ function draw_network_plot(
   }
 
   function update_nodes() {
-    node.attr("cx", (d) => x_pos(d.x)).attr("cy", (d) => y_pos(d.y));
+    all_nodes.attr("cx", (d) => x_pos(d.x)).attr("cy", (d) => y_pos(d.y));
+
+    // Update bounding rects for interaction purposes
+    component_containers.each(function (d) {
+      const pad = 5;
+
+      const component_bbox = d3
+        .select(this)
+        .select("g.node_container")
+        .node()
+        .getBBox();
+
+      d3.select(this)
+        .select("rect.bounding_rect")
+        .attr("width", component_bbox.width + pad * 2)
+        .attr("height", component_bbox.height + pad * 2)
+        .attr("x", component_bbox.x - pad)
+        .attr("y", component_bbox.y - pad);
+    });
   }
 
   function zoomed() {
@@ -262,22 +321,25 @@ function draw_network_plot(
   function highlight_component(edge_in_component) {
     const subgraph_id = edges[edge_in_component].subgraph;
 
-    node.filter((d) => d.subgraph_id === subgraph_id).attr("r", node_r * 1.5);
-    node.filter((d) => d.subgraph_id !== subgraph_id).attr("r", node_r);
+    all_nodes
+      .filter((d) => d.subgraph_id === subgraph_id)
+      .attr("r", node_r * 1.5);
+    all_nodes.filter((d) => d.subgraph_id !== subgraph_id).attr("r", node_r);
   }
 
   function reset_highlights() {
-    node.attr("r", node_r);
+    all_nodes.attr("r", node_r);
   }
 
   return { highlight_component, reset_highlights };
 }
 
-function draw_components_chart(g, components, settings, interaction_fns) {
+function draw_components_chart(g, { components, settings, interaction_fns }) {
   const {
     w,
     h,
     bar_color,
+    selection_color,
     padding = 3,
     strength_r = 4,
     units = {
@@ -338,7 +400,12 @@ function draw_components_chart(g, components, settings, interaction_fns) {
     strength_g.append("circle").classed("lollypop_head", true);
 
     // Place an invisible rectangle over the entire element space to make interactions more responsive
-    main_g.append("rect").classed("interaction_rect", true);
+    main_g
+      .append("rect")
+      .classed("interaction_rect", true)
+      .attr("stroke", selection_color)
+      .attr("stroke-width", 0)
+      .attr("fill-opacity", 0);
 
     return main_g;
   };
@@ -354,23 +421,16 @@ function draw_components_chart(g, components, settings, interaction_fns) {
     .classed("component_stats", true)
     .call(setup_interactions, interaction_fns);
 
-  // // wire up the interactions
-  // for (let type in interaction_fns) {
-  //   component_g.on(type, interaction_fns[type]);
-  // }
-
-  component_g
+  const component_backgrounds = component_g
     .select("rect.interaction_rect")
     .attr("width", component_w)
-    .attr("height", h)
-    .attr("fill-opacity", 0);
+    .attr("height", h);
 
   component_g
     .transition()
     .duration(100)
     .attr("transform", (d) => `translate(${X(d.id)}, 0)`);
 
-  // component_g;
   component_g
     .select("rect.size_bar")
     .attr("width", component_w)
@@ -427,6 +487,18 @@ function draw_components_chart(g, components, settings, interaction_fns) {
       `translate(0, ${sizes.size + sizes.density + 2 * padding})`
     )
     .call(d3.axisLeft(strengths_Y).ticks(2));
+
+  function highlight_component(edge_indices) {
+    component_backgrounds
+      .filter((c) => edge_indices.includes(c.first_edge))
+      .attr("stroke-width", 2);
+  }
+
+  function reset_highlights() {
+    component_backgrounds.attr("stroke-width", 0);
+  }
+
+  return { highlight_component, reset_highlights };
 }
 
 function draw_timelines(timeline_g, data, settings, update_fn) {
