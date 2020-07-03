@@ -59,20 +59,28 @@ const timelines_g = g
   .classed("timelines_chart", true)
   .attr("transform", `translate(0, ${timeline_settings.start_h})`);
 
-const network_g = g.append("g")
-  .classed("network_plot", true)
-  .attr("transform", `translate(${network_settings.padding}, ${network_settings.padding})`);
+const network_g = g.append("g").classed("network_plot", true);
 
 // =============================================================================
 // Initialize the plots themselves
-const update_components_chart = function (step_i) {
+const update_components_chart = function (step_i, update_network = false) {
   components_g.call(
     draw_components_chart,
     structure_data[step_i].components,
     component_settings
   );
+
+  if (update_network) {
+    network_g.call(draw_network_plot, {
+      edge_vals: data.edges,
+      n_edges: structure_data[step_i].n_edges,
+      settings: network_settings,
+      context,
+      margins,
+    });
+  }
 };
-update_components_chart(default_step);
+update_components_chart(default_step, true);
 
 // Setup and start the timeline charts
 timelines_g.call(
@@ -82,35 +90,27 @@ timelines_g.call(
   update_components_chart
 );
 
-network_g.call(draw_network_plot, data.edges, 50, network_settings);
-
 // =============================================================================
 // Functions for drawing each section of the plots
 
-function draw_network_plot(g, edge_vals, n_edges, settings) {
+function draw_network_plot(
+  g,
+  { edge_vals, n_edges, settings, context, margins }
+) {
   const { w, h, padding, node_r = 3, alphaDecay = 0.01 } = settings;
+  g.call(d3.zoom().on("zoom", zoomed));
 
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-  const { nodes, edges, subgraphs} = find_subgraphs({
+  const { nodes, edges } = find_subgraphs({
     nodes: nodes_raw,
     edge_source: edge_vals.a,
     edge_target: edge_vals.b,
     edge_strength: edge_vals.strength,
     n_edges,
-    width: w - padding*2,
-    height: h - padding*2,
+    width: w - padding * 2,
+    height: h - padding * 2,
   });
-
-  select_append(g, "rect", "background")
-    .attr("width", w)
-    .attr("height", h)
-    .attr("x", -padding)
-    .attr("y", -padding)
-    .attr("fill", "forestgreen")
-    .attr("fill-opacity", 0)
-    .attr("stroke", "forestgreen")
-    .attr("stroke-width", 2);
 
   const link_dist = d3
     .scaleLog()
@@ -119,7 +119,8 @@ function draw_network_plot(g, edge_vals, n_edges, settings) {
 
   let X = d3.scaleLinear().range([0, w]).domain([0, w]);
   let Y = d3.scaleLinear().range([0, h]).domain([0, h]);
-  const scales = {X, Y};
+  const x_pos = (x) => X(x) + padding;
+  const y_pos = (y) => Y(y) + padding;
 
   const simulation = d3
     .forceSimulation(nodes)
@@ -153,21 +154,81 @@ function draw_network_plot(g, edge_vals, n_edges, settings) {
     .attr("stroke-width", node_r / 3)
     .selectAll("circle")
     .data(nodes)
-    .enter()
-    .append("circle")
+    .join("circle")
     .attr("r", node_r)
     .attr("fill", (d) => d.color || "steelblue")
-    // .on("mouseover", show_tooltip)
-    // .on("mouseout", hide_tooltip)
-  //.call(drag(simulation));
+    .call(drag(simulation));
+  // .on("mouseover", show_tooltip)
+  // .on("mouseout", hide_tooltip)
 
   function ticked() {
-    // update_edges();
+    update_edges();
     update_nodes();
   }
 
+  function update_edges() {
+    context.clearRect(0, 0, +canvas.attr("width"), +canvas.attr("height"));
+
+    // Scale edge opacity based upon how many edges we have
+    context.globalAlpha = 0.5;
+
+    context.beginPath();
+    edges.forEach((d) => {
+      context.moveTo(
+        x_pos(d.source.x) + margins.left,
+        y_pos(d.source.y) + margins.top
+      );
+      context.lineTo(
+        x_pos(d.target.x) + margins.left,
+        y_pos(d.target.y) + margins.top
+      );
+    });
+
+    // Set color of edges
+    context.strokeStyle = "#999";
+
+    // Draw to canvas
+    context.stroke();
+  }
+
   function update_nodes() {
-    node.attr("cx", (d) => scales.X(d.x)).attr("cy", (d) => scales.Y(d.y));
+    node.attr("cx", (d) => x_pos(d.x)).attr("cy", (d) => y_pos(d.y));
+  }
+
+  function zoomed() {
+    X = d3.event.transform.rescaleX(
+      d3.scaleLinear().range([0, w]).domain([0, w])
+    );
+    Y = d3.event.transform.rescaleY(
+      d3.scaleLinear().range([0, h]).domain([0, h])
+    );
+    update_edges();
+    update_nodes();
+  }
+
+  function drag(simulation) {
+    function dragstarted(d) {
+      if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(d) {
+      d.fx = d3.event.x;
+      d.fy = d3.event.y;
+    }
+
+    function dragended(d) {
+      if (!d3.event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+
+    return d3
+      .drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
   }
 }
 
@@ -419,6 +480,7 @@ function draw_timelines(timeline_g, data, settings, update_fn) {
   function on_click() {
     updating_alowed = false;
     default_step = get_step_i(d3.mouse(this));
+    update_fn(default_step, true);
   }
   function draw_metric_line({ g, d, settings }) {
     const { X, Y } = d;
