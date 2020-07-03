@@ -7,24 +7,16 @@ const node_r = 3;
 // in that column
 const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-const edge_sources = data.edges[options.source_id];
-const edge_targets = data.edges[options.target_id];
-const edge_strengths = data.edges.strength;
 
-const { nodes, subgraphs } = find_subgraphs({
+const { nodes, edges, subgraphs } = find_subgraphs({
   nodes: nodes_raw,
-  source_edges: edge_sources,
-  target_edges: edge_targets,
-  //n_edges,
+  edge_source: data.edges[options.source_id],
+  edge_target:  data.edges[options.target_id],
+  edge_strength:  data.edges.strength,
   width: width - 2 * padding,
   height: height - 2 * padding,
 });
 
-const edges = HTMLWidgets.dataframeToD3({
-  source: edge_sources,
-  target: edge_targets,
-  strength: edge_strengths,
-});
 const grid_side_length = Math.min(width, height);
 
 const link_dist = d3
