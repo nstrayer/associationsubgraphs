@@ -1,43 +1,36 @@
-// !preview r2d3 data=entropy_network, container = "div", options = list(), dependencies = system.file("d3/find_subgraphs.js", package = "entropynet")
+// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 500)), container = "div", options = list(source_id = "a", target_id = "b"), dependencies = c("inst/d3/find_subgraphs.js")
 
 const padding = 50;
 const node_r = 3;
 // Expects that your edges have a source and target column
 // and that the nodes has an id column that matches the values
 // in that column
-const edges = HTMLWidgets.dataframeToD3(data.edges);
 const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-const { nodes, subgraphs } = find_subgraphs(nodes_raw, edges);
+const edge_sources = data.edges[options.source_id];
+const edge_targets = data.edges[options.target_id];
+const edge_strengths = data.edges.strength;
 
-const subgraph_grid_side = Math.ceil(Math.sqrt(subgraphs.size));
-let i = 0;
-const grid_side_length = Math.min(width, height);
-const margins = {
-  horizontal: (width - grid_side_length)/2,
-  vertical: (height - grid_side_length)/2,
-};
-const gap_size = grid_side_length / subgraph_grid_side;
-const is_giant_component = subgraphs.size == 1;
-
-subgraphs.forEach(function (subgraph, subgraph_id) {
-  const row = is_giant_component
-    ? width / 2
-    : (i % subgraph_grid_side) * gap_size;
-  const col = is_giant_component
-    ? height / 2
-    : Math.floor(i / subgraph_grid_side) * gap_size;
-  i++;
-  subgraph.forEach((node) => {
-    node.subgraph_x = row + margins.horizontal;
-    node.subgraph_y = col + margins.vertical;
-  });
+const { nodes, subgraphs } = find_subgraphs({
+  nodes: nodes_raw,
+  source_edges: edge_sources,
+  target_edges: edge_targets,
+  //n_edges,
+  width: width - 2 * padding,
+  height: height - 2 * padding,
 });
+
+const edges = HTMLWidgets.dataframeToD3({
+  source: edge_sources,
+  target: edge_targets,
+  strength: edge_strengths,
+});
+const grid_side_length = Math.min(width, height);
 
 const link_dist = d3
   .scaleLog()
   .domain(d3.extent(edges, (d) => d.strength))
-  .range([Math.max(2, subgraph_grid_side / 3), 1]);
+  .range([Math.max(2, grid_side_length / 13), 1]);
 
 let X = d3
   .scaleLinear()
