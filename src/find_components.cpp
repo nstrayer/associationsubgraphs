@@ -78,7 +78,6 @@ inline void merge_components(Component& C_a,
   all_components.erase(all_components.find(C_small.id));
 }
 
-
 //' Find all components in pairs for every subset of edges (c++ version)
 //'
 //' Given a dataframe of edges with strength between nodes this function returns
@@ -86,8 +85,8 @@ inline void merge_components(Component& C_a,
 //' descending order of strength.
 //'
 //' @param associations Dataframe of association between two ids with a strength
-//' @param a_col,b_col Names of columns that store the id's for the association pair
-//' @param w_col Name of the column storing the strength of association
+//' @param a_col,b_col Names of columns that store the id's for the association
+//pair ' @param w_col Name of the column storing the strength of association
 //'
 //' @export
 // [[Rcpp::export]]
@@ -187,7 +186,7 @@ List find_components(DataFrame associations,
       for (const auto& component_itt : components) {
         const int Nv = component_itt.second.num_members();
         const double Ne = component_itt.second.num_edges();
-        const double dens = Ne/double((Nv * (Nv - 1)) / 2);
+        const double dens = Ne / double((Nv * (Nv - 1)) / 2);
         ids[k] = component_itt.first;
         sizes[k] = Nv;
         densities[k] = dens;
@@ -202,6 +201,7 @@ List find_components(DataFrame associations,
       }
       strengths[step_i] = w_i;
       n_nodes_seen[step_i] = nodes_seen;
+      n_edges[step_i] = i + 1;
       n_components[step_i] = num_components;
       n_triples[step_i] = step_num_triples;
       max_size[step_i] = step_max_size;
@@ -209,27 +209,19 @@ List find_components(DataFrame associations,
       avg_size[step_i] = double(nodes_seen) / double(num_components);
       avg_density[step_i] = total_density / double(num_components);
       step_component_info[step_i] = List::create(
-          _["id"] = ids,
-          _["size"] = sizes,
-          _["density"] = densities,
-          _["strength"] = total_strengths,
-          _["first_edge"] = first_edge);
+          _["id"] = ids, _["size"] = sizes, _["density"] = densities,
+          _["strength"] = total_strengths, _["first_edge"] = first_edge);
 
       step_i++;
     }
   }
 
   return List::create(
-      _["step"] = seq_len(n_steps),
-      _["n_edges"] = n_edges,
-      _["strength"] = strengths,
-      _["n_nodes_seen"] = n_nodes_seen,
-      _["n_components"] = n_components,
-      _["max_size"] = max_size,
-      _["rel_max_size"] = rel_max_size,
-      _["avg_size"] = avg_size,
-      _["avg_density"] = avg_density,
-      _["n_triples"] = n_triples,
+      _["step"] = seq_len(n_steps), _["n_edges"] = n_edges,
+      _["strength"] = strengths, _["n_nodes_seen"] = n_nodes_seen,
+      _["n_components"] = n_components, _["max_size"] = max_size,
+      _["rel_max_size"] = rel_max_size, _["avg_size"] = avg_size,
+      _["avg_density"] = avg_density, _["n_triples"] = n_triples,
       _["components"] = step_component_info);
 }
 
