@@ -202,7 +202,7 @@ function draw_network_plot(
     .attr("stroke", "#fff")
     .attr("stroke-width", node_r / 3)
     .selectAll("g")
-    .data(nodes_by_component)
+    .data(nodes_by_component, (d) => d.id)
     .join((enter) => {
       const main_g = enter.append("g").attr("id", (d) => d.id);
 
@@ -440,7 +440,8 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
 
   const density_g = component_g
     .select("g.density_chart")
-    .call(move_to, { y: sizes.size + padding });
+    .move_to({ y: sizes.size + padding });
+  // .call(move_to, );
 
   density_g
     .select("rect.background")
@@ -458,7 +459,8 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
 
   const strength_g = component_g
     .select("g.strength_lollypop")
-    .call(move_to, { y: total_h - sizes.strength + padding * 2 });
+    .move_to({ y: total_h - sizes.strength + padding * 2 });
+  // .call(move_to, );
 
   strength_g
     .select("line")

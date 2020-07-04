@@ -82,14 +82,15 @@ d3.selection.prototype.select_append = function (query) {
   return sel.raise();
 };
 
-d3.selection.prototype.move_to = function (positions) {
-  return move_to(this, positions);
-};
+d3.selection.prototype.move_to = function ({ x = 0, y = 0 }) {
+  this.each(function (d) {
+    const x_pos = typeof x === "function" ? x(d) : x;
+    const y_pos = typeof y === "function" ? y(d) : y;
+    d3.select(this).attr("transform", `translate(${x_pos},${y_pos})`);
+  });
 
-function move_to(el, { x = 0, y = 0 }) {
-  const eval_pos = (p) => (typeof p === "function" ? p(el.datum()) : p);
-  return el.attr("transform", `translate(${eval_pos(x)},${eval_pos(y)})`);
-}
+  return this;
+};
 
 function setup_interactions(el, interaction_fns) {
   // wire up the interactions
