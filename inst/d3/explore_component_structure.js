@@ -18,7 +18,7 @@ const component_settings = {
   w,
   rel_h: 2,
   bar_color: "grey",
-  selection_color: "green",
+  selection_color: "black",
 };
 
 const timeline_settings = {
@@ -81,6 +81,7 @@ const component_interactions = {
 
 const network_interactions = {
   click: function (component) {
+    console.log("clicked!");
     // component_plot.highlight_component(component.edge_indices);
   },
   mouseover: function (component) {
@@ -422,6 +423,8 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
       .append("rect")
       .classed("interaction_rect", true)
       .attr("stroke", selection_color)
+      .attr("rx", 5)
+      .attr("ry", 5)
       .attr("stroke-width", 0)
       .attr("fill-opacity", 0);
 
@@ -437,12 +440,25 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
       (exit) => exit.attr("opacity", 0).remove()
     )
     .classed("component_stats", true)
-    .call(setup_interactions, interaction_fns);
+    .call(setup_interactions, interaction_fns)
+    .on("mouseover", function (d) {
+      d3.select(this).call(show_bounding_box);
+      interaction_fns.mouseover(d);
+    })
+    .on("mouseout", function (d) {
+      reset_highlights();
+      interaction_fns.mouseout(d);
+    })
+    .on("click", function (d) {
+      interaction_fns.click(d);
+    });
 
+  const v_pad = 5; // padding added to top of selection rectangle
   const component_backgrounds = component_g
     .select("rect.interaction_rect")
     .attr("width", component_w)
-    .attr("height", h);
+    .attr("height", h + v_pad)
+    .attr("y", -v_pad);
 
   component_g
     .transition()
@@ -459,7 +475,6 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
   const density_g = component_g
     .select("g.density_chart")
     .move_to({ y: sizes.size + padding });
-  // .call(move_to, );
 
   density_g
     .select("rect.background")
@@ -478,7 +493,6 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
   const strength_g = component_g
     .select("g.strength_lollypop")
     .move_to({ y: total_h - sizes.strength + padding * 2 });
-  // .call(move_to, );
 
   strength_g
     .select("line")
@@ -508,10 +522,14 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
     )
     .call(d3.axisLeft(strengths_Y).ticks(2));
 
+  function show_bounding_box(component_g) {
+    reset_highlights();
+    component_g.select("rect.interaction_rect").attr("stroke-width", 1);
+  }
   function highlight_component(edge_indices) {
-    component_backgrounds
+    component_g
       .filter((c) => edge_indices.includes(c.first_edge))
-      .attr("stroke-width", 2);
+      .call(show_bounding_box);
   }
 
   function reset_highlights() {
