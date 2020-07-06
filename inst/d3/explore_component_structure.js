@@ -212,18 +212,29 @@ function draw_network_plot(
     .attr("stroke-width", node_r / 3)
     .selectAll("g.component")
     .data(nodes_by_component, (component) => component.id)
-    .join("g")
-    .attr("class", "component")
-    .call(setup_interactions, interaction_fns);
-
-  component_containers
-    .select_append("rect.bounding_rect")
-    .attr("fill-opacity", 0)
-    .attr("rx", 5)
-    .attr("ry", 5)
+    .join((enter) => {
+      const main_g = enter.append("g").attr("class", "component");
+      main_g
+        .append("rect")
+        .attr("class", "bounding_rect")
+        .attr("fill-opacity", 0)
+        .attr("rx", 5)
+        .attr("ry", 5);
+      main_g.append("g").attr("class", "node_container");
+      return main_g;
+    })
+    .call(setup_interactions, interaction_fns)
+    .on("mouseover", function (d) {
+      d3.select(this).call(show_bounding_box);
+      interaction_fns.mouseover(d);
+    })
+    .on("mouseout", function (d) {
+      reset_highlights();
+      interaction_fns.mouseout(d);
+    });
 
   const all_nodes = component_containers
-    .select_append("g.node_container")
+    .select("g.node_container")
     .selectAll("circle")
     .data(
       ({ nodes }) => nodes,
@@ -321,15 +332,17 @@ function draw_network_plot(
       .on("end", dragended);
   }
 
+  function show_bounding_box(component) {
+    reset_highlights();
+    component.select("rect.bounding_rect").attr("stroke", "black");
+  }
+
   function highlight_component(edge_in_component) {
     const subgraph_id = edges[edge_in_component].subgraph;
 
-    reset_highlights();
-
     component_containers
       .filter((d) => +d.id === subgraph_id)
-      .select("rect.bounding_rect")
-      .attr("stroke", "black");
+      .call(show_bounding_box);
   }
 
   function reset_highlights() {
