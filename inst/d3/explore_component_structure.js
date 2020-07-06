@@ -1,6 +1,6 @@
 // !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_subgraphs.js"), d3_version = "5"
 
-const margins = { left: 30, right: 10, top: 20, bottom: 10 };
+const margins = { left: 50, right: 50, top: 20, bottom: 10 };
 const { canvas, context, svg, g, w, h } = setup_svg_canvas_overlap({
   div,
   width,
@@ -11,7 +11,6 @@ const { canvas, context, svg, g, w, h } = setup_svg_canvas_overlap({
 const network_settings = {
   w,
   rel_h: 3,
-  padding: 50,
 };
 
 const component_settings = {
@@ -208,7 +207,7 @@ function draw_network_plot(
 ) {
   let focused_on = null;
 
-  const { w, h, padding, node_r = 3, alphaDecay = 0.01 } = settings;
+  const { w, h, node_r = 3, alphaDecay = 0.01 } = settings;
   g.select_append("rect#zoom_detector")
     .attr("width", w + margins.left + margins.right)
     .attr("x", -margins.left)
@@ -229,8 +228,8 @@ function draw_network_plot(
     edge_target: edge_vals.b,
     edge_strength: edge_vals.strength,
     n_edges,
-    width: w - padding * 2,
-    height: h - padding * 2,
+    width: w,
+    height: h,
   });
 
   const subgraph_to_nodes = {};
@@ -269,8 +268,6 @@ function draw_network_plot(
   const Y_default = d3.scaleLinear().range([0, h]).domain([0, h]);
   let X = X_default.copy();
   let Y = Y_default.copy();
-  const x_pos = (x) => X(x) + padding;
-  const y_pos = (y) => Y(y) + padding;
 
   const simulation = d3
     .forceSimulation(nodes)
@@ -362,14 +359,8 @@ function draw_network_plot(
       ? edges.filter((e) => +e.source.subgraph_id === +focused_on)
       : edges
     ).forEach((d) => {
-      context.moveTo(
-        x_pos(d.source.x) + margins.left,
-        y_pos(d.source.y) + margins.top
-      );
-      context.lineTo(
-        x_pos(d.target.x) + margins.left,
-        y_pos(d.target.y) + margins.top
-      );
+      context.moveTo(X(d.source.x) + margins.left, Y(d.source.y) + margins.top);
+      context.lineTo(X(d.target.x) + margins.left, Y(d.target.y) + margins.top);
     });
 
     // Set color of edges
@@ -380,7 +371,7 @@ function draw_network_plot(
   }
 
   function update_nodes() {
-    all_nodes.attr("cx", (d) => x_pos(d.x)).attr("cy", (d) => y_pos(d.y));
+    all_nodes.attr("cx", (d) => X(d.x)).attr("cy", (d) => Y(d.y));
     // Update bounding rects for interaction purposes
     component_containers.each(function (d) {
       const pad = 5;
@@ -477,7 +468,7 @@ function draw_network_plot(
           .scale(
             Math.min(
               8,
-              0.9 / Math.max((x_max - x_min) / w, (y_max - y_min) / h)
+              0.7 / Math.max((x_max - x_min) / w, (y_max - y_min) / h)
             )
           )
           .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2)
