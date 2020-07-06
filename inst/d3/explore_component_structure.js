@@ -138,8 +138,6 @@ function draw_network_plot(
     .attr("fill-opacity", 0)
     .lower();
 
-  g.call(d3.zoom().on("zoom", zoomed));
-
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
   const { nodes, edges, node_to_subgraph } = find_subgraphs({
@@ -170,14 +168,19 @@ function draw_network_plot(
         .map((e) => e.index),
     });
   }
+  const edge_to_subgraph_id = function (edge_in_component) {
+    return edges[edge_in_component].subgraph;
+  };
 
   const link_dist = d3
     .scaleLog()
     .domain(d3.extent(edge_vals.strength))
     .range([10, 1]);
 
-  let X = d3.scaleLinear().range([0, w]).domain([0, w]);
-  let Y = d3.scaleLinear().range([0, h]).domain([0, h]);
+  const X_default = d3.scaleLinear().range([0, w]).domain([0, w]);
+  const Y_default = d3.scaleLinear().range([0, h]).domain([0, h]);
+  let X = X_default.copy();
+  let Y = Y_default.copy();
   const x_pos = (x) => X(x) + padding;
   const y_pos = (y) => Y(y) + padding;
 
@@ -224,7 +227,6 @@ function draw_network_plot(
       main_g.append("g").attr("class", "node_container");
       return main_g;
     })
-    .call(setup_interactions, interaction_fns)
     .on("mouseover", function (d) {
       d3.select(this).call(show_bounding_box);
       interaction_fns.mouseover(d);
@@ -232,6 +234,10 @@ function draw_network_plot(
     .on("mouseout", function (d) {
       reset_highlights();
       interaction_fns.mouseout(d);
+    })
+    .on("click", function (d) {
+      focus_on_subgraph(d.id);
+      interaction_fns.click(d);
     });
 
   const all_nodes = component_containers
@@ -297,17 +303,6 @@ function draw_network_plot(
     });
   }
 
-  function zoomed() {
-    X = d3.event.transform.rescaleX(
-      d3.scaleLinear().range([0, w]).domain([0, w])
-    );
-    Y = d3.event.transform.rescaleY(
-      d3.scaleLinear().range([0, h]).domain([0, h])
-    );
-    update_edges();
-    update_nodes();
-  }
-
   function drag(simulation) {
     function dragstarted(d) {
       if (!d3.event.active) simulation.alphaTarget(0.3).restart();
@@ -339,15 +334,47 @@ function draw_network_plot(
   }
 
   function highlight_component(edge_in_component) {
-    const subgraph_id = edges[edge_in_component].subgraph;
-
     component_containers
-      .filter((d) => +d.id === subgraph_id)
+      .filter((d) => +d.id === edge_to_subgraph_id(edge_in_component))
       .call(show_bounding_box);
   }
 
   function reset_highlights() {
     component_containers.select("rect.bounding_rect").attr("stroke", "white");
+  }
+
+  const zoom = d3.zoom().scaleExtent([1, 8]).on("zoom", zoomed);
+  g.call(zoom);
+  function zoomed() {
+    X = d3.event.transform.rescaleX(X_default.copy());
+    Y = d3.event.transform.rescaleY(Y_default.copy());
+    update_edges();
+    update_nodes();
+  }
+
+  function focus_on_subgraph(subgraph_id) {
+    const nodes_in_component = nodes_by_component.find(
+      (d) => d.id === subgraph_id
+    ).nodes;
+
+    const [x_min, x_max] = d3.extent(nodes_in_component, (n) => n.x);
+    const [y_min, y_max] = d3.extent(nodes_in_component, (n) => n.y);
+
+    g.transition()
+      .duration(750)
+      .call(
+        zoom.transform,
+        d3.zoomIdentity
+          .translate(w / 2, h / 2)
+          .scale(
+            Math.min(
+              8,
+              0.9 / Math.max((x_max - x_min) / w, (y_max - y_min) / h)
+            )
+          )
+          .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2),
+        d3.mouse(g.node())
+      );
   }
 
   return { highlight_component, reset_highlights };
