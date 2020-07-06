@@ -83,17 +83,18 @@ d3.selection.prototype.select_append = function (query) {
 };
 
 d3.selection.prototype.move_to = function ({ x = 0, y = 0 }) {
-  this.each(function (d) {
-    const x_pos = typeof x === "function" ? x(d) : x;
-    const y_pos = typeof y === "function" ? y(d) : y;
-    d3.select(this).attr("transform", `translate(${x_pos},${y_pos})`);
-  });
-
-  return this;
+  const eval_pos = (p, d) => (typeof p == "function" ? p(d) : p);
+  return this.attr(
+    "transform",
+    (d) => `translate(${eval_pos(x, d)},${eval_pos(y, d)})`
+  );
 };
 
-function setup_interactions(el, interaction_fns) {
+function setup_interactions(el, interaction_fns, id) {
   // wire up the interactions
+  // debugger;
+  if (id) console.log(`setup_interactions() run by ${id}`);
+
   for (let type in interaction_fns) {
     el.on(type, interaction_fns[type]);
   }
