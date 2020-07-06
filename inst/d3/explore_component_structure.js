@@ -62,6 +62,21 @@ const timelines_holder = g
 
 const network_holder = g.append("g").classed("network_plot", true);
 
+const info_div = div
+  .append("div")
+  .style("background", "white")
+  // .style("opacity", 0.2)
+  .style("position", "absolute")
+  .style("left", 0)
+  .style("width", `${width}px`)
+  .style("height", `${component_settings.h}px`)
+  .style("top", `${component_settings.start_h + margins.top}px`)
+  .style("display", "none");
+
+const hide_info_div = function () {
+  info_div.style("display", "none");
+};
+
 // =============================================================================
 // Initialize the plots themselves
 let network_plot;
@@ -69,7 +84,7 @@ let component_plot;
 
 const component_interactions = {
   click: function (component) {
-    console.log("clicked!");
+    network_plot.focus_on_component(component.first_edge);
   },
   mouseover: function (component) {
     network_plot.highlight_component(component.first_edge);
@@ -81,14 +96,19 @@ const component_interactions = {
 
 const network_interactions = {
   click: function (component) {
-    console.log("clicked!");
-    // component_plot.highlight_component(component.edge_indices);
+    // info_div.call(fill_in_info_panel, component);
   },
   mouseover: function (component) {
     component_plot.highlight_component(component.edge_indices);
   },
   mouseout: function (component) {
     component_plot.reset_highlights();
+  },
+  reset: function () {
+    hide_info_div();
+  },
+  focus: function (component) {
+    info_div.call(fill_in_info_panel, component);
   },
 };
 
@@ -123,11 +143,69 @@ timelines_holder.call(
 
 // =============================================================================
 // Functions for drawing each section of the plots
+function fill_in_info_panel(info_div, component) {
+  info_div.style("display", "block");
+  const { nodes } = component;
+  const non_column_keys = [
+    "subgraph_id",
+    "subgraph_x",
+    "subgraph_y",
+    "index",
+    "x",
+    "y",
+    "vy",
+    "vx",
+    "color",
+  ];
+  const column_names = Object.keys(nodes[0]).filter(
+    (key) => !non_column_keys.includes(key)
+  );
+
+  const node_table = info_div
+    .style("overflow", "scroll")
+    .select_append("table.nodes")
+    .style("border-collapse", "collapse")
+    .style("margin-left", "auto")
+    .style("margin-right", "auto");
+
+  // Setup the header/column names
+  node_table
+    .select_append("thead")
+    .select_append("tr")
+    .selectAll("th")
+    .data(column_names)
+    .join("th")
+    .attr("class", "table_cell")
+    .style("max-width", `100px`)
+    .text((d) => d.replace(/_/g, " "));
+
+  // Setup each row
+  node_table
+    .select_append("tbody")
+    .selectAll("tr")
+    .data(nodes)
+    .join("tr")
+    .style("background", (d, i) => (i % 2 ? "white" : "#dedede"))
+    .selectAll("td")
+    .data((node) => column_names.map((key) => node[key]))
+    .join("td")
+    .attr("class", "table_cell")
+    .text((d) => d);
+
+  // Style all the cells in common
+  node_table
+    .selectAll(".table_cell")
+    .style("max-width", `100px`)
+    .style("text-align", "left")
+    .style("padding", "0.2rem 0.5rem");
+}
 
 function draw_network_plot(
   g,
   { edge_vals, n_edges, settings, context, margins, interaction_fns }
 ) {
+  let focused_on = null;
+
   const { w, h, padding, node_r = 3, alphaDecay = 0.01 } = settings;
   g.select_append("rect#zoom_detector")
     .attr("width", w + margins.left + margins.right)
@@ -138,7 +216,7 @@ function draw_network_plot(
     .attr("fill-opacity", 0)
     .lower()
     .on("click", function () {
-      reset_focus();
+      reset();
     });
 
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
@@ -172,7 +250,12 @@ function draw_network_plot(
     });
   }
   const edge_to_subgraph_id = function (edge_in_component) {
-    return edges[edge_in_component].subgraph;
+    return +edges[edge_in_component].subgraph;
+  };
+
+  edge_to_subgraph_data = function (edge_in_component) {
+    const subgraph_id = edge_to_subgraph_id(edge_in_component);
+    return nodes_by_component.find((d) => +d.id === subgraph_id);
   };
 
   const link_dist = d3
@@ -231,19 +314,22 @@ function draw_network_plot(
       return main_g;
     })
     .on("mouseover", function (d) {
-      d3.select(this).call(show_bounding_box);
-      interaction_fns.mouseover(d);
+      if (!focused_on) {
+        d3.select(this).call(show_bounding_box);
+        interaction_fns.mouseover(d);
+      }
     })
     .on("mouseout", function (d) {
       reset_highlights();
       interaction_fns.mouseout(d);
     })
     .on("click", function (d) {
-      focus_on_subgraph(d.id);
-      interaction_fns.click(d);
+      focus_on_component(d);
     })
     .on("dblclick", function () {
-      reset_focus();
+      if (focused_on) {
+        reset();
+      }
     });
 
   const all_nodes = component_containers
@@ -270,7 +356,10 @@ function draw_network_plot(
     context.globalAlpha = 0.5;
 
     context.beginPath();
-    edges.forEach((d) => {
+    (focused_on
+      ? edges.filter((e) => +e.source.subgraph_id === +focused_on)
+      : edges
+    ).forEach((d) => {
       context.moveTo(
         x_pos(d.source.x) + margins.left,
         y_pos(d.source.y) + margins.top
@@ -333,6 +422,17 @@ function draw_network_plot(
       .on("drag", dragged)
       .on("end", dragended);
   }
+  const zoom = d3.zoom().scaleExtent([0.8, 8]).on("zoom", zoomed);
+  // We dont want the double click to work because double clicking is taken over
+  // for de-selecting a component
+  g.call(zoom).on("dblclick.zoom", null);
+
+  function zoomed() {
+    X = d3.event.transform.rescaleX(X_default.copy());
+    Y = d3.event.transform.rescaleY(Y_default.copy());
+    update_edges();
+    update_nodes();
+  }
 
   function show_bounding_box(component) {
     reset_highlights();
@@ -349,26 +449,19 @@ function draw_network_plot(
     component_containers.select("rect.bounding_rect").attr("stroke", "white");
   }
 
-  const zoom = d3.zoom().scaleExtent([0.8, 8]).on("zoom", zoomed);
-  // We dont want the double click to work because double clicking is taken over
-  // for de-selecting a component
-  g.call(zoom).on("dblclick.zoom", null);
-
-  function zoomed() {
-    X = d3.event.transform.rescaleX(X_default.copy());
-    Y = d3.event.transform.rescaleY(Y_default.copy());
-    update_edges();
-    update_nodes();
-  }
-
-  function reset_focus() {
+  function reset() {
     g.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+    reset_highlights();
+    interaction_fns.reset();
+    component_containers.attr("opacity", 1);
+
+    focused_on = null;
   }
 
-  function focus_on_subgraph(subgraph_id) {
-    const nodes_in_component = nodes_by_component.find(
-      (d) => d.id === subgraph_id
-    ).nodes;
+  function focus_on_component(component) {
+    interaction_fns.focus(component);
+
+    const nodes_in_component = component.nodes;
 
     const [x_min, x_max] = d3.extent(nodes_in_component, (n) => n.x);
     const [y_min, y_max] = d3.extent(nodes_in_component, (n) => n.y);
@@ -387,9 +480,21 @@ function draw_network_plot(
           )
           .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2)
       );
+
+    component_containers
+      .filter((c) => c.id !== component.id)
+      .attr("opacity", 0);
+
+    focused_on = component.id;
   }
 
-  return { highlight_component, reset_highlights };
+  return {
+    highlight_component,
+    reset_highlights,
+    focus_on_component: (edge_id) =>
+      focus_on_component(edge_to_subgraph_data(edge_id)),
+    reset,
+  };
 }
 
 function draw_components_chart(g, { components, settings, interaction_fns }) {
@@ -489,6 +594,7 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
       interaction_fns.mouseout(d);
     })
     .on("click", function (d) {
+      reset_highlights();
       interaction_fns.click(d);
     });
 
@@ -672,24 +778,30 @@ function draw_timelines(timeline_g, data, settings, update_fn) {
     .on("mouseout", on_mouseout)
     .on("click", on_click);
 
-  const get_step_i = (mouse_pos) => Math.round(X.invert(mouse_pos[0])) - 1;
+  const move_callouts = ({ mouse_pos, step_i, pin = false }) => {
+    const x_pos = mouse_pos ? mouse_pos[0] : X(step_i);
+    const step = step_i | Math.round(X.invert(x_pos));
 
-  const move_callouts = (step_i) => {
-    callout_line.attr("transform", `translate(${X(step_i)}, 0)`);
-    step_metrics.forEach((m) => m.set_callout(step_i));
-    update_fn(step_i);
+    if (pin) {
+      default_step = step;
+      pinned_step_line.move_to({ x: x_pos });
+    }
+    callout_line.move_to({ x: x_pos });
+    step_metrics.forEach((m) => m.set_callout(step));
+    update_fn(step, pin);
   };
+
+  move_callouts({ step_i: default_step, pin: true });
+
   function on_mousemove() {
-    const step_i = get_step_i(d3.mouse(this));
-    move_callouts(step_i);
+    move_callouts({ mouse_pos: d3.mouse(this) });
   }
   function on_mouseout() {
-    move_callouts(default_step);
+    move_callouts({ step_i: default_step });
   }
   function on_click() {
-    default_step = get_step_i(d3.mouse(this));
-    pinned_step_line.move_to({ x: X(default_step) });
-    update_fn(default_step, true);
+    move_callouts({ mouse_pos: d3.mouse(this), pin: true });
+    update_fn(d3.mouse(this), true);
   }
   function draw_metric_line({ g, d, settings }) {
     const { X, Y } = d;
