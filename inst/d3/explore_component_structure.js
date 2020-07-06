@@ -49,37 +49,42 @@ const structure_data = HTMLWidgets.dataframeToD3(data.structure);
 // =============================================================================
 // Setup the g elements that hold the separate plots
 // Setup and start the component charts;
+const network_holder = g.append("g").classed("network_plot", true);
+
 const components_holder = g
   .append("g")
   .classed("components_chart", true)
-  .move_to({ y: component_settings.start_h });
+  .move_to({ y: component_settings.start_h })
+  .call(add_background_rect, {
+    ...component_settings,
+    margins: { left: margins.left, right: margins.right },
+  });
 
 const timelines_holder = g
   .append("g")
   .classed("timelines_chart", true)
-  .move_to({ y: timeline_settings.start_h });
-
-const network_holder = g.append("g").classed("network_plot", true);
+  .move_to({ y: timeline_settings.start_h })
+  .call(add_background_rect, {
+    ...timeline_settings,
+    margins: { left: margins.left, right: margins.right },
+  });
 
 const info_div = div
   .append("div")
   .style("background", "white")
-  // .style("opacity", 0.2)
   .style("position", "absolute")
   .style("left", 0)
   .style("width", `${width}px`)
-  .style("height", `${component_settings.h}px`)
+  .style("height", `${component_settings.h - 5}px`)
   .style("top", `${component_settings.start_h + margins.top}px`)
+  .style("box-shadow", "1px 1px 9px black")
   .style("display", "none");
-
-const hide_info_div = function () {
-  info_div.style("display", "none");
-};
 
 // =============================================================================
 // Initialize the plots themselves
 let network_plot;
 let component_plot;
+let info_panel;
 
 const component_interactions = {
   click: function (component) {
@@ -104,12 +109,27 @@ const network_interactions = {
     component_plot.reset_highlights();
   },
   reset: function () {
-    hide_info_div();
+    info_panel.hide();
     component_plot.show();
   },
   focus: function (component) {
-    info_div.call(fill_in_info_panel, component);
+    info_panel = setup_info_panel(info_div, component, info_panel_interactions);
     component_plot.hide();
+  },
+  node_mouseover: function (node) {
+    info_panel.highlight_node(node.id);
+  },
+  node_mouseout: function (node) {
+    info_panel.reset_highlights();
+  },
+};
+
+const info_panel_interactions = {
+  node_mouseover: function (node) {
+    network_plot.highlight_node(node);
+  },
+  node_mouseout: function () {
+    network_plot.reset_node_highlights();
   },
 };
 
@@ -144,7 +164,7 @@ timelines_holder.call(
 
 // =============================================================================
 // Functions for drawing each section of the plots
-function fill_in_info_panel(info_div, component) {
+function setup_info_panel(info_div, component, interaction_fns) {
   info_div.style("display", "block");
   const { nodes } = component;
   const non_column_keys = [
@@ -181,12 +201,23 @@ function fill_in_info_panel(info_div, component) {
     .text((d) => d.replace(/_/g, " "));
 
   // Setup each row
-  node_table
+  const rows = node_table
     .select_append("tbody")
     .selectAll("tr")
     .data(nodes)
     .join("tr")
     .style("background", (d, i) => (i % 2 ? "white" : "#dedede"))
+    .on("mouseover", function (d) {
+      reset_highlights();
+      highlight_node(d.id);
+      interaction_fns.node_mouseover(d);
+    })
+    .on("mouseout", function (d) {
+      reset_highlights();
+      interaction_fns.node_mouseout();
+    });
+
+  rows
     .selectAll("td")
     .data((node) => column_names.map((key) => node[key]))
     .join("td")
@@ -199,6 +230,22 @@ function fill_in_info_panel(info_div, component) {
     .style("max-width", `100px`)
     .style("text-align", "left")
     .style("padding", "0.2rem 0.5rem");
+
+  function highlight_node(node_id) {
+    rows
+      .filter((node) => node.id === node_id)
+      .style("border", "1px solid black");
+  }
+
+  function reset_highlights() {
+    rows.style("border", "none");
+  }
+
+  function hide() {
+    info_div.style("display", "none");
+  }
+
+  return { highlight_node, reset_highlights, hide };
 }
 
 function draw_network_plot(
@@ -207,7 +254,7 @@ function draw_network_plot(
 ) {
   let focused_on = null;
 
-  const { w, h, node_r = 3, alphaDecay = 0.01 } = settings;
+  const { w, h, node_r = 3, focus_r = 6, alphaDecay = 0.01 } = settings;
   g.select_append("rect#zoom_detector")
     .attr("width", w + margins.left + margins.right)
     .attr("x", -margins.left)
@@ -319,7 +366,7 @@ function draw_network_plot(
       }
     })
     .on("mouseout", function (d) {
-      reset_highlights();
+      reset_component_highlights();
       interaction_fns.mouseout(d);
     })
     .on("click", function (d) {
@@ -338,9 +385,25 @@ function draw_network_plot(
       ({ nodes }) => nodes,
       (d) => d.id
     )
-    .join("circle")
+    .join((enter) =>
+      enter
+        .append("circle")
+        .call((node_circle) => node_circle.append("title").text((d) => d.id))
+    )
     .attr("r", node_r)
     .attr("fill", (d) => d.color || "steelblue")
+    .on("mouseover", function (d) {
+      if (focused_on) {
+        highlight_node(d);
+        interaction_fns.node_mouseover(d);
+      }
+    })
+    .on("mouseout", function (d) {
+      if (focused_on) {
+        reset_node_highlights();
+        interaction_fns.node_mouseout();
+      }
+    })
     .call(drag(simulation));
 
   function ticked() {
@@ -428,7 +491,7 @@ function draw_network_plot(
   }
 
   function show_bounding_box(component) {
-    reset_highlights();
+    reset_component_highlights();
     component.select("rect.bounding_rect").attr("stroke", "black");
   }
 
@@ -438,13 +501,15 @@ function draw_network_plot(
       .call(show_bounding_box);
   }
 
-  function reset_highlights() {
+  function reset_component_highlights() {
     component_containers.select("rect.bounding_rect").attr("stroke", "white");
   }
 
   function reset() {
     g.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-    reset_highlights();
+    all_nodes.transition().duration(750).attr("r", node_r);
+
+    reset_component_highlights();
     interaction_fns.reset();
     component_containers.attr("opacity", 1);
 
@@ -475,17 +540,33 @@ function draw_network_plot(
       );
 
     component_containers
+      .filter((c) => c.id === component.id)
+      .selectAll("circle")
+      .transition()
+      .duration(750)
+      .attr("r", focus_r);
+
+    component_containers
       .filter((c) => c.id !== component.id)
       .attr("opacity", 0);
 
     focused_on = component.id;
   }
 
+  function highlight_node(node) {
+    all_nodes.filter((n) => n.id == node.id).attr("r", focus_r * 2);
+  }
+  function reset_node_highlights(radius = focus_r) {
+    all_nodes.attr("r", radius);
+  }
+
   return {
     highlight_component,
-    reset_highlights,
+    reset_highlights: reset_component_highlights,
     focus_on_component: (edge_id) =>
       focus_on_component(edge_to_subgraph_data(edge_id)),
+    highlight_node,
+    reset_node_highlights,
     reset,
   };
 }
@@ -675,10 +756,10 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
   }
 
   function hide() {
-    component_g.attr("opacity", 0);
+    g.attr("opacity", 0);
   }
   function show() {
-    component_g.attr("opacity", 1);
+    g.attr("opacity", 1);
   }
 
   return { highlight_component, reset_highlights, hide, show };
