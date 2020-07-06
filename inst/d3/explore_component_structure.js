@@ -212,23 +212,18 @@ function draw_network_plot(
     .attr("stroke-width", node_r / 3)
     .selectAll("g.component")
     .data(nodes_by_component, (component) => component.id)
-    .join((enter) => {
-      const main_g = enter.append("g").attr("class", "component");
-
-      main_g.append("g").attr("class", "node_container");
-      main_g
-        .append("rect")
-        .attr("class", "bounding_rect")
-        .attr("fill-opacity", 0);
-      return main_g;
-    });
-
-  component_containers
-    .select("rect.bounding_rect")
+    .join("g")
+    .attr("class", "component")
     .call(setup_interactions, interaction_fns);
 
+  component_containers
+    .select_append("rect.bounding_rect")
+    .attr("fill-opacity", 0)
+    .attr("rx", 5)
+    .attr("ry", 5)
+
   const all_nodes = component_containers
-    .select("g.node_container")
+    .select_append("g.node_container")
     .selectAll("circle")
     .data(
       ({ nodes }) => nodes,
@@ -329,14 +324,16 @@ function draw_network_plot(
   function highlight_component(edge_in_component) {
     const subgraph_id = edges[edge_in_component].subgraph;
 
-    all_nodes
-      .filter((d) => d.subgraph_id === subgraph_id)
-      .attr("r", node_r * 1.5);
-    all_nodes.filter((d) => d.subgraph_id !== subgraph_id).attr("r", node_r);
+    reset_highlights();
+
+    component_containers
+      .filter((d) => +d.id === subgraph_id)
+      .select("rect.bounding_rect")
+      .attr("stroke", "black");
   }
 
   function reset_highlights() {
-    all_nodes.attr("r", node_r);
+    component_containers.select("rect.bounding_rect").attr("stroke", "white");
   }
 
   return { highlight_component, reset_highlights };
