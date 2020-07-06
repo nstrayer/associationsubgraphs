@@ -136,7 +136,10 @@ function draw_network_plot(
     .attr("y", -margins.top)
     .attr("fill", "white")
     .attr("fill-opacity", 0)
-    .lower();
+    .lower()
+    .on("click", function () {
+      reset_focus();
+    });
 
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
@@ -238,6 +241,9 @@ function draw_network_plot(
     .on("click", function (d) {
       focus_on_subgraph(d.id);
       interaction_fns.click(d);
+    })
+    .on("dblclick", function () {
+      reset_focus();
     });
 
   const all_nodes = component_containers
@@ -343,13 +349,20 @@ function draw_network_plot(
     component_containers.select("rect.bounding_rect").attr("stroke", "white");
   }
 
-  const zoom = d3.zoom().scaleExtent([1, 8]).on("zoom", zoomed);
-  g.call(zoom);
+  const zoom = d3.zoom().scaleExtent([0.8, 8]).on("zoom", zoomed);
+  // We dont want the double click to work because double clicking is taken over
+  // for de-selecting a component
+  g.call(zoom).on("dblclick.zoom", null);
+
   function zoomed() {
     X = d3.event.transform.rescaleX(X_default.copy());
     Y = d3.event.transform.rescaleY(Y_default.copy());
     update_edges();
     update_nodes();
+  }
+
+  function reset_focus() {
+    g.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
   }
 
   function focus_on_subgraph(subgraph_id) {
@@ -372,8 +385,7 @@ function draw_network_plot(
               0.9 / Math.max((x_max - x_min) / w, (y_max - y_min) / h)
             )
           )
-          .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2),
-        d3.mouse(g.node())
+          .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2)
       );
   }
 
