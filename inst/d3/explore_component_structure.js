@@ -106,9 +106,11 @@ const network_interactions = {
   },
   reset: function () {
     hide_info_div();
+    component_plot.show();
   },
   focus: function (component) {
     info_div.call(fill_in_info_panel, component);
+    component_plot.hide();
   },
 };
 
@@ -586,7 +588,7 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
     .classed("component_stats", true)
     .call(setup_interactions, interaction_fns)
     .on("mouseover", function (d) {
-      d3.select(this).call(show_bounding_box);
+      d3.select(this).call(emphasize_component);
       interaction_fns.mouseover(d);
     })
     .on("mouseout", function (d) {
@@ -599,13 +601,14 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
     });
 
   const v_pad = 5; // padding added to top of selection rectangle
-  const component_backgrounds = component_g
+  component_g
     .select("rect.interaction_rect")
     .attr("width", component_w)
     .attr("height", h + v_pad)
     .attr("y", -v_pad);
 
   component_g
+    .attr("stroke", "black")
     .transition()
     .duration(100)
     .attr("transform", (d) => `translate(${X(d.id)}, 0)`);
@@ -653,7 +656,7 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
     .attr("cx", component_w / 2)
     .attr("r", strength_r)
     .attr("fill", bar_color);
-
+  reset_highlights();
   g.select_append("g.size_axis")
     .call(d3.axisLeft(sizes_Y).ticks(sizes_Y.domain()[1]))
     .call(extend_ticks, w, 0.4)
@@ -667,21 +670,27 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
     )
     .call(d3.axisLeft(strengths_Y).ticks(2));
 
-  function show_bounding_box(component_g) {
+  function emphasize_component(component_g) {
     reset_highlights();
-    component_g.select("rect.interaction_rect").attr("stroke-width", 1);
+    component_g.attr("stroke-width", 2.5);
+  }
+  function reset_highlights() {
+    component_g.attr("stroke-width", 1);
   }
   function highlight_component(edge_indices) {
     component_g
       .filter((c) => edge_indices.includes(c.first_edge))
-      .call(show_bounding_box);
+      .call(emphasize_component);
   }
 
-  function reset_highlights() {
-    component_backgrounds.attr("stroke-width", 0);
+  function hide() {
+    component_g.attr("opacity", 0);
+  }
+  function show() {
+    component_g.attr("opacity", 1);
   }
 
-  return { highlight_component, reset_highlights };
+  return { highlight_component, reset_highlights, hide, show };
 }
 
 function draw_timelines(timeline_g, data, settings, update_fn) {
