@@ -128,6 +128,15 @@ function draw_network_plot(
   { edge_vals, n_edges, settings, context, margins, interaction_fns }
 ) {
   const { w, h, padding, node_r = 3, alphaDecay = 0.01 } = settings;
+  g.select_append("rect#zoom_detector")
+    .attr("width", w + margins.left + margins.right)
+    .attr("x", -margins.left)
+    .attr("height", h + margins.top)
+    .attr("y", -margins.top)
+    .attr("fill", "white")
+    .attr("fill-opacity", 0)
+    .lower();
+
   g.call(d3.zoom().on("zoom", zoomed));
 
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
@@ -201,30 +210,30 @@ function draw_network_plot(
   const component_containers = g
     .attr("stroke", "#fff")
     .attr("stroke-width", node_r / 3)
-    .selectAll("g")
-    .data(nodes_by_component, (d) => d.id)
+    .selectAll("g.component")
+    .data(nodes_by_component, (component) => component.id)
     .join((enter) => {
-      const main_g = enter.append("g").attr("id", (d) => d.id);
+      const main_g = enter.append("g").attr("class", "component");
 
       main_g.append("g").attr("class", "node_container");
-
       main_g
         .append("rect")
         .attr("class", "bounding_rect")
         .attr("fill-opacity", 0);
-
       return main_g;
-    })
-    .attr("id", (d) => d.id);
+    });
 
-  const bounding_rects = component_containers
+  component_containers
     .select("rect.bounding_rect")
     .call(setup_interactions, interaction_fns);
 
   const all_nodes = component_containers
     .select("g.node_container")
     .selectAll("circle")
-    .data((component) => component.nodes)
+    .data(
+      ({ nodes }) => nodes,
+      (d) => d.id
+    )
     .join("circle")
     .attr("r", node_r)
     .attr("fill", (d) => d.color || "steelblue")
@@ -262,7 +271,6 @@ function draw_network_plot(
 
   function update_nodes() {
     all_nodes.attr("cx", (d) => x_pos(d.x)).attr("cy", (d) => y_pos(d.y));
-
     // Update bounding rects for interaction purposes
     component_containers.each(function (d) {
       const pad = 5;
