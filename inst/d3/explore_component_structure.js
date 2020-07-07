@@ -60,6 +60,7 @@ const components_holder = g
     margins: { left: margins.left, right: margins.right },
   });
 
+const div_shadow = "1px 1px 9px black";
 const info_div = div
   .append("div")
   .style("background", "white")
@@ -68,7 +69,18 @@ const info_div = div
   .style("width", `${width}px`)
   .style("height", `${h - network_settings.h - 5}px`)
   .style("top", `${component_settings.start_h + margins.top}px`)
-  .style("box-shadow", "1px 1px 9px black")
+  .style("box-shadow", div_shadow)
+  .style("display", "none");
+
+const tooltip_div = div
+  .append("div")
+  .style("width", "auto")
+  .style("max-width", "40%")
+  // .style("border", "1px solid black")
+  .style("box-shadow", div_shadow)
+  .style("padding-top", "6px")
+  .style("background", "white")
+  .style("position", "absolute")
   .style("display", "none");
 
 const instructions = div
@@ -177,6 +189,7 @@ function update_components_chart(step_i, update_network = false) {
       context,
       margins,
       interaction_fns: network_interactions,
+      tooltip_div,
     });
   }
 }
@@ -199,6 +212,7 @@ update_components_chart(default_step, true);
 
 // =============================================================================
 // Functions for drawing each section of the plots
+
 function setup_info_panel(info_div, interaction_fns) {
   const non_column_keys = [
     "subgraph_id",
@@ -273,7 +287,15 @@ function setup_info_panel(info_div, interaction_fns) {
 
 function draw_network_plot(
   g,
-  { edge_vals, n_edges, settings, context, margins, interaction_fns }
+  {
+    edge_vals,
+    n_edges,
+    settings,
+    context,
+    margins,
+    interaction_fns,
+    tooltip_div,
+  }
 ) {
   let focused_on = null;
 
@@ -329,11 +351,10 @@ function draw_network_plot(
     return nodes_by_component.find((d) => +d.id === subgraph_id);
   };
 
-  const link_dist = d3
-    .scaleLog()
-    .domain(d3.extent(edge_vals.strength))
-    .range([10, 1]);
+  const link_scale = d3.scaleLog().domain(d3.extent(edge_vals.strength));
+  const link_dist = link_scale.copy().range([10, 1]);
 
+  const link_color = link_scale.copy();
   const X_default = d3.scaleLinear().range([0, w]).domain([0, w]);
   const Y_default = d3.scaleLinear().range([0, h]).domain([0, h]);
   let X = X_default.copy();
@@ -437,23 +458,40 @@ function draw_network_plot(
   function update_edges() {
     context.clearRect(0, 0, +canvas.attr("width"), +canvas.attr("height"));
 
-    // Scale edge opacity based upon how many edges we have
-    context.globalAlpha = 0.5;
+    if (focused_on) {
+      context.lineWidth = 2.5;
+      nodes_by_component
+        .find((c) => c.id === focused_on)
+        .edge_indices.forEach((edge_i) => {
+          const { source, target, strength } = edges[edge_i];
+          context.beginPath();
+          context.moveTo(X(source.x) + margins.left, Y(source.y) + margins.top);
+          context.lineTo(X(target.x) + margins.left, Y(target.y) + margins.top);
+          // Set color of edges
+          context.strokeStyle = d3.interpolateReds(link_color(strength));
+          context.stroke();
+        });
+    } else {
+      // Scale edge opacity based upon how many edges we have
+      context.globalAlpha = 0.5;
+      context.lineWidth = 1;
+      // Set color of edges
+      context.strokeStyle = "#999";
+      context.beginPath();
+      edges.forEach((d) => {
+        context.moveTo(
+          X(d.source.x) + margins.left,
+          Y(d.source.y) + margins.top
+        );
+        context.lineTo(
+          X(d.target.x) + margins.left,
+          Y(d.target.y) + margins.top
+        );
+      });
 
-    context.beginPath();
-    (focused_on
-      ? edges.filter((e) => +e.source.subgraph_id === +focused_on)
-      : edges
-    ).forEach((d) => {
-      context.moveTo(X(d.source.x) + margins.left, Y(d.source.y) + margins.top);
-      context.lineTo(X(d.target.x) + margins.left, Y(d.target.y) + margins.top);
-    });
-
-    // Set color of edges
-    context.strokeStyle = "#999";
-
-    // Draw to canvas
-    context.stroke();
+      // Draw to canvas
+      context.stroke();
+    }
   }
 
   function update_nodes() {
@@ -501,7 +539,7 @@ function draw_network_plot(
       .on("drag", dragged)
       .on("end", dragended);
   }
-  const zoom = d3.zoom().scaleExtent([0.8, 8]).on("zoom", zoomed);
+  const zoom = d3.zoom().scaleExtent([0.5, 8]).on("zoom", zoomed);
   // We dont want the double click to work because double clicking is taken over
   // for de-selecting a component
   g.call(zoom).on("dblclick.zoom", null);
@@ -573,14 +611,43 @@ function draw_network_plot(
       .filter((c) => c.id !== component.id)
       .attr("opacity", 0);
 
+    link_color.domain(
+      d3.extent(component.edge_indices, (i) => edge_vals.strength[i])
+    );
+
     focused_on = component.id;
   }
 
   function highlight_node(node) {
+    const n_neighbors = 5;
     all_nodes.filter((n) => n.id == node.id).attr("r", focus_r * 2);
+
+    const neighbors = edges
+      .filter((edge) => edge.source === node || edge.target === node)
+      .map(({ source, target, strength }) => ({
+        neighbor: source == node ? target.id : source.id,
+        strength,
+      }))
+      .sort((a, b) => b.strength - a.strength)
+      .filter((d, i) => i < n_neighbors);
+
+    tooltip_div
+      .style("display", "block")
+      .style("top", Y(node.y))
+      .style("left", X(node.x))
+      .call(table_from_obj, {
+        data: neighbors,
+        id: "tooltip",
+        keys_to_avoid: ["id", "first_edge"],
+        even_cols: true,
+        title: `Top ${neighbors.length} Neighbors`,
+        max_width: "95%",
+      });
   }
+
   function reset_node_highlights(radius = focus_r) {
     all_nodes.attr("r", radius);
+    tooltip_div.style("display", "none");
   }
 
   return {
