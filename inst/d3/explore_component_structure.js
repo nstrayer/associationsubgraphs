@@ -82,6 +82,7 @@ const instructions = div
   .select_append("span")
   .style("background", "#ffffffc4")
   .style("border-radius", "5px");
+
 // .text("Click a component in chart or network to see details.");
 const set_instructions = function (focus_mode = false) {
   instructions.text(
@@ -122,6 +123,12 @@ const component_interactions = {
   },
 };
 
+const default_state = function () {
+  info_panel.hide();
+  component_plot.show();
+  set_instructions();
+};
+
 const network_interactions = {
   click: function (component) {},
   mouseover: function (component) {
@@ -131,16 +138,12 @@ const network_interactions = {
     component_plot.reset_highlights();
   },
   reset: function () {
-    info_panel.hide();
-    component_plot.show();
-    set_instructions();
+    default_state();
   },
   focus: function (component) {
-    info_panel = setup_info_panel(
-      info_div,
+    info_panel.update(
       component,
-      component_plot.info_for_component(component.edge_indices),
-      info_panel_interactions
+      component_plot.info_for_component(component.edge_indices)
     );
     component_plot.hide();
     set_instructions(true);
@@ -153,7 +156,8 @@ const network_interactions = {
   },
 };
 
-const update_components_chart = function (step_i, update_network = false) {
+function update_components_chart(step_i, update_network = false) {
+  default_state();
   component_plot = draw_components_chart(components_holder, {
     components: structure_data[step_i].components,
     settings: component_settings,
@@ -170,9 +174,7 @@ const update_components_chart = function (step_i, update_network = false) {
       interaction_fns: network_interactions,
     });
   }
-};
-
-update_components_chart(default_step, true);
+}
 
 // Setup and start the timeline charts
 g.append("g")
@@ -189,14 +191,13 @@ g.append("g")
     update_components_chart
   );
 
+info_panel = setup_info_panel(info_div, info_panel_interactions);
+
+update_components_chart(default_step, true);
+
 // =============================================================================
 // Functions for drawing each section of the plots
-function setup_info_panel(
-  info_div,
-  component,
-  component_info,
-  interaction_fns
-) {
+function setup_info_panel(info_div, interaction_fns) {
   const non_column_keys = [
     "subgraph_id",
     "subgraph_x",
@@ -211,41 +212,38 @@ function setup_info_panel(
     "color",
   ];
 
-  info_div
-    .style("display", "block")
-    .style("overflow", "scroll")
-    .style("padding-top", "0.75rem");
+  info_div.style("overflow", "scroll").style("padding-top", "0.75rem");
 
-  const info_table = table_from_obj(info_div, {
-    data: [component_info],
-    id: "component_info",
-    keys_to_avoid: ["id", "first_edge"],
-    alignment: "center",
-    even_cols: true,
-    title: `Component ${component_info.id} statistics`,
-  });
+  let info_table;
+  let nodes_table;
 
-  const nodes_table = table_from_obj(info_div, {
-    data: component.nodes,
-    id: "nodes",
-    keys_to_avoid: non_column_keys,
-    title: "Nodes in component (hover to highlight in network plot)",
-  })
-    .on("mouseover", function (d) {
-      reset_highlights();
-      highlight_node(d.id);
-      interaction_fns.node_mouseover(d);
-    })
-    .on("mouseout", function (d) {
-      reset_highlights();
-      interaction_fns.node_mouseout();
+  function update(component, component_info) {
+    info_div.style("display", "block");
+    info_table = table_from_obj(info_div, {
+      data: [component_info],
+      id: "component_info",
+      keys_to_avoid: ["id", "first_edge"],
+      alignment: "center",
+      even_cols: true,
+      title: `Component ${component_info.id} statistics`,
     });
 
-  // info_table.call((tbl) => {
-  //   const table_node = tbl.node();
-  //   // debugger;
-  //   table_node.scrollIntoView();
-  // }); // Makes sure div is at top
+    nodes_table = table_from_obj(info_div, {
+      data: component.nodes,
+      id: "nodes",
+      keys_to_avoid: non_column_keys,
+      title: "Nodes in component (hover to highlight in network plot)",
+    })
+      .on("mouseover", function (d) {
+        reset_highlights();
+        highlight_node(d.id);
+        interaction_fns.node_mouseover(d);
+      })
+      .on("mouseout", function (d) {
+        reset_highlights();
+        interaction_fns.node_mouseout();
+      });
+  }
 
   function highlight_node(node_id) {
     nodes_table
@@ -267,7 +265,8 @@ function setup_info_panel(
     info_div.style("display", "none");
   }
 
-  return { highlight_node, reset_highlights, hide };
+  hide();
+  return { update, highlight_node, reset_highlights, hide };
 }
 
 function draw_network_plot(
