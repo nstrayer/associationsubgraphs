@@ -66,7 +66,7 @@ const info_div = div
   .style("position", "absolute")
   .style("left", 0)
   .style("width", `${width}px`)
-  .style("height", `${component_settings.h - 5}px`)
+  .style("height", `${h - network_settings.h - 5}px`)
   .style("top", `${component_settings.start_h + margins.top}px`)
   .style("box-shadow", "1px 1px 9px black")
   .style("display", "none");
@@ -98,7 +98,6 @@ set_instructions();
 // Initialize the plots themselves
 let network_plot;
 let component_plot;
-let info_panel;
 
 // =============================================================================
 // Setup the interaction behaviours between chart components
@@ -110,6 +109,8 @@ const info_panel_interactions = {
     network_plot.reset_node_highlights();
   },
 };
+let info_panel;
+info_panel = setup_info_panel(info_div, info_panel_interactions);
 
 const component_interactions = {
   click: function (component) {
@@ -124,8 +125,12 @@ const component_interactions = {
 };
 
 const default_state = function () {
-  info_panel.hide();
-  component_plot.show();
+  if (info_panel) {
+    info_panel.hide();
+  }
+  if (component_plot) {
+    component_plot.show();
+  }
   set_instructions();
 };
 
@@ -184,14 +189,11 @@ g.append("g")
     ...timeline_settings,
     margins: { left: margins.left, right: margins.right },
   })
-  .call(
-    draw_timelines,
-    structure_data,
-    timeline_settings,
-    update_components_chart
-  );
-
-info_panel = setup_info_panel(info_div, info_panel_interactions);
+  .call(draw_timelines, {
+    data: structure_data,
+    settings: timeline_settings,
+    update_fn: update_components_chart,
+  });
 
 update_components_chart(default_step, true);
 
@@ -796,7 +798,10 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
   };
 }
 
-function draw_timelines(timeline_g, data, settings, update_fn) {
+function draw_timelines(
+  timeline_g,
+  { data, settings, update_fn: on_new_step }
+) {
   const { w, h } = settings;
 
   const non_metric_keys = [
@@ -900,7 +905,7 @@ function draw_timelines(timeline_g, data, settings, update_fn) {
     }
     callout_line.move_to({ x: x_pos });
     step_metrics.forEach((m) => m.set_callout(step));
-    update_fn(step, pin);
+    on_new_step(step, pin);
   };
 
   move_callouts({ step_i: default_step, pin: true });
@@ -913,7 +918,6 @@ function draw_timelines(timeline_g, data, settings, update_fn) {
   }
   function on_click() {
     move_callouts({ mouse_pos: d3.mouse(this), pin: true });
-    update_fn(d3.mouse(this), true);
   }
   function draw_metric_line({ g, d, settings }) {
     const { X, Y } = d;
