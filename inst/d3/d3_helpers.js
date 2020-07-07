@@ -102,13 +102,20 @@ d3.selection.prototype.move_to = function ({ x = 0, y = 0 }) {
 
 function table_from_obj(
   container,
-  { data, id, keys_to_avoid, alignment = "left", even_cols = false, title }
+  {
+    data,
+    id,
+    keys_to_avoid,
+    alignment = "left",
+    even_cols = false,
+    title,
+    max_width = "85%",
+  }
 ) {
   const column_names = Object.keys(data[0]).filter(
     (key) => !keys_to_avoid.includes(key)
   );
 
-  const max_width = "85%";
   const stripe_color = d3.color("#dedede");
   const off_stripe_color = stripe_color.brighter();
   const header_color = stripe_color.darker(0.5);
