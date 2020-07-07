@@ -109,3 +109,77 @@ function setup_interactions(el, interaction_fns, id) {
     el.on(type, interaction_fns[type]);
   }
 }
+function table_from_obj(container, { data, id, keys_to_avoid }) {
+  const column_names = Object.keys(data[0]).filter(
+    (key) => !keys_to_avoid.includes(key)
+  );
+
+  const formatters = {
+    string: (d) => d,
+    integer: d3.format(",i"),
+    float: d3.format(".3f"),
+  };
+
+  const column_types = {};
+  data.forEach((d) => {
+    column_names.forEach((col_name) => {
+      const col_value = d[col_name];
+      if (typeof col_value === "string") {
+        column_types[col_name] = "string";
+      } else if (typeof col_value === "boolean") {
+        column_types[col_name] = "string";
+      } else {
+        const val_is_integer = col_value % 1 === 0;
+        const wasnt_already_float = column_types[col_name] !== "float";
+        if (val_is_integer && wasnt_already_float) {
+          column_types[col_name] = "integer";
+        } else {
+          column_types[col_name] = "float";
+        }
+      }
+    });
+  });
+
+  const table = container
+    .select_append(`table#${id}`)
+    .style("border-collapse", "collapse")
+    .style("margin-left", "auto")
+    .style("margin-right", "auto");
+
+  // header
+  table
+    .select_append("thead")
+    .select_append("tr")
+    .selectAll("th")
+    .data(column_names)
+    .join("th")
+    .attr("class", "table_cell")
+    .style("max-width", `100px`)
+    .text((d) => d.replace(/_/g, " "));
+
+  // body
+  const rows = table
+    .select_append("tbody")
+    .selectAll("tr")
+    .data(data)
+    .join("tr")
+    .style("background", (d, i) => (i % 2 ? "white" : "#dedede"));
+
+  rows
+    .selectAll("td")
+    .data((d) =>
+      column_names.map((key) => formatters[column_types[key]](d[key]))
+    )
+    .join("td")
+    .attr("class", "table_cell")
+    .text((d) => d);
+
+  // Style all the cells in common
+  table
+    .selectAll(".table_cell")
+    .style("max-width", `100px`)
+    .style("text-align", "left")
+    .style("padding", "0.2rem 0.5rem");
+
+  return rows;
+}
