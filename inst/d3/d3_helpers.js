@@ -102,7 +102,7 @@ d3.selection.prototype.move_to = function ({ x = 0, y = 0 }) {
 
 function table_from_obj(
   container,
-  { data, id, keys_to_avoid, alignment = "left", even_cols = false }
+  { data, id, keys_to_avoid, alignment = "left", even_cols = false, title }
 ) {
   const column_names = Object.keys(data[0]).filter(
     (key) => !keys_to_avoid.includes(key)
@@ -139,13 +139,24 @@ function table_from_obj(
     });
   });
 
-  const table = container
-    .select_append(`table#${id}`)
+  const table_holder = container
+    .select_append(`div#table_holder${id}`)
     .style("max-width", max_width)
-    .style("border-collapse", "collapse")
-    .style("border", `1px solid ${header_color.toString()}`)
     .style("margin-left", "auto")
-    .style("margin-right", "auto");
+    .style("margin-right", "auto")
+    .style("margin-bottom", "0.75rem");
+
+  if (title) {
+    table_holder
+      .select_append("span")
+      .style("font-style", "italic")
+      .text(title);
+  }
+
+  const table = table_holder
+    .select_append(`table#${id}`)
+    .style("border-collapse", "collapse")
+    .style("border", `1px solid ${header_color.toString()}`);
 
   // header
   table
