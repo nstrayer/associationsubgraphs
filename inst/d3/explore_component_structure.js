@@ -60,15 +60,6 @@ const components_holder = g
     margins: { left: margins.left, right: margins.right },
   });
 
-const timelines_holder = g
-  .append("g")
-  .classed("timelines_chart", true)
-  .move_to({ y: timeline_settings.start_h })
-  .call(add_background_rect, {
-    ...timeline_settings,
-    margins: { left: margins.left, right: margins.right },
-  });
-
 const info_div = div
   .append("div")
   .style("background", "white")
@@ -86,6 +77,17 @@ let network_plot;
 let component_plot;
 let info_panel;
 
+// =============================================================================
+// Setup the interaction behaviours between chart components
+const info_panel_interactions = {
+  node_mouseover: function (node) {
+    network_plot.highlight_node(node);
+  },
+  node_mouseout: function () {
+    network_plot.reset_node_highlights();
+  },
+};
+
 const component_interactions = {
   click: function (component) {
     network_plot.focus_on_component(component.first_edge);
@@ -99,9 +101,7 @@ const component_interactions = {
 };
 
 const network_interactions = {
-  click: function (component) {
-    // info_div.call(fill_in_info_panel, component);
-  },
+  click: function (component) {},
   mouseover: function (component) {
     component_plot.highlight_component(component.edge_indices);
   },
@@ -113,7 +113,12 @@ const network_interactions = {
     component_plot.show();
   },
   focus: function (component) {
-    info_panel = setup_info_panel(info_div, component, info_panel_interactions);
+    info_panel = setup_info_panel(
+      info_div,
+      component,
+      component_plot.info_for_component(component.edge_indices),
+      info_panel_interactions
+    );
     component_plot.hide();
   },
   node_mouseover: function (node) {
@@ -121,15 +126,6 @@ const network_interactions = {
   },
   node_mouseout: function (node) {
     info_panel.reset_highlights();
-  },
-};
-
-const info_panel_interactions = {
-  node_mouseover: function (node) {
-    network_plot.highlight_node(node);
-  },
-  node_mouseout: function () {
-    network_plot.reset_node_highlights();
   },
 };
 
@@ -155,18 +151,28 @@ const update_components_chart = function (step_i, update_network = false) {
 update_components_chart(default_step, true);
 
 // Setup and start the timeline charts
-timelines_holder.call(
-  draw_timelines,
-  structure_data,
-  timeline_settings,
-  update_components_chart
-);
+g.append("g")
+  .classed("timelines_chart", true)
+  .move_to({ y: timeline_settings.start_h })
+  .call(add_background_rect, {
+    ...timeline_settings,
+    margins: { left: margins.left, right: margins.right },
+  })
+  .call(
+    draw_timelines,
+    structure_data,
+    timeline_settings,
+    update_components_chart
+  );
 
 // =============================================================================
 // Functions for drawing each section of the plots
-function setup_info_panel(info_div, component, interaction_fns) {
-  info_div.style("display", "block");
-  const { nodes } = component;
+function setup_info_panel(
+  info_div,
+  component,
+  component_info,
+  interaction_fns
+) {
   const non_column_keys = [
     "subgraph_id",
     "subgraph_x",
@@ -178,35 +184,20 @@ function setup_info_panel(info_div, component, interaction_fns) {
     "vx",
     "color",
   ];
-  const column_names = Object.keys(nodes[0]).filter(
-    (key) => !non_column_keys.includes(key)
-  );
 
-  const node_table = info_div
-    .style("overflow", "scroll")
-    .select_append("table.nodes")
-    .style("border-collapse", "collapse")
-    .style("margin-left", "auto")
-    .style("margin-right", "auto");
+  info_div.style("display", "block").style("overflow", "scroll");
 
-  // Setup the header/column names
-  node_table
-    .select_append("thead")
-    .select_append("tr")
-    .selectAll("th")
-    .data(column_names)
-    .join("th")
-    .attr("class", "table_cell")
-    .style("max-width", `100px`)
-    .text((d) => d.replace(/_/g, " "));
+  table_from_obj(info_div, {
+    data: [component_info],
+    id: "component_info",
+    keys_to_avoid: ["id", "first_edge"],
+  });
 
-  // Setup each row
-  const rows = node_table
-    .select_append("tbody")
-    .selectAll("tr")
-    .data(nodes)
-    .join("tr")
-    .style("background", (d, i) => (i % 2 ? "white" : "#dedede"))
+  const nodes_table = table_from_obj(info_div, {
+    data: component.nodes,
+    id: "nodes",
+    keys_to_avoid: non_column_keys,
+  })
     .on("mouseover", function (d) {
       reset_highlights();
       highlight_node(d.id);
@@ -217,28 +208,14 @@ function setup_info_panel(info_div, component, interaction_fns) {
       interaction_fns.node_mouseout();
     });
 
-  rows
-    .selectAll("td")
-    .data((node) => column_names.map((key) => node[key]))
-    .join("td")
-    .attr("class", "table_cell")
-    .text((d) => d);
-
-  // Style all the cells in common
-  node_table
-    .selectAll(".table_cell")
-    .style("max-width", `100px`)
-    .style("text-align", "left")
-    .style("padding", "0.2rem 0.5rem");
-
   function highlight_node(node_id) {
-    rows
+    nodes_table
       .filter((node) => node.id === node_id)
       .style("border", "1px solid black");
   }
 
   function reset_highlights() {
-    rows.style("border", "none");
+    nodes_table.style("border", "none");
   }
 
   function hide() {
@@ -749,10 +726,15 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
   function reset_highlights() {
     component_g.attr("stroke-width", 1);
   }
+
   function highlight_component(edge_indices) {
     component_g
       .filter((c) => edge_indices.includes(c.first_edge))
       .call(emphasize_component);
+  }
+
+  function info_for_component(edge_indices) {
+    return components_df.find((c) => edge_indices.includes(c.first_edge));
   }
 
   function hide() {
@@ -762,7 +744,13 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
     g.attr("opacity", 1);
   }
 
-  return { highlight_component, reset_highlights, hide, show };
+  return {
+    highlight_component,
+    info_for_component,
+    reset_highlights,
+    hide,
+    show,
+  };
 }
 
 function draw_timelines(timeline_g, data, settings, update_fn) {
