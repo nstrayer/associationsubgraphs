@@ -189,18 +189,28 @@ function setup_info_panel(
 
   info_div.style("display", "block").style("overflow", "scroll");
 
+  info_div
+    .select_append("p.instructions")
+    .style("font-style", "italic")
+    .style("text-align", "right")
+    .style("font-size", "0.9rem")
+    .style("margin", "3px 5px")
+    .text("Click anywhere outside of component to exit focus view.");
+
   table_from_obj(info_div, {
     data: [component_info],
     id: "component_info",
     keys_to_avoid: ["id", "first_edge"],
     alignment: "center",
     even_cols: true,
+    title: `Component ${component_info.id} statistics`,
   });
 
   const nodes_table = table_from_obj(info_div, {
     data: component.nodes,
     id: "nodes",
     keys_to_avoid: non_column_keys,
+    title: "Nodes in component (hover to highlight in network plot)",
   })
     .on("mouseover", function (d) {
       reset_highlights();
@@ -215,7 +225,13 @@ function setup_info_panel(
   function highlight_node(node_id) {
     nodes_table
       .filter((node) => node.id === node_id)
-      .style("outline", "2px solid black");
+      .style("outline", "2px solid black")
+      .call((node_row) => {
+        node_row.node().scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      });
   }
 
   function reset_highlights() {
