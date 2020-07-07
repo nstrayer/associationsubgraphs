@@ -10,7 +10,6 @@ function find_subgraphs({
   const stop_point = n_edges || edge_source.length;
   const subgraphs = new Map();
   const node_to_subgraph = new Map();
-  const edges = Array.from({ length: stop_point });
 
   let subgraph_counter = 0;
 
@@ -72,15 +71,19 @@ function find_subgraphs({
       // Delete the target subgraph
       subgraphs.delete(culled_subgraph_id);
     }
+  }
 
-    edges[i] = {
+  const edges = Array.from({ length: stop_point }).map((_, i) => {
+    const source = edge_source[i];
+    const target = edge_target[i];
+    return {
       source,
       target,
       strength: edge_strength[i],
-      subgraph: edge_subgraph_id,
+      subgraph: node_to_subgraph.get(source),
       index: i,
     };
-  }
+  });
 
   const n = subgraphs.size;
   const n_in_col = Math.ceil(Math.sqrt((n * width) / height));
