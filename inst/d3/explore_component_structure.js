@@ -71,6 +71,28 @@ const info_div = div
   .style("box-shadow", "1px 1px 9px black")
   .style("display", "none");
 
+const instructions = div
+  .select_append("p.instructions")
+  .style("font-style", "italic")
+  .style("text-align", "right")
+  .style("font-size", "0.9rem")
+  .style("margin", "3px 5px")
+  .style("position", "sticky")
+  .style("top", "30px")
+  .select_append("span")
+  .style("background", "#ffffffc4")
+  .style("border-radius", "5px");
+// .text("Click a component in chart or network to see details.");
+const set_instructions = function (focus_mode = false) {
+  instructions.text(
+    focus_mode
+      ? "Click anywhere outside of component to exit focus view."
+      : "Click a component in chart or network to see details."
+  );
+};
+
+set_instructions();
+
 // =============================================================================
 // Initialize the plots themselves
 let network_plot;
@@ -111,6 +133,7 @@ const network_interactions = {
   reset: function () {
     info_panel.hide();
     component_plot.show();
+    set_instructions();
   },
   focus: function (component) {
     info_panel = setup_info_panel(
@@ -120,6 +143,7 @@ const network_interactions = {
       info_panel_interactions
     );
     component_plot.hide();
+    set_instructions(true);
   },
   node_mouseover: function (node) {
     info_panel.highlight_node(node.id);
@@ -187,17 +211,12 @@ function setup_info_panel(
     "color",
   ];
 
-  info_div.style("display", "block").style("overflow", "scroll");
-
   info_div
-    .select_append("p.instructions")
-    .style("font-style", "italic")
-    .style("text-align", "right")
-    .style("font-size", "0.9rem")
-    .style("margin", "3px 5px")
-    .text("Click anywhere outside of component to exit focus view.");
+    .style("display", "block")
+    .style("overflow", "scroll")
+    .style("padding-top", "0.75rem");
 
-  table_from_obj(info_div, {
+  const info_table = table_from_obj(info_div, {
     data: [component_info],
     id: "component_info",
     keys_to_avoid: ["id", "first_edge"],
@@ -221,6 +240,12 @@ function setup_info_panel(
       reset_highlights();
       interaction_fns.node_mouseout();
     });
+
+  // info_table.call((tbl) => {
+  //   const table_node = tbl.node();
+  //   // debugger;
+  //   table_node.scrollIntoView();
+  // }); // Makes sure div is at top
 
   function highlight_node(node_id) {
     nodes_table
