@@ -113,32 +113,6 @@ function table_from_obj(
   const off_stripe_color = stripe_color.brighter();
   const header_color = stripe_color.darker(0.5);
 
-  const formatters = {
-    string: (d) => d,
-    integer: d3.format(",i"),
-    float: d3.format(".3f"),
-  };
-
-  const column_types = {};
-  data.forEach((d) => {
-    column_names.forEach((col_name) => {
-      const col_value = d[col_name];
-      if (typeof col_value === "string") {
-        column_types[col_name] = "string";
-      } else if (typeof col_value === "boolean") {
-        column_types[col_name] = "string";
-      } else {
-        const val_is_integer = col_value % 1 === 0;
-        const wasnt_already_float = column_types[col_name] !== "float";
-        if (val_is_integer && wasnt_already_float) {
-          column_types[col_name] = "integer";
-        } else {
-          column_types[col_name] = "float";
-        }
-      }
-    });
-  });
-
   const table_holder = container
     .select_append(`div#table_holder${id}`)
     .style("max-width", max_width)
@@ -177,11 +151,15 @@ function table_from_obj(
     .join("tr")
     .style("background", (d, i) => (i % 2 ? stripe_color : off_stripe_color));
 
+  const print_val = (val) =>
+    typeof val === "number"
+      ? d3
+          .format(",.3f")(val)
+          .replace(/(\.)*0+$/, "")
+      : val;
   rows
     .selectAll("td")
-    .data((d) =>
-      column_names.map((key) => formatters[column_types[key]](d[key]))
-    )
+    .data((d) => column_names.map((key) => print_val(d[key])))
     .join("td")
     .attr("class", "table_cell")
     .text((d) => d);
