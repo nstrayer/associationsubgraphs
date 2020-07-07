@@ -100,15 +100,6 @@ d3.selection.prototype.move_to = function ({ x = 0, y = 0 }) {
   );
 };
 
-function setup_interactions(el, interaction_fns, id) {
-  // wire up the interactions
-  // debugger;
-  if (id) console.log(`setup_interactions() run by ${id}`);
-
-  for (let type in interaction_fns) {
-    el.on(type, interaction_fns[type]);
-  }
-}
 function table_from_obj(
   container,
   { data, id, keys_to_avoid, alignment = "left", even_cols = false }

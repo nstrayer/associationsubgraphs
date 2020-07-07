@@ -639,7 +639,6 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
       (exit) => exit.attr("opacity", 0).remove()
     )
     .classed("component_stats", true)
-    .call(setup_interactions, interaction_fns)
     .on("mouseover", function (d) {
       d3.select(this).call(emphasize_component);
       interaction_fns.mouseover(d);
