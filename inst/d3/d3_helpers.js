@@ -109,10 +109,18 @@ function setup_interactions(el, interaction_fns, id) {
     el.on(type, interaction_fns[type]);
   }
 }
-function table_from_obj(container, { data, id, keys_to_avoid }) {
+function table_from_obj(
+  container,
+  { data, id, keys_to_avoid, alignment = "left", even_cols = false }
+) {
   const column_names = Object.keys(data[0]).filter(
     (key) => !keys_to_avoid.includes(key)
   );
+
+  const max_width = "85%";
+  const stripe_color = d3.color("#dedede");
+  const off_stripe_color = stripe_color.brighter();
+  const header_color = stripe_color.darker(0.5);
 
   const formatters = {
     string: (d) => d,
@@ -142,7 +150,9 @@ function table_from_obj(container, { data, id, keys_to_avoid }) {
 
   const table = container
     .select_append(`table#${id}`)
+    .style("max-width", max_width)
     .style("border-collapse", "collapse")
+    .style("border", `1px solid ${header_color.toString()}`)
     .style("margin-left", "auto")
     .style("margin-right", "auto");
 
@@ -150,11 +160,11 @@ function table_from_obj(container, { data, id, keys_to_avoid }) {
   table
     .select_append("thead")
     .select_append("tr")
+    .style("background", header_color)
     .selectAll("th")
     .data(column_names)
     .join("th")
     .attr("class", "table_cell")
-    .style("max-width", `100px`)
     .text((d) => d.replace(/_/g, " "));
 
   // body
@@ -163,7 +173,7 @@ function table_from_obj(container, { data, id, keys_to_avoid }) {
     .selectAll("tr")
     .data(data)
     .join("tr")
-    .style("background", (d, i) => (i % 2 ? "white" : "#dedede"));
+    .style("background", (d, i) => (i % 2 ? stripe_color : off_stripe_color));
 
   rows
     .selectAll("td")
@@ -175,11 +185,15 @@ function table_from_obj(container, { data, id, keys_to_avoid }) {
     .text((d) => d);
 
   // Style all the cells in common
-  table
+  const all_cells = table
     .selectAll(".table_cell")
-    .style("max-width", `100px`)
-    .style("text-align", "left")
+    .style("text-align", alignment)
+    .style("margin-top", "2px")
     .style("padding", "0.2rem 0.5rem");
+
+  if (even_cols) {
+    all_cells.style("width", `calc(${max_width} / ${column_names.length})`);
+  }
 
   return rows;
 }

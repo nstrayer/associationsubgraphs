@@ -179,7 +179,9 @@ function setup_info_panel(
     "subgraph_y",
     "index",
     "x",
+    "fx",
     "y",
+    "fy",
     "vy",
     "vx",
     "color",
@@ -191,6 +193,8 @@ function setup_info_panel(
     data: [component_info],
     id: "component_info",
     keys_to_avoid: ["id", "first_edge"],
+    alignment: "center",
+    even_cols: true,
   });
 
   const nodes_table = table_from_obj(info_div, {
@@ -211,11 +215,11 @@ function setup_info_panel(
   function highlight_node(node_id) {
     nodes_table
       .filter((node) => node.id === node_id)
-      .style("border", "1px solid black");
+      .style("outline", "2px solid black");
   }
 
   function reset_highlights() {
-    nodes_table.style("border", "none");
+    nodes_table.style("outline", "none");
   }
 
   function hide() {
