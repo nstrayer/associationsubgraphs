@@ -110,8 +110,12 @@ function table_from_obj(
     even_cols = false,
     title,
     max_width = "85%",
+    colored_rows = false,
   }
 ) {
+  if (colored_rows) {
+    keys_to_avoid.push("color");
+  }
   const column_names = Object.keys(data[0]).filter(
     (key) => !keys_to_avoid.includes(key)
   );
@@ -155,9 +159,19 @@ function table_from_obj(
     .select_append("tbody")
     .selectAll("tr")
     .data(data)
-    .join("tr")
-    .style("background", (d, i) => (i % 2 ? stripe_color : off_stripe_color));
+    .join("tr");
 
+  if (colored_rows) {
+    const color_is_light = (cell_color) => d3.hcl(d3.color(cell_color)).l > 60;
+
+    rows
+      .style("background", (d) => d.color)
+      .style("color", (d) => (color_is_light(d.color) ? "black" : "white"));
+  } else {
+    rows.style("background", (d, i) =>
+      i % 2 ? stripe_color : off_stripe_color
+    );
+  }
   const print_val = (val) =>
     typeof val === "number"
       ? d3
