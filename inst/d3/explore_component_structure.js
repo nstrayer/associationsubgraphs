@@ -690,10 +690,37 @@ function draw_components_chart(g, { components, settings, interaction_fns }) {
     (c_a, c_b) => c_b.size - c_a.size
   );
 
+  const size_label = g
+    .select_append("text#size_label")
+    .text("Num members")
+    .attr("dominant-baseline", "middle")
+    .attr("y", sizes.size / 2);
+
+  const density_label = g
+    .select_append("text#density_label")
+    .text("Avg density")
+    .attr("y", sizes.size + padding + sizes.density / 2)
+    .attr("dominant-baseline", "middle");
+
+  const strength_label = g
+    .select_append("text#strength_label")
+    .text("Total edge strength")
+    .attr("dominant-baseline", "middle")
+    .attr("y", total_h - sizes.strength / 2 + padding * 2);
+
+  const all_labels = [size_label, density_label, strength_label];
+
+  const space_for_labels = d3.max(
+    all_labels,
+    (lab) => lab.node().getBBox().width
+  );
+
+  all_labels.forEach((lab) => lab.move_to({ x: w - space_for_labels + 3 }));
+
   const X = d3
     .scaleBand()
     .domain(components_df.map((d) => d.id))
-    .range([0, w])
+    .range([0, w - space_for_labels])
     .paddingInner(0.03);
 
   const component_w = X.bandwidth();
