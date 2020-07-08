@@ -76,7 +76,6 @@ const tooltip_div = div
   .append("div")
   .style("width", "auto")
   .style("max-width", "40%")
-  // .style("border", "1px solid black")
   .style("box-shadow", div_shadow)
   .style("padding-top", "6px")
   .style("background", "white")
@@ -627,22 +626,26 @@ function draw_network_plot(
       .map(({ source, target, strength }) => ({
         neighbor: source == node ? target.id : source.id,
         strength,
+        color: d3.interpolateReds(link_color(strength)),
       }))
       .sort((a, b) => b.strength - a.strength)
       .filter((d, i) => i < n_neighbors);
 
-    tooltip_div
-      .style("display", "block")
-      .style("top", Y(node.y))
-      .style("left", X(node.x))
-      .call(table_from_obj, {
+    const neighbor_table = table_from_obj(
+      tooltip_div
+        .style("display", "block")
+        .style("top", Y(node.y))
+        .style("left", X(node.x)),
+      {
         data: neighbors,
         id: "tooltip",
         keys_to_avoid: ["id", "first_edge"],
         even_cols: true,
         title: `Top ${neighbors.length} Neighbors`,
         max_width: "95%",
-      });
+        colored_rows: true,
+      }
+    );
   }
 
   function reset_node_highlights(radius = focus_r) {
