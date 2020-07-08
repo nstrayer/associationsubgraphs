@@ -1,7 +1,7 @@
 // !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_subgraphs.js"), d3_version = "5"
 
 const margins = { left: 50, right: 50, top: 20, bottom: 10 };
-const { canvas, context, svg, g, w, h } = setup_svg_canvas_overlap({
+const { canvas, context, svg, g, w, h } = set_dom_elements({
   div,
   width,
   height,

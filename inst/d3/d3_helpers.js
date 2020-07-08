@@ -1,24 +1,28 @@
-function setup_svg_canvas_overlap({ div, width, height, margins }) {
-  // Get the device pixel ratio, falling back to 1.
-  const dpr = window.devicePixelRatio || 1;
+function set_dom_elements({ div, width, height, margins, add_canvas = true }) {
+  const res = {};
 
-  // Append the canvas
-  const canvas = div
-    .append("canvas")
-    .style("position", "absolute")
-    .attr("width", width * dpr)
-    .attr("height", height * dpr)
-    .style("width", `${width}px`)
-    .style("height", `${height}px`)
-    .style("left", 0)
-    .style("top", 0);
+  if (add_canvas) {
+    // Get the device pixel ratio, falling back to 1.
+    const dpr = window.devicePixelRatio || 1;
 
-  const context = canvas.node().getContext("2d");
+    // Append the canvas
+    res.canvas = div
+      .append("canvas")
+      .style("position", "absolute")
+      .attr("width", width * dpr)
+      .attr("height", height * dpr)
+      .style("width", `${width}px`)
+      .style("height", `${height}px`)
+      .style("left", 0)
+      .style("top", 0);
 
-  // Scale canvas image so it looks good on retina displays
-  context.scale(dpr, dpr);
+    res.context = res.canvas.node().getContext("2d");
 
-  const svg = div
+    // Scale canvas image so it looks good on retina displays
+    res.context.scale(dpr, dpr);
+  }
+
+  res.svg = div
     .append("svg")
     .attr("height", height)
     .attr("width", width)
@@ -27,18 +31,14 @@ function setup_svg_canvas_overlap({ div, width, height, margins }) {
     .style("top", 0)
     .call(add_blur_filter);
 
-  const g = svg
+  res.g = res.svg
     .append("g")
     .attr("transform", `translate(${margins.left},${margins.top})`);
 
-  return {
-    canvas,
-    context,
-    svg,
-    g,
-    w: width - margins.left - margins.right,
-    h: height - margins.top - margins.bottom,
-  };
+  res.w = width - margins.left - margins.right;
+  res.h = height - margins.top - margins.bottom;
+
+  return res;
 }
 
 function extend_ticks(g, tick_width, tick_opacity = 0.8) {
