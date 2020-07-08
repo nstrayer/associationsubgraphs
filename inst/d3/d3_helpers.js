@@ -93,11 +93,11 @@ d3.selection.prototype.select_append = function (query) {
 };
 
 d3.selection.prototype.move_to = function ({ x = 0, y = 0 }) {
-  const eval_pos = (p, d) => (typeof p == "function" ? p(d) : p);
-  return this.attr(
-    "transform",
-    (d) => `translate(${eval_pos(x, d)},${eval_pos(y, d)})`
-  );
+  return this.attr("transform", function () {
+    const x_pos = typeof x === "function" ? x.apply(this, arguments) : x;
+    const y_pos = typeof y === "function" ? y.apply(this, arguments) : y;
+    return `translate(${x_pos},${y_pos})`;
+  });
 };
 
 function table_from_obj(
