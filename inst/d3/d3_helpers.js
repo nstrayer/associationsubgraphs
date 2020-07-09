@@ -181,11 +181,7 @@ function table_from_obj(
     );
   }
   const print_val = (val) =>
-    typeof val === "number"
-      ? d3
-          .format(",.3f")(val)
-          .replace(/(\.)*0+$/, "")
-      : val;
+    typeof val === "number" ? format_number(val) : val;
   rows
     .selectAll("td")
     .data((d) => column_names.map((key) => print_val(d[key])))
@@ -205,6 +201,12 @@ function table_from_obj(
   }
 
   return rows;
+}
+
+function format_number(x, digits = 3) {
+  return d3
+    .format(`,.${digits}f`)(x)
+    .replace(/(\.)*0+$/, "");
 }
 
 function units_to_sizes(units, h, padding = 5) {
