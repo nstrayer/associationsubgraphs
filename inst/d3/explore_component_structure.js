@@ -381,17 +381,17 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         return main_g;
       })
       .on("click", function (d) {
-        if (!current_focus) {
+        if (!current_focus & !zooming) {
           event_fns.focus_on_component(d.id);
         }
       })
       .on("mouseover", function (d) {
-        if (!current_focus) {
+        if (!current_focus & !zooming) {
           event_fns.highlight_component(d.id);
         }
       })
       .on("mouseout", function (d) {
-        if (!current_focus) {
+        if (!current_focus & !zooming) {
           event_fns.reset_component_highlights();
         }
       });
@@ -528,7 +528,10 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     function zoom_to_component(id, node_highlight_fns) {
       reset_component_highlights();
       current_focus = id;
-
+      const nodes_in_sel = component_containers
+        .filter((c) => c.id === id)
+        .attr("opacity", 1)
+        .selectAll("circle");
       const nodes_in_component = nodes_by_component.find((c) => c.id === id)
         .nodes;
 
@@ -562,21 +565,14 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
             .call(zoom)
             .on("dblclick.zoom", null)
             .on("wheel.zoom", null);
-        });
 
-      const nodes_in_sel = component_containers
-        .filter((c) => c.id === id)
-        .attr("opacity", 1)
-        .selectAll("circle")
-        .on("mouseover", function (n) {
-          if (!zooming) {
-            node_highlight_fns.highlight_node(n.id);
-          }
-        })
-        .on("mouseout", function () {
-          if (!zooming) {
-            node_highlight_fns.reset_node_highlights();
-          }
+          nodes_in_sel
+            .on("mouseover", function (n) {
+              node_highlight_fns.highlight_node(n.id);
+            })
+            .on("mouseout", function () {
+              node_highlight_fns.reset_node_highlights();
+            });
         });
 
       function highlight_node(id) {
