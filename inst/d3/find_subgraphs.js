@@ -73,14 +73,24 @@ function find_subgraphs({
     }
   }
 
+  const subgraph_to_edges = {};
+  const add_to_obj_arr = function (obj, key, val) {
+    if (!obj[key]) {
+      obj[key] = [];
+    }
+    obj[key].push(val);
+  };
   const edges = Array.from({ length: stop_point }).map((_, i) => {
     const source = edge_source[i];
     const target = edge_target[i];
+    const subgraph_id = node_to_subgraph.get(source);
+    add_to_obj_arr(subgraph_to_edges, subgraph_id, i);
+
     return {
       source,
       target,
       strength: edge_strength[i],
-      subgraph: node_to_subgraph.get(source),
+      subgraph: subgraph_id,
       index: i,
     };
   });
@@ -109,7 +119,9 @@ function find_subgraphs({
     i++;
   });
 
-  const nodes_to_return = nodes.reduce((nodes_w_subgraph, node) => {
+  const subgraph_to_nodes = {};
+  const nodes_w_subgraph = [];
+  nodes.forEach((node) => {
     const subgraph_id = node_to_subgraph.get(node.id);
     if (subgraph_id) {
       const subgraph_center = subgraph_to_center.get(subgraph_id);
@@ -117,9 +129,23 @@ function find_subgraphs({
       node.subgraph_x = subgraph_center.x;
       node.subgraph_y = subgraph_center.y;
       nodes_w_subgraph.push(node);
+      add_to_obj_arr(subgraph_to_nodes, subgraph_id, node);
     }
-    return nodes_w_subgraph;
-  }, []);
+  });
 
-  return { nodes: nodes_to_return, edges, subgraphs, node_to_subgraph };
+  const nodes_by_component = [];
+  for (let subgraph_id in subgraph_to_nodes) {
+    nodes_by_component.push({
+      id: +subgraph_id,
+      nodes: subgraph_to_nodes[subgraph_id],
+      edge_indices: subgraph_to_edges[subgraph_id],
+    });
+  }
+
+  return {
+    nodes: nodes_w_subgraph,
+    nodes_by_component,
+    edges,
+    subgraphs,
+  };
 }
