@@ -69,14 +69,20 @@ function add_blur_filter(svg) {
   `);
 }
 
-function add_background_rect(g, { w, h, margins, color = "white" }) {
+function add_background_rect(
+  g,
+  { w, h, margins = {}, color = "white", fill_opacity = 0.5 }
+) {
   const { top = 0, bottom = 0, left = 0, right = 0 } = margins;
   g.select_append("rect.background")
     .attr("width", w + left + right)
     .attr("height", h + top + bottom)
     .attr("x", -left)
     .attr("y", -top)
-    .attr("fill", color);
+    .attr("fill", color)
+    .attr("fill-opacity", fill_opacity)
+    .attr("stroke", color)
+    .attr("stroke-width", 2);
 }
 
 d3.selection.prototype.select_append = function (query) {
