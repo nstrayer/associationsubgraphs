@@ -251,3 +251,8 @@ const scale_scale = function (scale, rel_amnt = 0.05) {
       : [range_min + extension_amnt / 2, range_max - extension_amnt / 2]
   );
 };
+
+Array.prototype.head = function (n = 5) {
+  // if (n === 0) return [];
+  return Array.from({ length: n }).map((_, i) => this[i]);
+};
