@@ -198,3 +198,18 @@ function table_from_obj(
 
   return rows;
 }
+
+function units_to_sizes(units, h, padding = 5) {
+  const values = Object.values(units);
+  const n = values.length;
+  const total_units = values.reduce((tot, u) => tot + u, 0);
+  const total_h = h - padding * (n - 1);
+  const sizes = {};
+  let current_h = 0;
+  for (let measure in units) {
+    const measure_h = (total_h * units[measure]) / total_units;
+    sizes[measure] = { h: measure_h, start: current_h };
+    current_h += measure_h + padding;
+  }
+  return sizes;
+}
