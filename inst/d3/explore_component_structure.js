@@ -434,7 +434,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         }
       });
 
-    const all_nodes = component_containers
+    all_nodes = component_containers
       .select("g.node_container")
       .selectAll("circle")
       .data(
