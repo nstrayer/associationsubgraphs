@@ -80,7 +80,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     "Click a component in network of chart to see details";
   const in_focus_instructions =
     "Click anywhere outside of component to reset zoom";
-  const instructions_text = div
+  const instructions_text = network_div
     .select_append("span#instructions_text")
     .style("position", "absolute")
     .style("top", "0")
