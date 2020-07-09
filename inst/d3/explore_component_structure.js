@@ -441,11 +441,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         ({ nodes }) => nodes,
         (d) => d.id
       )
-      .join((enter) =>
-        enter
-          .append("circle")
-          .call((node_circle) => node_circle.append("title").text((d) => d.id))
-      )
+      .join("circle")
       .attr("r", node_r)
       .attr("fill", (d) => d.color || "steelblue");
 
