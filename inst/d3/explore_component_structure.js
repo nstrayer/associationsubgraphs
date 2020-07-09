@@ -1,13 +1,15 @@
 // !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_subgraphs.js"), d3_version = "5"
 
 const margins = { left: 50, right: 50, top: 20, bottom: 10 };
-const { canvas, context, svg, g, w, h } = set_dom_elements({
-  div,
-  width,
-  height,
-  margins,
-});
+// const { canvas, context, svg, g, w, h } = set_dom_elements({
+//   div,
+//   width,
+//   height,
+//   margins,
+// });
 
+const w = width - margins.left - margins.right;
+const h = height - margins.top - margins.bottom;
 const network_settings = {
   w,
   rel_h: 3,
@@ -45,330 +47,475 @@ all_settings.forEach((settings) => {
 
 let default_step = 50;
 const structure_data = HTMLWidgets.dataframeToD3(data.structure);
+const div_shadow = "1px 1px 9px black";
 
 // =============================================================================
 // Setup the g elements that hold the separate plots
 // Setup and start the component charts;
-const network_holder = g.append("g").classed("network_plot", true);
+// const network_holder = g.append("g").classed("network_plot", true);
 
-const components_holder = g
-  .append("g")
-  .classed("components_chart", true)
-  .move_to({ y: component_settings.start_h })
-  .call(add_background_rect, {
-    ...component_settings,
-    margins: { left: margins.left, right: margins.right },
-  });
+// const components_holder = g
+//   .append("g")
+//   .classed("components_chart", true)
+//   .move_to({ y: component_settings.start_h })
+//   .call(add_background_rect, {
+//     ...component_settings,
+//     margins: { left: margins.left, right: margins.right },
+//   });
 
-const div_shadow = "1px 1px 9px black";
-const info_div = div
-  .append("div")
-  .style("background", "white")
-  .style("position", "absolute")
-  .style("left", 0)
-  .style("width", `${width}px`)
-  .style("height", `${h - network_settings.h - 5}px`)
-  .style("top", `${component_settings.start_h + margins.top}px`)
-  .style("box-shadow", div_shadow)
-  .style("display", "none");
+// const div_shadow = "1px 1px 9px black";
+// const info_div = div
+//   .append("div")
+//   .style("background", "white")
+//   .style("position", "absolute")
+//   .style("left", 0)
+//   .style("width", `${width}px`)
+//   .style("height", `${h - network_settings.h - 5}px`)
+//   .style("top", `${component_settings.start_h + margins.top}px`)
+//   .style("box-shadow", div_shadow)
+//   .style("display", "none");
 
-const tooltip_div = div
-  .append("div")
-  .style("width", "auto")
-  .style("max-width", "40%")
-  .style("box-shadow", div_shadow)
-  .style("padding-top", "6px")
-  .style("background", "white")
-  .style("position", "absolute")
-  .style("display", "none");
+// const tooltip_div = div
+//   .append("div")
+//   .style("width", "auto")
+//   .style("max-width", "40%")
+//   .style("box-shadow", div_shadow)
+//   .style("padding-top", "6px")
+//   .style("background", "white")
+//   .style("position", "absolute")
+//   .style("display", "none");
 
-const instructions = div
-  .select_append("p.instructions")
-  .style("font-style", "italic")
-  .style("text-align", "right")
-  .style("font-size", "0.9rem")
-  .style("margin", "3px 5px")
-  .style("position", "sticky")
-  .style("top", "30px")
-  .select_append("span")
-  .style("background", "#ffffffc4")
-  .style("border-radius", "5px");
+// const instructions = div
+//   .select_append("p.instructions")
+//   .style("font-style", "italic")
+//   .style("text-align", "right")
+//   .style("font-size", "0.9rem")
+//   .style("margin", "3px 5px")
+//   .style("position", "sticky")
+//   .style("top", "30px")
+//   .select_append("span")
+//   .style("background", "#ffffffc4")
+//   .style("border-radius", "5px");
 
-// .text("Click a component in chart or network to see details.");
-const set_instructions = function (focus_mode = false) {
-  instructions.text(
-    focus_mode
-      ? "Click anywhere outside of component to exit focus view."
-      : "Click a component in chart or network to see details."
-  );
-};
+// // .text("Click a component in chart or network to see details.");
+// const set_instructions = function (focus_mode = false) {
+//   instructions.text(
+//     focus_mode
+//       ? "Click anywhere outside of component to exit focus view."
+//       : "Click a component in chart or network to see details."
+//   );
+// };
 
-set_instructions();
+// set_instructions();
 
-// =============================================================================
-// Initialize the plots themselves
-let network_plot;
-let component_plot;
+// // =============================================================================
+// // Initialize the plots themselves
+// let network_plot;
+// let component_plot;
 
-// =============================================================================
-// Setup the interaction behaviours between chart components
-const info_panel_interactions = {
-  node_mouseover: function (node) {
-    network_plot.highlight_node(node);
+// // =============================================================================
+// // Setup the interaction behaviours between chart components
+// const info_panel_interactions = {
+//   node_mouseover: function (node) {
+//     network_plot.highlight_node(node);
+//   },
+//   node_mouseout: function () {
+//     network_plot.reset_node_highlights();
+//   },
+// };
+// let info_panel;
+// info_panel = setup_info_panel(info_div, info_panel_interactions);
+
+// const component_interactions = {
+//   click: function (component) {
+//     network_plot.focus_on_component(component.first_edge);
+//   },
+//   mouseover: function (component) {
+//     network_plot.highlight_component(component.first_edge);
+//   },
+//   mouseout: function (component) {
+//     network_plot.reset_highlights();
+//   },
+// };
+
+// const default_state = function () {
+//   if (info_panel) {
+//     info_panel.hide();
+//   }
+//   if (component_plot) {
+//     component_plot.show();
+//   }
+//   set_instructions();
+// };
+
+// const network_interactions = {
+//   click: function (component) {},
+//   mouseover: function (component) {
+//     component_plot.highlight_component(component.edge_indices);
+//   },
+//   mouseout: function (component) {
+//     component_plot.reset_highlights();
+//   },
+//   reset: function () {
+//     default_state();
+//   },
+//   focus: function (component) {
+//     info_panel.update(
+//       component,
+//       component_plot.info_for_component(component.edge_indices)
+//     );
+//     component_plot.hide();
+//     set_instructions(true);
+//   },
+//   node_mouseover: function (node) {
+//     info_panel.highlight_node(node.id);
+//   },
+//   node_mouseout: function (node) {
+//     info_panel.reset_highlights();
+//   },
+// };
+
+// function update_components_chart(step_i, update_network = false) {
+//   default_state();
+//   component_plot = draw_components_chart(components_holder, {
+//     components: structure_data[step_i].components,
+//     settings: component_settings,
+//     interaction_fns: component_interactions,
+//   });
+
+//   if (update_network) {
+//     network_plot = draw_network_plot(network_holder, {
+//       edge_vals: data.edges,
+//       n_edges: structure_data[step_i].n_edges,
+//       settings: network_settings,
+//       context,
+//       margins,
+//       interaction_fns: network_interactions,
+//       tooltip_div,
+//     });
+//   }
+// }
+
+// // Setup and start the timeline charts
+// g.append("g")
+//   .classed("timelines_chart", true)
+//   .move_to({ y: timeline_settings.start_h })
+//   .call(add_background_rect, {
+//     ...timeline_settings,
+//     margins: { left: margins.left, right: margins.right },
+//   })
+//   .call(draw_timelines, {
+//     data: structure_data,
+//     settings: timeline_settings,
+//     update_fn: update_components_chart,
+//   });
+
+// update_components_chart(default_step, true);
+
+setup_network_views({
+  div,
+  sizes: {
+    network_h: network_settings.h,
+    component_h: component_settings.h,
+    width,
+    margins,
   },
-  node_mouseout: function () {
-    network_plot.reset_node_highlights();
-  },
-};
-let info_panel;
-info_panel = setup_info_panel(info_div, info_panel_interactions);
-
-const component_interactions = {
-  click: function (component) {
-    network_plot.focus_on_component(component.first_edge);
-  },
-  mouseover: function (component) {
-    network_plot.highlight_component(component.first_edge);
-  },
-  mouseout: function (component) {
-    network_plot.reset_highlights();
-  },
-};
-
-const default_state = function () {
-  if (info_panel) {
-    info_panel.hide();
-  }
-  if (component_plot) {
-    component_plot.show();
-  }
-  set_instructions();
-};
-
-const network_interactions = {
-  click: function (component) {},
-  mouseover: function (component) {
-    component_plot.highlight_component(component.edge_indices);
-  },
-  mouseout: function (component) {
-    component_plot.reset_highlights();
-  },
-  reset: function () {
-    default_state();
-  },
-  focus: function (component) {
-    info_panel.update(
-      component,
-      component_plot.info_for_component(component.edge_indices)
-    );
-    component_plot.hide();
-    set_instructions(true);
-  },
-  node_mouseover: function (node) {
-    info_panel.highlight_node(node.id);
-  },
-  node_mouseout: function (node) {
-    info_panel.reset_highlights();
-  },
-};
-
-function update_components_chart(step_i, update_network = false) {
-  default_state();
-  component_plot = draw_components_chart(components_holder, {
-    components: structure_data[step_i].components,
-    settings: component_settings,
-    interaction_fns: component_interactions,
-  });
-
-  if (update_network) {
-    network_plot = draw_network_plot(network_holder, {
-      edge_vals: data.edges,
-      n_edges: structure_data[step_i].n_edges,
-      settings: network_settings,
-      context,
-      margins,
-      interaction_fns: network_interactions,
-      tooltip_div,
-    });
-  }
-}
-
-// Setup and start the timeline charts
-g.append("g")
-  .classed("timelines_chart", true)
-  .move_to({ y: timeline_settings.start_h })
-  .call(add_background_rect, {
-    ...timeline_settings,
-    margins: { left: margins.left, right: margins.right },
-  })
-  .call(draw_timelines, {
-    data: structure_data,
-    settings: timeline_settings,
-    update_fn: update_components_chart,
-  });
-
-update_components_chart(default_step, true);
-
+  all_edges: data.edges,
+  all_nodes: data.nodes,
+  component_info: structure_data,
+});
 // =============================================================================
 // Functions for drawing each section of the plots
 
-function setup_info_panel(info_div, interaction_fns) {
-  const non_column_keys = [
-    "subgraph_id",
-    "subgraph_x",
-    "subgraph_y",
-    "index",
-    "x",
-    "fx",
-    "y",
-    "fy",
-    "vy",
-    "vx",
-    "color",
-  ];
+function setup_network_views({
+  div,
+  all_nodes,
+  all_edges,
+  component_info,
+  sizes = {},
+}) {
+  const { network_h = 200, component_h = 200, width = 400, margins } = sizes;
 
-  info_div.style("overflow", "scroll").style("padding-top", "0.75rem");
+  const selection_color = "black";
+  const bar_color = "grey";
+  const selected_color = d3.color(bar_color).darker();
+  let focused_on = null;
+  const alphaDecay = 0.01;
+  const node_r = 3;
+  const focus_r = 6;
+  const lolly_r = 5;
+  const v_pad = 5; // padding added to top of selection rectangle
 
-  let info_table;
-  let nodes_table;
+  const network_div = div
+    .select_append("div#network_plot")
+    .style("position", "absolute");
 
-  function update(component, component_info) {
-    info_div.style("display", "block");
-    info_table = table_from_obj(info_div, {
-      data: [component_info],
-      id: "component_info",
-      keys_to_avoid: ["id", "first_edge"],
-      alignment: "center",
-      even_cols: true,
-      title: `Component ${component_info.id} statistics`,
-    });
+  // { canvas, context, svg, g, w, h }
+  // div, width, height, margins, add_canvas = true
+  const network = set_dom_elements({
+    div: network_div,
+    width,
+    height: network_h,
+    margins,
+  });
+  const network_g = network.g;
 
-    nodes_table = table_from_obj(info_div, {
-      data: component.nodes,
-      id: "nodes",
-      keys_to_avoid: non_column_keys,
-      title: "Nodes in component (hover to highlight in network plot)",
+  const component_div = div
+    .select_append("div#component_plot")
+    .style("position", "absolute")
+    .style("top", `${network_h}px`);
+
+  const component_dom = set_dom_elements({
+    div: component_div,
+    width,
+    height: component_h,
+    margins,
+    add_canvas: false,
+  });
+  const component_g = component_dom.g;
+
+  //#region Position debugging helpers
+  network_div.style("outline", "1px solid green");
+  component_div.style("outline", "1px solid red");
+  // info_div.style("outline", "1px solid blue");
+
+  // add_background_rect(network.g, {
+  //   w: network.w,
+  //   h: network.h,
+  //   color: "green",
+  //   fill_opacity: 0.1,
+  // });
+  // add_background_rect(component_dom.g, {
+  //   w: component_dom.w,
+  //   h: component_dom.h,
+  //   color: "red",
+  //   fill_opacity: 0.1,
+  // });
+  //#endregion
+
+  //#region Component chart setup
+  const component_sizes = units_to_sizes(
+    {
+      size: 2,
+      density: 1,
+      strength: 2,
+    },
+    component_dom.h
+  );
+
+  let max_label_width = 0;
+  component_g
+    .select_append("g.axis_labels")
+    .selectAll("text")
+    .data([
+      { label: "Num members", id: "size" },
+      { label: "Avg density", id: "density" },
+      { label: "Total edge strength", id: "strength" },
+    ])
+    .join("text")
+    .text((d) => d.label)
+    .attr("dominant-baseline", "middle")
+    .attr("y", (d) => component_sizes[d.id].start + component_sizes[d.id].h / 2)
+    .each(function () {
+      max_label_width = Math.max(
+        d3.select(this).node().getBBox().width,
+        max_label_width
+      );
     })
+    .attr("x", component_dom.w - max_label_width + 3);
+
+  const component_scales = {
+    X: d3
+      .scaleBand()
+      .range([0, w - max_label_width])
+      .paddingInner(0.03),
+    size: d3.scaleLinear().range([component_sizes.size.h, 0]),
+    density: d3.scaleLinear().range([component_sizes.density.h, 0]),
+    strength: d3.scaleLinear().range([0, component_sizes.strength.h - lolly_r]),
+  };
+
+  function update_components_chart(components, event_fns) {
+    const components_df = HTMLWidgets.dataframeToD3(components).sort(
+      (c_a, c_b) => c_b.size - c_a.size
+    );
+
+    // Update scales
+    component_scales.X.domain(components_df.map((d) => d.id));
+    component_scales.size.domain([0, d3.max(components.size)]);
+    component_scales.density.domain(d3.extent(components.density));
+    component_scales.strength.domain([0, d3.max(components.strength)]);
+    const component_w = component_scales.X.bandwidth();
+
+    const single_component = component_g
+      .select_append("g.chart_elements")
+      .selectAll("g.component_stats")
+      .data(components_df)
+      .join(function (enter) {
+        const main_g = enter
+          .append("g")
+          .attr("stroke", "black")
+          .move_to({ x: (d) => component_scales.X(d.id) });
+
+        // We have a size bar
+        main_g.append("rect").classed("size_bar", true).attr("fill", bar_color);
+
+        // We hav a two rectangle density g element in the middle
+        const density_g = main_g
+          .append("g")
+          .classed("density_chart", true)
+          .move_to({ y: component_sizes.density.start });
+        density_g
+          .append("rect")
+          .classed("background", true)
+          .attr("fill", "grey")
+          .attr("fill-opacity", 0.5);
+        density_g
+          .append("rect")
+          .classed("density_fill", true)
+          .attr("fill", bar_color);
+
+        // Finally we have a lollypop plot for strength on bottom
+        const strength_g = main_g
+          .append("g")
+          .classed("strength_lollypop", true)
+          .move_to({ y: component_sizes.strength.start });
+        strength_g
+          .append("line")
+          .classed("lollypop_stick", true)
+          .attr("stroke", bar_color)
+          .attr("stroke-width", 1);
+        strength_g
+          .append("circle")
+          .classed("lollypop_head", true)
+          .attr("r", lolly_r)
+          .attr("fill", bar_color);
+
+        // Place an invisible rectangle over the entire element space to make interactions more responsive
+        main_g
+          .append("rect")
+          .classed("interaction_rect", true)
+          .attr("stroke", selection_color)
+          .attr("rx", 5)
+          .attr("ry", 5)
+          .attr("stroke-width", 0)
+          .attr("fill-opacity", 0)
+          .attr("height", component_dom.h + v_pad)
+          .attr("y", -v_pad);
+
+        return main_g;
+      })
+      .classed("component_stats", true)
       .on("mouseover", function (d) {
-        reset_highlights();
-        highlight_node(d.id);
-        interaction_fns.node_mouseover(d);
+        event_fns.highlight_component(d.id);
       })
       .on("mouseout", function (d) {
-        reset_highlights();
-        interaction_fns.node_mouseout();
+        event_fns.reset_component_highlights();
+      })
+      .on("click", function (d) {
+        event_fns.focus_on_component(d.id);
       });
+
+    single_component.select("rect.interaction_rect").attr("width", component_w);
+
+    single_component
+      .transition()
+      .duration(100)
+      .attr("transform", (d) => `translate(${component_scales.X(d.id)}, 0)`);
+
+    single_component
+      .select("rect.size_bar")
+      .attr("width", component_w)
+      .attr("y", (d) => component_scales.size(d.size))
+      .attr(
+        "height",
+        (d) => component_sizes.size.h - component_scales.size(d.size)
+      );
+
+    const density_g = single_component.select("g.density_chart");
+
+    density_g
+      .select("rect.background")
+      .attr("height", component_sizes.density.h)
+      .attr("width", component_w);
+
+    density_g
+      .select("rect.density_fill")
+      .attr("y", (d) => component_scales.density(d.density))
+      .attr(
+        "height",
+        (d) => component_sizes.density.h - component_scales.density(d.density)
+      )
+      .attr("width", component_w);
+
+    const strength_g = single_component.select("g.strength_lollypop");
+
+    strength_g
+      .select("line")
+      .attr("y1", (d) => component_scales.strength(d.strength))
+      .attr("x1", component_w / 2)
+      .attr("x2", component_w / 2);
+
+    strength_g
+      .select("circle")
+      .attr("cy", (d) => component_scales.strength(d.strength))
+      .attr("cx", component_w / 2);
+
+    function highlight_component(id) {
+      // debugger;
+      const component_sel = single_component.filter((c) => c.id === id);
+
+      component_sel.select("rect.size_bar").attr("fill", selected_color);
+      component_sel.select("rect.density_fill").attr("fill", selected_color);
+      component_sel
+        .select("circle")
+        .attr("fill", selected_color)
+        .attr("r", lolly_r * 1.5);
+    }
+
+    function reset_component_highlights() {
+      single_component.select("rect.size_bar").attr("fill", bar_color);
+      single_component.select("rect.density_fill").attr("fill", bar_color);
+      single_component
+        .select("circle")
+        .attr("fill", bar_color)
+        .attr("r", lolly_r);
+    }
+
+    return { highlight_component, reset_component_highlights };
   }
+  //#endregion
 
-  function highlight_node(node_id) {
-    nodes_table
-      .filter((node) => node.id === node_id)
-      .style("outline", "2px solid black")
-      .call((node_row) => {
-        node_row.node().scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      });
-  }
+  //#region Network plot setup
 
-  function reset_highlights() {
-    nodes_table.style("outline", "none");
-  }
-
-  function hide() {
-    info_div.style("display", "none");
-  }
-
-  hide();
-  return { update, highlight_node, reset_highlights, hide };
-}
-
-function draw_network_plot(
-  g,
-  {
-    edge_vals,
-    n_edges,
-    settings,
-    context,
-    margins,
-    interaction_fns,
-    tooltip_div,
-  }
-) {
-  let focused_on = null;
-
-  const { w, h, node_r = 3, focus_r = 6, alphaDecay = 0.01 } = settings;
-  g.select_append("rect#zoom_detector")
-    .attr("width", w + margins.left + margins.right)
+  // May be able to replace this with just svg as network has its own svg now...
+  const zoom_detector_rect = network.g
+    .select_append("rect#zoom_detector")
+    .attr("width", network.w + margins.left + margins.right)
     .attr("x", -margins.left)
-    .attr("height", h + margins.top)
+    .attr("height", network.h + margins.top + margins.bottom)
     .attr("y", -margins.top)
     .attr("fill", "white")
     .attr("fill-opacity", 0)
-    .lower()
-    .on("click", function () {
-      reset();
-    });
+    .lower();
 
-  const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
-
-  const { nodes, edges, node_to_subgraph } = find_subgraphs({
-    nodes: nodes_raw,
-    edge_source: edge_vals.a,
-    edge_target: edge_vals.b,
-    edge_strength: edge_vals.strength,
-    n_edges,
-    width: w,
-    height: h,
-  });
-
-  const subgraph_to_nodes = {};
-  nodes.forEach((node) => {
-    if (!subgraph_to_nodes[node.subgraph_id]) {
-      subgraph_to_nodes[node.subgraph_id] = [];
-    }
-    subgraph_to_nodes[node.subgraph_id].push(node);
-  });
-
-  const nodes_by_component = [];
-  for (let subgraph_id in subgraph_to_nodes) {
-    nodes_by_component.push({
-      id: subgraph_id,
-      nodes: subgraph_to_nodes[subgraph_id],
-      edge_indices: edges
-        .filter((e) => e.subgraph == subgraph_id)
-        .map((e) => e.index),
-    });
-  }
-  const edge_to_subgraph_id = function (edge_in_component) {
-    return +edges[edge_in_component].subgraph;
+  network.scales = {
+    link_dist: d3.scaleLog().range([10, 1]),
+    link_color: d3.scaleLog(),
+    X_default: d3.scaleLinear().range([0, network.w]).domain([0, network.w]),
+    Y_default: d3.scaleLinear().range([0, network.h]).domain([0, network.h]),
   };
-
-  edge_to_subgraph_data = function (edge_in_component) {
-    const subgraph_id = edge_to_subgraph_id(edge_in_component);
-    return nodes_by_component.find((d) => +d.id === subgraph_id);
-  };
-
-  const link_scale = d3.scaleLog().domain(d3.extent(edge_vals.strength));
-  const link_dist = link_scale.copy().range([10, 1]);
-
-  const link_color = link_scale.copy();
-  const X_default = d3.scaleLinear().range([0, w]).domain([0, w]);
-  const Y_default = d3.scaleLinear().range([0, h]).domain([0, h]);
-  let X = X_default.copy();
-  let Y = Y_default.copy();
 
   const simulation = d3
-    .forceSimulation(nodes)
+    .forceSimulation()
+    .force("charge", d3.forceManyBody())
+    .alphaDecay(alphaDecay)
     .force(
       "link",
       d3
-        .forceLink(edges)
+        .forceLink()
         .id((d) => d.id)
-        .distance((d) => link_dist(d.strength))
+        .distance((e) => network.scales.link_dist(e.strength))
     )
-    .force("charge", d3.forceManyBody())
     .force(
       "x",
       d3
@@ -383,517 +530,1143 @@ function draw_network_plot(
         .strength(0.25)
         .y((node) => node.subgraph_y)
     )
-    .alphaDecay(alphaDecay)
-    .on("tick", ticked);
+    .stop();
 
-  const component_containers = g
-    .attr("stroke", "#fff")
-    .attr("stroke-width", node_r / 3)
-    .selectAll("g.component")
-    .data(nodes_by_component, (component) => component.id)
-    .join((enter) => {
-      const main_g = enter.append("g").attr("class", "component");
-      main_g
-        .append("rect")
-        .attr("class", "bounding_rect")
-        .attr("fill-opacity", 0)
-        .attr("rx", 5)
-        .attr("ry", 5);
-      main_g.append("g").attr("class", "node_container");
-      return main_g;
-    })
-    .on("mouseover", function (d) {
-      if (!focused_on) {
-        d3.select(this).call(show_bounding_box);
-        interaction_fns.mouseover(d);
-      }
-    })
-    .on("mouseout", function (d) {
-      reset_component_highlights();
-      interaction_fns.mouseout(d);
-    })
-    .on("click", function (d) {
-      focus_on_component(d);
-    })
-    .on("dblclick", function () {
-      if (focused_on) {
-        reset();
-      }
-    });
+  const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
-  const all_nodes = component_containers
-    .select("g.node_container")
-    .selectAll("circle")
-    .data(
-      ({ nodes }) => nodes,
-      (d) => d.id
-    )
-    .join((enter) =>
-      enter
-        .append("circle")
-        .call((node_circle) => node_circle.append("title").text((d) => d.id))
-    )
-    .attr("r", node_r)
-    .attr("fill", (d) => d.color || "steelblue")
-    .on("mouseover", function (d) {
-      if (focused_on) {
-        highlight_node(d);
-        interaction_fns.node_mouseover(d);
-      }
-    })
-    .on("mouseout", function (d) {
-      if (focused_on) {
-        reset_node_highlights();
-        interaction_fns.node_mouseout();
-      }
-    })
-    .call(drag(simulation));
+  function update_network_plot(
+    { nodes, edges, nodes_by_component },
+    event_fns
+  ) {
+    let current_focus = null;
+    let X = network.scales.X_default.copy();
+    let Y = network.scales.Y_default.copy();
+    const strength_extent = d3.extent(edges, (d) => d.strength);
+    network.scales.link_dist.domain(strength_extent);
+    network.scales.link_color.domain(strength_extent);
 
-  function ticked() {
-    update_edges();
-    update_nodes();
-  }
+    // Update simulation with data
+    simulation.nodes(nodes);
+    simulation.force("link").links(edges);
+    simulation.alpha(1).restart();
+    simulation.on("tick", update_positions);
 
-  function update_edges() {
-    context.clearRect(0, 0, +canvas.attr("width"), +canvas.attr("height"));
-
-    if (focused_on) {
-      context.lineWidth = 2.5;
-      nodes_by_component
-        .find((c) => c.id === focused_on)
-        .edge_indices.forEach((edge_i) => {
-          const { source, target, strength } = edges[edge_i];
-          context.beginPath();
-          context.moveTo(X(source.x) + margins.left, Y(source.y) + margins.top);
-          context.lineTo(X(target.x) + margins.left, Y(target.y) + margins.top);
-          // Set color of edges
-          context.strokeStyle = d3.interpolateReds(link_color(strength));
-          context.stroke();
-        });
-    } else {
-      // Scale edge opacity based upon how many edges we have
-      context.globalAlpha = 0.5;
-      context.lineWidth = 1;
-      // Set color of edges
-      context.strokeStyle = "#999";
-      context.beginPath();
-      edges.forEach((d) => {
-        context.moveTo(
-          X(d.source.x) + margins.left,
-          Y(d.source.y) + margins.top
-        );
-        context.lineTo(
-          X(d.target.x) + margins.left,
-          Y(d.target.y) + margins.top
-        );
+    const component_containers = network.g
+      .attr("stroke", "#fff")
+      .attr("stroke-width", node_r / 3)
+      .selectAll("g.component")
+      .data(nodes_by_component, (component) => component.id)
+      .join((enter) => {
+        const main_g = enter.append("g").attr("class", "component");
+        main_g
+          .append("rect")
+          .attr("class", "bounding_rect")
+          .attr("fill-opacity", 0)
+          .attr("rx", 5)
+          .attr("ry", 5);
+        main_g.append("g").attr("class", "node_container");
+        return main_g;
+      })
+      .on("click", function (d) {
+        if (!current_focus) {
+          event_fns.focus_on_component(d.id);
+        }
+      })
+      .on("mouseover", function (d) {
+        if (!current_focus) {
+          event_fns.highlight_component(d.id);
+        }
+      })
+      .on("mouseout", function (d) {
+        if (!current_focus) {
+          event_fns.reset_component_highlights();
+        }
       });
 
-      // Draw to canvas
-      context.stroke();
-    }
-  }
+    const all_nodes = component_containers
+      .select("g.node_container")
+      .selectAll("circle")
+      .data(
+        ({ nodes }) => nodes,
+        (d) => d.id
+      )
+      .join((enter) =>
+        enter
+          .append("circle")
+          .call((node_circle) => node_circle.append("title").text((d) => d.id))
+      )
+      .attr("r", node_r)
+      .attr("fill", (d) => d.color || "steelblue");
 
-  function update_nodes() {
-    all_nodes.attr("cx", (d) => X(d.x)).attr("cy", (d) => Y(d.y));
-    // Update bounding rects for interaction purposes
-    component_containers.each(function (d) {
-      const pad = 5;
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.5, 8])
+      .on("zoom", function () {
+        X = d3.event.transform.rescaleX(network.scales.X_default.copy());
+        Y = d3.event.transform.rescaleY(network.scales.Y_default.copy());
+        update_positions();
+      });
+    network.svg.call(zoom).on("dblclick.zoom", null);
 
-      const component_bbox = d3
-        .select(this)
-        .select("g.node_container")
-        .node()
-        .getBBox();
-
-      d3.select(this)
-        .select("rect.bounding_rect")
-        .attr("width", component_bbox.width + pad * 2)
-        .attr("height", component_bbox.height + pad * 2)
-        .attr("x", component_bbox.x - pad)
-        .attr("y", component_bbox.y - pad);
+    zoom_detector_rect.on("click", function () {
+      event_fns.reset_focus();
     });
-  }
 
-  function drag(simulation) {
-    function dragstarted(d) {
-      if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    }
-
-    function dragged(d) {
-      d.fx = d3.event.x;
-      d.fy = d3.event.y;
-    }
-
-    function dragended(d) {
-      if (!d3.event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
-    }
-
-    return d3
-      .drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended);
-  }
-  const zoom = d3.zoom().scaleExtent([0.5, 8]).on("zoom", zoomed);
-  // We dont want the double click to work because double clicking is taken over
-  // for de-selecting a component
-  g.call(zoom).on("dblclick.zoom", null);
-
-  function zoomed() {
-    X = d3.event.transform.rescaleX(X_default.copy());
-    Y = d3.event.transform.rescaleY(Y_default.copy());
-    update_edges();
-    update_nodes();
-  }
-
-  function show_bounding_box(component) {
-    reset_component_highlights();
-    component.select("rect.bounding_rect").attr("stroke", "black");
-  }
-
-  function highlight_component(edge_in_component) {
-    component_containers
-      .filter((d) => +d.id === edge_to_subgraph_id(edge_in_component))
-      .call(show_bounding_box);
-  }
-
-  function reset_component_highlights() {
-    component_containers.select("rect.bounding_rect").attr("stroke", "white");
-  }
-
-  function reset() {
-    g.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
-    all_nodes.transition().duration(750).attr("r", node_r);
-
-    reset_component_highlights();
-    interaction_fns.reset();
-    component_containers.attr("opacity", 1);
-
-    focused_on = null;
-  }
-
-  function focus_on_component(component) {
-    interaction_fns.focus(component);
-
-    const nodes_in_component = component.nodes;
-
-    const [x_min, x_max] = d3.extent(nodes_in_component, (n) => n.x);
-    const [y_min, y_max] = d3.extent(nodes_in_component, (n) => n.y);
-
-    g.transition()
-      .duration(750)
-      .call(
-        zoom.transform,
-        d3.zoomIdentity
-          .translate(w / 2, h / 2)
-          .scale(
-            Math.min(
-              8,
-              0.7 / Math.max((x_max - x_min) / w, (y_max - y_min) / h)
-            )
-          )
-          .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2)
+    function update_positions() {
+      // Edges
+      network.context.clearRect(
+        0,
+        0,
+        +network.canvas.attr("width"),
+        +network.canvas.attr("height")
       );
 
-    component_containers
-      .filter((c) => c.id === component.id)
-      .selectAll("circle")
-      .transition()
-      .duration(750)
-      .attr("r", focus_r);
+      const draw_edge = ({ source, target }) => {
+        network.context.moveTo(
+          X(source.x) + margins.left,
+          Y(source.y) + margins.top
+        );
+        network.context.lineTo(
+          X(target.x) + margins.left,
+          Y(target.y) + margins.top
+        );
+      };
 
-    component_containers
-      .filter((c) => c.id !== component.id)
-      .attr("opacity", 0);
+      if (current_focus) {
+        network.context.lineWidth = 2.5;
+        nodes_by_component
+          .find((c) => c.id === current_focus)
+          .edge_indices.forEach((edge_i) => {
+            const edge = edges[edge_i];
 
-    link_color.domain(
-      d3.extent(component.edge_indices, (i) => edge_vals.strength[i])
-    );
-
-    focused_on = component.id;
-  }
-
-  function highlight_node(node) {
-    const n_neighbors = 5;
-    all_nodes.filter((n) => n.id == node.id).attr("r", focus_r * 2);
-
-    const neighbors = edges
-      .filter((edge) => edge.source === node || edge.target === node)
-      .map(({ source, target, strength }) => ({
-        neighbor: source == node ? target.id : source.id,
-        strength,
-        color: d3.interpolateReds(link_color(strength)),
-      }))
-      .sort((a, b) => b.strength - a.strength)
-      .filter((d, i) => i < n_neighbors);
-
-    const neighbor_table = table_from_obj(
-      tooltip_div
-        .style("display", "block")
-        .style("top", Y(node.y))
-        .style("left", X(node.x)),
-      {
-        data: neighbors,
-        id: "tooltip",
-        keys_to_avoid: ["id", "first_edge"],
-        even_cols: true,
-        title: `Top ${neighbors.length} Neighbors`,
-        max_width: "95%",
-        colored_rows: true,
+            network.context.beginPath();
+            draw_edge(edge);
+            // Set color of edges
+            network.context.strokeStyle = d3.interpolateReds(
+              network.scales.link_color(edge.strength)
+            );
+            network.context.stroke();
+          });
+      } else {
+        network.context.globalAlpha = 0.5;
+        network.context.lineWidth = 1;
+        network.context.strokeStyle = "#999";
+        network.context.beginPath();
+        edges.forEach(draw_edge);
+        network.context.stroke();
       }
-    );
+
+      // nodes
+      all_nodes.attr("cx", (d) => X(d.x)).attr("cy", (d) => Y(d.y));
+      // Update bounding rects for interaction purposes
+      component_containers.each(function (d) {
+        const pad = 5;
+
+        const component_bbox = d3
+          .select(this)
+          .select("g.node_container")
+          .node()
+          .getBBox();
+
+        d3.select(this)
+          .select("rect.bounding_rect")
+          .attr("width", component_bbox.width + pad * 2)
+          .attr("height", component_bbox.height + pad * 2)
+          .attr("x", component_bbox.x - pad)
+          .attr("y", component_bbox.y - pad);
+      });
+    }
+
+    function zoom_to_component(id, node_highlight_fns) {
+      current_focus = id;
+      reset_component_highlights();
+      const nodes_in_component = nodes_by_component.find((c) => c.id === id)
+        .nodes;
+
+      const [x_min, x_max] = d3.extent(nodes_in_component, (n) => n.x);
+      const [y_min, y_max] = d3.extent(nodes_in_component, (n) => n.y);
+
+      network.g
+        .transition()
+        .duration(750)
+        .call(
+          zoom.transform,
+          d3.zoomIdentity
+            .translate(network.w / 2, network.h / 2)
+            .scale(
+              Math.min(
+                8,
+                0.7 /
+                  Math.max(
+                    (x_max - x_min) / network.w,
+                    (y_max - y_min) / network.h
+                  )
+              )
+            )
+            .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2)
+        );
+
+      const nodes_in_sel = component_containers
+        .filter((c) => c.id === id)
+        .attr("opacity", 1)
+        .selectAll("circle")
+        .on("mouseover", function (n) {
+          node_highlight_fns.highlight_node(n.id);
+        })
+        .on("mouseout", function () {
+          node_highlight_fns.reset_node_highlights();
+        });
+
+      function highlight_node(id) {
+        nodes_in_sel.filter((n) => n.id === id).attr("r", focus_r * 1.5);
+      }
+
+      nodes_in_sel.transition().duration(750).attr("r", focus_r);
+
+      component_containers.filter((c) => c.id !== id).attr("opacity", 0);
+
+      return {
+        highlight_node,
+        reset_node_highlights: function () {
+          nodes_in_sel.attr("r", focus_r);
+        },
+      };
+    }
+
+    function reset_component_highlights() {
+      component_containers.select("rect.bounding_rect").attr("stroke", "white");
+    }
+
+    return {
+      zoom_to_component,
+      reset_component_highlights,
+      reset_zoom: function () {
+        current_focus = null;
+        component_containers.attr("opacity", 1);
+        network.g
+          .transition()
+          .duration(750)
+          .call(zoom.transform, d3.zoomIdentity);
+
+        all_nodes
+          .on("mouseover", null)
+          .on("mouseout", null)
+          .transition()
+          .duration(750)
+          .attr("r", node_r);
+      },
+      highlight_component: function (id) {
+        reset_component_highlights();
+        component_containers
+          .filter((c) => c.id === id)
+          .select("rect.bounding_rect")
+          .attr("stroke", "black");
+      },
+    };
   }
 
-  function reset_node_highlights(radius = focus_r) {
-    all_nodes.attr("r", radius);
-    tooltip_div.style("display", "none");
+  //#endregion Network plot
+
+  //#region Information div
+  const info_div = div
+    .select_append("div#info_panel")
+    .style("position", "absolute")
+    .style("top", `${network_h}px`)
+    .style("height", `calc(100% - ${network_h}px`)
+    .style("width", `${width}px`)
+    .style("box-shadow", div_shadow)
+    .style("background", "white")
+    .style("overflow", "scroll")
+    .style("padding-top", "0.75rem")
+    .style("display", "none");
+
+  // What we want to not show in now info
+  const non_column_keys = [
+    "subgraph_id",
+    "subgraph_x",
+    "subgraph_y",
+    "index",
+    "x",
+    "fx",
+    "y",
+    "fy",
+    "vy",
+    "vx",
+    "color",
+  ];
+
+  function setup_info_div({ nodes, edges, nodes_by_component, components }) {
+    return {
+      show_component: function (id, highlight_fns) {
+        const component_i = components.id.findIndex((c_id) => c_id === id);
+        info_div.style("display", "block");
+
+        info_table = table_from_obj(info_div, {
+          data: [
+            {
+              density: components.density[component_i],
+              strength: components.strength[component_i],
+              size: components.size[component_i],
+            },
+          ],
+          id: "component_info",
+          keys_to_avoid: ["first_edge"],
+          alignment: "center",
+          even_cols: true,
+          title: `Component ${id} statistics`,
+        });
+
+        nodes_table = table_from_obj(info_div, {
+          data: nodes_by_component.find((c) => c.id === id).nodes,
+          id: "nodes",
+          keys_to_avoid: non_column_keys,
+          title: "Nodes in component (hover to highlight in network plot)",
+        });
+
+        nodes_table
+          .on("mouseover", function (n) {
+            highlight_fns.highlight_node(n.id);
+          })
+          .on("mouseout", function () {
+            highlight_fns.reset_node_highlights();
+          });
+
+        return {
+          highlight_node(id) {
+            nodes_table
+              .filter((n) => n.id === id)
+              .style("outline", "2px solid black")
+              .call((node_row) => {
+                node_row.node().scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                });
+              });
+          },
+          reset_node_highlights() {
+            nodes_table.style("outline", "none");
+          },
+        };
+      },
+      hide: function () {
+        info_div.style("display", "none");
+      },
+    };
+  }
+  //#endregion
+
+  //#region Neighbor tooltip
+  function setup_neighbor_tooltip({ edges, n_neighbors = 5 }) {
+    const tooltip_div = div
+      .select_append("div#edges_tooltip")
+      .style("width", "auto")
+      .style("max-width", "40%")
+      .style("box-shadow", div_shadow)
+      .style("padding-top", "6px")
+      .style("background", "white")
+      .style("position", "absolute")
+      .style("display", "none");
+
+    return {
+      show_node_neighbors: function (node_id) {
+        const neighbors = edges
+          .filter(
+            (edge) => edge.source.id === node_id || edge.target.id === node_id
+          )
+          .map(({ source, target, strength }) => ({
+            neighbor: source.id == node_id ? target.id : source.id,
+            strength,
+            color: d3.interpolateReds(network.scales.link_color(strength)),
+          }))
+          .sort((a, b) => b.strength - a.strength)
+          .filter((d, i) => i < n_neighbors);
+
+        table_from_obj(tooltip_div.style("display", "block"), {
+          data: neighbors,
+          id: "tooltip",
+          keys_to_avoid: ["id", "first_edge"],
+          even_cols: true,
+          title: `Top ${neighbors.length} Neighbors`,
+          max_width: "95%",
+          colored_rows: true,
+        });
+      },
+      hide: function () {
+        tooltip_div.style("display", "none");
+      },
+    };
   }
 
-  return {
-    highlight_component,
-    reset_highlights: reset_component_highlights,
-    focus_on_component: (edge_id) =>
-      focus_on_component(edge_to_subgraph_data(edge_id)),
-    highlight_node,
-    reset_node_highlights,
-    reset,
-  };
-}
+  //#endregion
 
-function draw_components_chart(g, { components, settings, interaction_fns }) {
-  const {
-    w,
-    h,
-    bar_color,
-    selection_color,
-    padding = 3,
-    strength_r = 4,
-    units = {
-      size: 2,
-      density: 1,
-      strength: 2,
-    },
-  } = settings;
-
-  const total_units = Object.values(units).reduce((tot, u) => tot + u, 0);
-  const total_h = h - padding * 2;
-
-  const sizes = {};
-  for (let measure in units) {
-    sizes[measure] = (total_h * units[measure]) / total_units;
-  }
-  const components_df = HTMLWidgets.dataframeToD3(components).sort(
-    (c_a, c_b) => c_b.size - c_a.size
-  );
-
-  const size_label = g
-    .select_append("text#size_label")
-    .text("Num members")
-    .attr("dominant-baseline", "middle")
-    .attr("y", sizes.size / 2);
-
-  const density_label = g
-    .select_append("text#density_label")
-    .text("Avg density")
-    .attr("y", sizes.size + padding + sizes.density / 2)
-    .attr("dominant-baseline", "middle");
-
-  const strength_label = g
-    .select_append("text#strength_label")
-    .text("Total edge strength")
-    .attr("dominant-baseline", "middle")
-    .attr("y", total_h - sizes.strength / 2 + padding * 2);
-
-  const all_labels = [size_label, density_label, strength_label];
-
-  const space_for_labels = d3.max(
-    all_labels,
-    (lab) => lab.node().getBBox().width
-  );
-
-  all_labels.forEach((lab) => lab.move_to({ x: w - space_for_labels + 3 }));
-
-  const X = d3
-    .scaleBand()
-    .domain(components_df.map((d) => d.id))
-    .range([0, w - space_for_labels])
-    .paddingInner(0.03);
-
-  const component_w = X.bandwidth();
-
-  const sizes_Y = d3
-    .scaleLinear()
-    .domain([0, d3.max(components.size)])
-    .range([sizes.size, 0]);
-
-  const densities_Y = d3
-    .scaleLinear()
-    .domain(d3.extent(components.density))
-    .range([sizes.density, 0]);
-
-  const strengths_Y = d3
-    .scaleLinear()
-    .domain([0, d3.max(components.strength)])
-    .range([0, sizes.strength - strength_r]);
-
-  const setup_new_subgraph_g = function (enter) {
-    const main_g = enter.append("g");
-
-    // We have a size bar
-    main_g.append("rect").classed("size_bar", true);
-
-    // We hav a two rectangle density g element in the middle
-    const density_g = main_g.append("g").classed("density_chart", true);
-    density_g.append("rect").classed("background", true);
-    density_g.append("rect").classed("density_fill", true);
-
-    // Finally we have a lollypop plot for strength on bottom
-    const strength_g = main_g.append("g").classed("strength_lollypop", true);
-    strength_g.append("line").classed("lollypop_stick", true);
-    strength_g.append("circle").classed("lollypop_head", true);
-
-    // Place an invisible rectangle over the entire element space to make interactions more responsive
-    main_g
-      .append("rect")
-      .classed("interaction_rect", true)
-      .attr("stroke", selection_color)
-      .attr("rx", 5)
-      .attr("ry", 5)
-      .attr("stroke-width", 0)
-      .attr("fill-opacity", 0);
-
-    return main_g;
-  };
-
-  const component_g = g
-    .selectAll("g.component_stats")
-    .data(components_df)
-    .join(
-      setup_new_subgraph_g,
-      (update) => update,
-      (exit) => exit.attr("opacity", 0).remove()
-    )
-    .classed("component_stats", true)
-    .on("mouseover", function (d) {
-      d3.select(this).call(emphasize_component);
-      interaction_fns.mouseover(d);
-    })
-    .on("mouseout", function (d) {
-      reset_highlights();
-      interaction_fns.mouseout(d);
-    })
-    .on("click", function (d) {
-      reset_highlights();
-      interaction_fns.click(d);
+  function harmonize_data(step_i) {
+    const { n_edges, components } = component_info[step_i];
+    const { nodes, edges, nodes_by_component } = find_subgraphs({
+      nodes: nodes_raw,
+      edge_source: all_edges.a,
+      edge_target: all_edges.b,
+      edge_strength: all_edges.strength,
+      n_edges,
+      width: network.w,
+      height: network.h,
     });
 
-  const v_pad = 5; // padding added to top of selection rectangle
-  component_g
-    .select("rect.interaction_rect")
-    .attr("width", component_w)
-    .attr("height", h + v_pad)
-    .attr("y", -v_pad);
+    // Match the component ids across the two datasets
+    components.id = components.first_edge.map(
+      (edge_i) => edges[edge_i].subgraph
+    );
 
-  component_g
-    .attr("stroke", "black")
-    .transition()
-    .duration(100)
-    .attr("transform", (d) => `translate(${X(d.id)}, 0)`);
-
-  component_g
-    .select("rect.size_bar")
-    .attr("width", component_w)
-    .attr("y", (d) => sizes_Y(d.size))
-    .attr("height", (d) => sizes.size - sizes_Y(d.size))
-    .attr("fill", bar_color);
-
-  const density_g = component_g
-    .select("g.density_chart")
-    .move_to({ y: sizes.size + padding });
-
-  density_g
-    .select("rect.background")
-    .attr("height", sizes.density)
-    .attr("width", component_w)
-    .attr("fill", "grey")
-    .attr("fill-opacity", 0.5);
-
-  density_g
-    .select("rect.density_fill")
-    .attr("y", (d) => densities_Y(d.density))
-    .attr("height", (d) => sizes.density - densities_Y(d.density))
-    .attr("width", component_w)
-    .attr("fill", bar_color);
-
-  const strength_g = component_g
-    .select("g.strength_lollypop")
-    .move_to({ y: total_h - sizes.strength + padding * 2 });
-
-  strength_g
-    .select("line")
-    .attr("y1", (d) => strengths_Y(d.strength))
-    .attr("x1", component_w / 2)
-    .attr("x2", component_w / 2)
-    .attr("stroke", bar_color)
-    .attr("stroke-width", 1);
-
-  strength_g
-    .select("circle")
-    .attr("cy", (d) => strengths_Y(d.strength))
-    .attr("cx", component_w / 2)
-    .attr("r", strength_r)
-    .attr("fill", bar_color);
-  reset_highlights();
-  g.select_append("g.size_axis")
-    .call(d3.axisLeft(sizes_Y).ticks(sizes_Y.domain()[1]))
-    .call(extend_ticks, w, 0.4)
-    .call(remove_domain)
-    .call((g) => g.selectAll("text").remove());
-
-  g.select_append("g.strength_axis")
-    .attr(
-      "transform",
-      `translate(0, ${sizes.size + sizes.density + 2 * padding})`
-    )
-    .call(d3.axisLeft(strengths_Y).ticks(2));
-
-  function emphasize_component(component_g) {
-    reset_highlights();
-    component_g.attr("stroke-width", 2.5);
-  }
-  function reset_highlights() {
-    component_g.attr("stroke-width", 1);
+    return { nodes, edges, components, nodes_by_component };
   }
 
-  function highlight_component(edge_indices) {
-    component_g
-      .filter((c) => edge_indices.includes(c.first_edge))
-      .call(emphasize_component);
-  }
+  function set_to_step(step_i) {
+    const step_data = harmonize_data(step_i);
+    const component_chart = update_components_chart(step_data.components, {
+      focus_on_component,
+      reset_focus,
+      highlight_component,
+      reset_component_highlights,
+    });
+    const network_plot = update_network_plot(step_data, {
+      focus_on_component,
+      reset_focus,
+      highlight_component,
+      reset_component_highlights,
+    });
 
-  function info_for_component(edge_indices) {
-    return components_df.find((c) => edge_indices.includes(c.first_edge));
-  }
+    const info_panel = setup_info_div(step_data);
+    const neighbor_tooltip = setup_neighbor_tooltip(step_data);
 
-  function hide() {
-    g.attr("opacity", 0);
-  }
-  function show() {
-    g.attr("opacity", 1);
-  }
+    function focus_on_component(id) {
+      const highlight_fns = {
+        highlight_node,
+        reset_node_highlights,
+      };
 
-  return {
-    highlight_component,
-    info_for_component,
-    reset_highlights,
-    hide,
-    show,
-  };
+      const focused_network = network_plot.zoom_to_component(id, highlight_fns);
+      const focused_info = info_panel.show_component(id, highlight_fns);
+
+      function highlight_node(node_id) {
+        focused_network.highlight_node(node_id);
+        focused_info.highlight_node(node_id);
+        neighbor_tooltip.show_node_neighbors(node_id);
+      }
+
+      function reset_node_highlights() {
+        focused_network.reset_node_highlights();
+        focused_info.reset_node_highlights();
+        neighbor_tooltip.hide();
+      }
+    }
+
+    function reset_focus() {
+      network_plot.reset_zoom();
+      info_panel.hide();
+      neighbor_tooltip.hide();
+    }
+
+    function highlight_component(id) {
+      network_plot.highlight_component(id);
+      component_chart.highlight_component(id);
+    }
+
+    function reset_component_highlights() {
+      network_plot.reset_component_highlights();
+      component_chart.reset_component_highlights();
+    }
+  }
+  set_to_step(50);
+
+  // setTimeout(function () {
+  //   set_to_step(150);
+  // }, 2000);
 }
+
+//#region Old code
+
+// function setup_info_panel(info_div, interaction_fns) {
+//   const non_column_keys = [
+//     "subgraph_id",
+//     "subgraph_x",
+//     "subgraph_y",
+//     "index",
+//     "x",
+//     "fx",
+//     "y",
+//     "fy",
+//     "vy",
+//     "vx",
+//     "color",
+//   ];
+
+//   info_div.style("overflow", "scroll").style("padding-top", "0.75rem");
+
+//   let info_table;
+//   let nodes_table;
+
+//   function update(component, component_info) {
+//     info_div.style("display", "block");
+//     info_table = table_from_obj(info_div, {
+//       data: [component_info],
+//       id: "component_info",
+//       keys_to_avoid: ["id", "first_edge"],
+//       alignment: "center",
+//       even_cols: true,
+//       title: `Component ${component_info.id} statistics`,
+//     });
+
+//     nodes_table = table_from_obj(info_div, {
+//       data: component.nodes,
+//       id: "nodes",
+//       keys_to_avoid: non_column_keys,
+//       title: "Nodes in component (hover to highlight in network plot)",
+//     })
+//       .on("mouseover", function (d) {
+//         reset_highlights();
+//         highlight_node(d.id);
+//         interaction_fns.node_mouseover(d);
+//       })
+//       .on("mouseout", function (d) {
+//         reset_highlights();
+//         interaction_fns.node_mouseout();
+//       });
+//   }
+
+//   function highlight_node(node_id) {
+//     nodes_table
+//       .filter((node) => node.id === node_id)
+//       .style("outline", "2px solid black")
+//       .call((node_row) => {
+//         node_row.node().scrollIntoView({
+//           behavior: "smooth",
+//           block: "nearest",
+//         });
+//       });
+//   }
+
+//   function reset_highlights() {
+//     nodes_table.style("outline", "none");
+//   }
+
+//   function hide() {
+//     info_div.style("display", "none");
+//   }
+
+//   hide();
+//   return { update, highlight_node, reset_highlights, hide };
+// }
+
+// function draw_network_plot(
+//   g,
+//   {
+//     edge_vals,
+//     n_edges,
+//     settings,
+//     context,
+//     margins,
+//     interaction_fns,
+//     tooltip_div,
+//   }
+// ) {
+//   let focused_on = null;
+
+//   const { w, h, node_r = 3, focus_r = 6, alphaDecay = 0.01 } = settings;
+//   g.select_append("rect#zoom_detector")
+//     .attr("width", w + margins.left + margins.right)
+//     .attr("x", -margins.left)
+//     .attr("height", h + margins.top)
+//     .attr("y", -margins.top)
+//     .attr("fill", "white")
+//     .attr("fill-opacity", 0)
+//     .lower()
+//     .on("click", function () {
+//       reset();
+//     });
+
+//   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
+
+//   const { nodes, edges, node_to_subgraph } = find_subgraphs({
+//     nodes: nodes_raw,
+//     edge_source: edge_vals.a,
+//     edge_target: edge_vals.b,
+//     edge_strength: edge_vals.strength,
+//     n_edges,
+//     width: w,
+//     height: h,
+//   });
+
+//   const subgraph_to_nodes = {};
+//   nodes.forEach((node) => {
+//     if (!subgraph_to_nodes[node.subgraph_id]) {
+//       subgraph_to_nodes[node.subgraph_id] = [];
+//     }
+//     subgraph_to_nodes[node.subgraph_id].push(node);
+//   });
+
+//   const nodes_by_component = [];
+//   for (let subgraph_id in subgraph_to_nodes) {
+//     nodes_by_component.push({
+//       id: subgraph_id,
+//       nodes: subgraph_to_nodes[subgraph_id],
+//       edge_indices: edges
+//         .filter((e) => e.subgraph == subgraph_id)
+//         .map((e) => e.index),
+//     });
+//   }
+//   const edge_to_subgraph_id = function (edge_in_component) {
+//     return +edges[edge_in_component].subgraph;
+//   };
+
+//   edge_to_subgraph_data = function (edge_in_component) {
+//     const subgraph_id = edge_to_subgraph_id(edge_in_component);
+//     return nodes_by_component.find((d) => +d.id === subgraph_id);
+//   };
+
+//   const link_scale = d3.scaleLog().domain(d3.extent(edge_vals.strength));
+//   const link_dist = link_scale.copy().range([10, 1]);
+
+//   const link_color = link_scale.copy();
+//   const X_default = d3.scaleLinear().range([0, w]).domain([0, w]);
+//   const Y_default = d3.scaleLinear().range([0, h]).domain([0, h]);
+//   let X = X_default.copy();
+//   let Y = Y_default.copy();
+
+//   const simulation = d3
+//     .forceSimulation(nodes)
+//     .force(
+//       "link",
+//       d3
+//         .forceLink(edges)
+//         .id((d) => d.id)
+//         .distance((d) => link_dist(d.strength))
+//     )
+//     .force("charge", d3.forceManyBody())
+//     .force(
+//       "x",
+//       d3
+//         .forceX()
+//         .strength(0.25)
+//         .x((node) => node.subgraph_x)
+//     )
+//     .force(
+//       "y",
+//       d3
+//         .forceY()
+//         .strength(0.25)
+//         .y((node) => node.subgraph_y)
+//     )
+//     .alphaDecay(alphaDecay)
+//     .on("tick", ticked);
+
+//   const component_containers = g
+//     .attr("stroke", "#fff")
+//     .attr("stroke-width", node_r / 3)
+//     .selectAll("g.component")
+//     .data(nodes_by_component, (component) => component.id)
+//     .join((enter) => {
+//       const main_g = enter.append("g").attr("class", "component");
+//       main_g
+//         .append("rect")
+//         .attr("class", "bounding_rect")
+//         .attr("fill-opacity", 0)
+//         .attr("rx", 5)
+//         .attr("ry", 5);
+//       main_g.append("g").attr("class", "node_container");
+//       return main_g;
+//     })
+//     .on("mouseover", function (d) {
+//       if (!focused_on) {
+//         d3.select(this).call(show_bounding_box);
+//         interaction_fns.mouseover(d);
+//       }
+//     })
+//     .on("mouseout", function (d) {
+//       reset_component_highlights();
+//       interaction_fns.mouseout(d);
+//     })
+//     .on("click", function (d) {
+//       focus_on_component(d);
+//     })
+//     .on("dblclick", function () {
+//       if (focused_on) {
+//         reset();
+//       }
+//     });
+
+//   const all_nodes = component_containers
+//     .select("g.node_container")
+//     .selectAll("circle")
+//     .data(
+//       ({ nodes }) => nodes,
+//       (d) => d.id
+//     )
+//     .join((enter) =>
+//       enter
+//         .append("circle")
+//         .call((node_circle) => node_circle.append("title").text((d) => d.id))
+//     )
+//     .attr("r", node_r)
+//     .attr("fill", (d) => d.color || "steelblue")
+//     .on("mouseover", function (d) {
+//       if (focused_on) {
+//         highlight_node(d);
+//         interaction_fns.node_mouseover(d);
+//       }
+//     })
+//     .on("mouseout", function (d) {
+//       if (focused_on) {
+//         reset_node_highlights();
+//         interaction_fns.node_mouseout();
+//       }
+//     })
+//     .call(drag(simulation));
+
+//   function ticked() {
+//     update_edges();
+//     update_nodes();
+//   }
+
+//   function update_edges() {
+//     context.clearRect(0, 0, +canvas.attr("width"), +canvas.attr("height"));
+
+//     if (focused_on) {
+//       context.lineWidth = 2.5;
+//       nodes_by_component
+//         .find((c) => c.id === focused_on)
+//         .edge_indices.forEach((edge_i) => {
+//           const { source, target, strength } = edges[edge_i];
+//           context.beginPath();
+//           context.moveTo(X(source.x) + margins.left, Y(source.y) + margins.top);
+//           context.lineTo(X(target.x) + margins.left, Y(target.y) + margins.top);
+//           // Set color of edges
+//           context.strokeStyle = d3.interpolateReds(link_color(strength));
+//           context.stroke();
+//         });
+//     } else {
+//       // Scale edge opacity based upon how many edges we have
+//       context.globalAlpha = 0.5;
+//       context.lineWidth = 1;
+//       // Set color of edges
+//       context.strokeStyle = "#999";
+//       context.beginPath();
+//       edges.forEach((d) => {
+//         context.moveTo(
+//           X(d.source.x) + margins.left,
+//           Y(d.source.y) + margins.top
+//         );
+//         context.lineTo(
+//           X(d.target.x) + margins.left,
+//           Y(d.target.y) + margins.top
+//         );
+//       });
+
+//       // Draw to canvas
+//       context.stroke();
+//     }
+//   }
+
+//   function update_nodes() {
+//     all_nodes.attr("cx", (d) => X(d.x)).attr("cy", (d) => Y(d.y));
+//     // Update bounding rects for interaction purposes
+//     component_containers.each(function (d) {
+//       const pad = 5;
+
+//       const component_bbox = d3
+//         .select(this)
+//         .select("g.node_container")
+//         .node()
+//         .getBBox();
+
+//       d3.select(this)
+//         .select("rect.bounding_rect")
+//         .attr("width", component_bbox.width + pad * 2)
+//         .attr("height", component_bbox.height + pad * 2)
+//         .attr("x", component_bbox.x - pad)
+//         .attr("y", component_bbox.y - pad);
+//     });
+//   }
+
+//   function drag(simulation) {
+//     function dragstarted(d) {
+//       if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+//       d.fx = d.x;
+//       d.fy = d.y;
+//     }
+
+//     function dragged(d) {
+//       d.fx = d3.event.x;
+//       d.fy = d3.event.y;
+//     }
+
+//     function dragended(d) {
+//       if (!d3.event.active) simulation.alphaTarget(0);
+//       d.fx = null;
+//       d.fy = null;
+//     }
+
+//     return d3
+//       .drag()
+//       .on("start", dragstarted)
+//       .on("drag", dragged)
+//       .on("end", dragended);
+//   }
+//   const zoom = d3.zoom().scaleExtent([0.5, 8]).on("zoom", zoomed);
+//   // We dont want the double click to work because double clicking is taken over
+//   // for de-selecting a component
+//   g.call(zoom).on("dblclick.zoom", null);
+
+//   function zoomed() {
+//     X = d3.event.transform.rescaleX(X_default.copy());
+//     Y = d3.event.transform.rescaleY(Y_default.copy());
+//     update_edges();
+//     update_nodes();
+//   }
+
+//   function show_bounding_box(component) {
+//     reset_component_highlights();
+//     component.select("rect.bounding_rect").attr("stroke", "black");
+//   }
+
+//   function highlight_component(edge_in_component) {
+//     component_containers
+//       .filter((d) => +d.id === edge_to_subgraph_id(edge_in_component))
+//       .call(show_bounding_box);
+//   }
+
+//   function reset_component_highlights() {
+//     component_containers.select("rect.bounding_rect").attr("stroke", "white");
+//   }
+
+//   function reset() {
+//     g.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+//     all_nodes.transition().duration(750).attr("r", node_r);
+
+//     reset_component_highlights();
+//     interaction_fns.reset();
+//     component_containers.attr("opacity", 1);
+
+//     focused_on = null;
+//   }
+
+//   function focus_on_component(component) {
+//     interaction_fns.focus(component);
+
+//     const nodes_in_component = component.nodes;
+
+//     const [x_min, x_max] = d3.extent(nodes_in_component, (n) => n.x);
+//     const [y_min, y_max] = d3.extent(nodes_in_component, (n) => n.y);
+
+//     g.transition()
+//       .duration(750)
+//       .call(
+//         zoom.transform,
+//         d3.zoomIdentity
+//           .translate(w / 2, h / 2)
+//           .scale(
+//             Math.min(
+//               8,
+//               0.7 / Math.max((x_max - x_min) / w, (y_max - y_min) / h)
+//             )
+//           )
+//           .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2)
+//       );
+
+//     component_containers
+//       .filter((c) => c.id === component.id)
+//       .selectAll("circle")
+//       .transition()
+//       .duration(750)
+//       .attr("r", focus_r);
+
+//     component_containers
+//       .filter((c) => c.id !== component.id)
+//       .attr("opacity", 0);
+
+//     link_color.domain(
+//       d3.extent(component.edge_indices, (i) => edge_vals.strength[i])
+//     );
+
+//     focused_on = component.id;
+//   }
+
+//   function highlight_node(node) {
+//     const n_neighbors = 5;
+//     all_nodes.filter((n) => n.id == node.id).attr("r", focus_r * 2);
+
+//     const neighbors = edges
+//       .filter((edge) => edge.source === node || edge.target === node)
+//       .map(({ source, target, strength }) => ({
+//         neighbor: source == node ? target.id : source.id,
+//         strength,
+//         color: d3.interpolateReds(link_color(strength)),
+//       }))
+//       .sort((a, b) => b.strength - a.strength)
+//       .filter((d, i) => i < n_neighbors);
+
+//     const neighbor_table = table_from_obj(
+//       tooltip_div
+//         .style("display", "block")
+//         .style("top", Y(node.y))
+//         .style("left", X(node.x)),
+//       {
+//         data: neighbors,
+//         id: "tooltip",
+//         keys_to_avoid: ["id", "first_edge"],
+//         even_cols: true,
+//         title: `Top ${neighbors.length} Neighbors`,
+//         max_width: "95%",
+//         colored_rows: true,
+//       }
+//     );
+//   }
+
+//   function reset_node_highlights(radius = focus_r) {
+//     all_nodes.attr("r", radius);
+//     tooltip_div.style("display", "none");
+//   }
+
+//   return {
+//     highlight_component,
+//     reset_highlights: reset_component_highlights,
+//     focus_on_component: (edge_id) =>
+//       focus_on_component(edge_to_subgraph_data(edge_id)),
+//     highlight_node,
+//     reset_node_highlights,
+//     reset,
+//   };
+// }
+
+// function draw_components_chart(g, { components, settings, interaction_fns }) {
+//   const {
+//     w,
+//     h,
+//     bar_color,
+//     selection_color,
+//     padding = 3,
+//     strength_r = 4,
+//     units = {
+//       size: 2,
+//       density: 1,
+//       strength: 2,
+//     },
+//   } = settings;
+
+//   const total_units = Object.values(units).reduce((tot, u) => tot + u, 0);
+//   const total_h = h - padding * 2;
+
+//   const sizes = {};
+//   for (let measure in units) {
+//     sizes[measure] = (total_h * units[measure]) / total_units;
+//   }
+//   const components_df = HTMLWidgets.dataframeToD3(components).sort(
+//     (c_a, c_b) => c_b.size - c_a.size
+//   );
+
+//   const size_label = g
+//     .select_append("text#size_label")
+//     .text("Num members")
+//     .attr("dominant-baseline", "middle")
+//     .attr("y", sizes.size / 2);
+
+//   const density_label = g
+//     .select_append("text#density_label")
+//     .text("Avg density")
+//     .attr("y", sizes.size + padding + sizes.density / 2)
+//     .attr("dominant-baseline", "middle");
+
+//   const strength_label = g
+//     .select_append("text#strength_label")
+//     .text("Total edge strength")
+//     .attr("dominant-baseline", "middle")
+//     .attr("y", total_h - sizes.strength / 2 + padding * 2);
+
+//   const all_labels = [size_label, density_label, strength_label];
+
+//   const space_for_labels = d3.max(
+//     all_labels,
+//     (lab) => lab.node().getBBox().width
+//   );
+
+//   all_labels.forEach((lab) => lab.move_to({ x: w - space_for_labels + 3 }));
+
+//   const X = d3
+//     .scaleBand()
+//     .domain(components_df.map((d) => d.id))
+//     .range([0, w - space_for_labels])
+//     .paddingInner(0.03);
+
+//   const component_w = X.bandwidth();
+
+//   const sizes_Y = d3
+//     .scaleLinear()
+//     .domain([0, d3.max(components.size)])
+//     .range([sizes.size, 0]);
+
+//   const densities_Y = d3
+//     .scaleLinear()
+//     .domain(d3.extent(components.density))
+//     .range([sizes.density, 0]);
+
+//   const strengths_Y = d3
+//     .scaleLinear()
+//     .domain([0, d3.max(components.strength)])
+//     .range([0, sizes.strength - strength_r]);
+
+//   const setup_new_subgraph_g = function (enter) {
+//     const main_g = enter.append("g");
+
+//     // We have a size bar
+//     main_g.append("rect").classed("size_bar", true);
+
+//     // We hav a two rectangle density g element in the middle
+//     const density_g = main_g.append("g").classed("density_chart", true);
+//     density_g.append("rect").classed("background", true);
+//     density_g.append("rect").classed("density_fill", true);
+
+//     // Finally we have a lollypop plot for strength on bottom
+//     const strength_g = main_g.append("g").classed("strength_lollypop", true);
+//     strength_g.append("line").classed("lollypop_stick", true);
+//     strength_g.append("circle").classed("lollypop_head", true);
+
+//     // Place an invisible rectangle over the entire element space to make interactions more responsive
+//     main_g
+//       .append("rect")
+//       .classed("interaction_rect", true)
+//       .attr("stroke", selection_color)
+//       .attr("rx", 5)
+//       .attr("ry", 5)
+//       .attr("stroke-width", 0)
+//       .attr("fill-opacity", 0);
+
+//     return main_g;
+//   };
+
+//   const component_g = g
+//     .selectAll("g.component_stats")
+//     .data(components_df)
+//     .join(
+//       setup_new_subgraph_g,
+//       (update) => update,
+//       (exit) => exit.attr("opacity", 0).remove()
+//     )
+//     .classed("component_stats", true)
+//     .on("mouseover", function (d) {
+//       d3.select(this).call(emphasize_component);
+//       interaction_fns.mouseover(d);
+//     })
+//     .on("mouseout", function (d) {
+//       reset_highlights();
+//       interaction_fns.mouseout(d);
+//     })
+//     .on("click", function (d) {
+//       reset_highlights();
+//       interaction_fns.click(d);
+//     });
+
+//   const v_pad = 5; // padding added to top of selection rectangle
+//   component_g
+//     .select("rect.interaction_rect")
+//     .attr("width", component_w)
+//     .attr("height", h + v_pad)
+//     .attr("y", -v_pad);
+
+//   component_g
+//     .attr("stroke", "black")
+//     .transition()
+//     .duration(100)
+//     .attr("transform", (d) => `translate(${X(d.id)}, 0)`);
+
+//   component_g
+//     .select("rect.size_bar")
+//     .attr("width", component_w)
+//     .attr("y", (d) => sizes_Y(d.size))
+//     .attr("height", (d) => sizes.size - sizes_Y(d.size))
+//     .attr("fill", bar_color);
+
+//   const density_g = component_g
+//     .select("g.density_chart")
+//     .move_to({ y: sizes.size + padding });
+
+//   density_g
+//     .select("rect.background")
+//     .attr("height", sizes.density)
+//     .attr("width", component_w)
+//     .attr("fill", "grey")
+//     .attr("fill-opacity", 0.5);
+
+//   density_g
+//     .select("rect.density_fill")
+//     .attr("y", (d) => densities_Y(d.density))
+//     .attr("height", (d) => sizes.density - densities_Y(d.density))
+//     .attr("width", component_w)
+//     .attr("fill", bar_color);
+
+//   const strength_g = component_g
+//     .select("g.strength_lollypop")
+//     .move_to({ y: total_h - sizes.strength + padding * 2 });
+
+//   strength_g
+//     .select("line")
+//     .attr("y1", (d) => strengths_Y(d.strength))
+//     .attr("x1", component_w / 2)
+//     .attr("x2", component_w / 2)
+//     .attr("stroke", bar_color)
+//     .attr("stroke-width", 1);
+
+//   strength_g
+//     .select("circle")
+//     .attr("cy", (d) => strengths_Y(d.strength))
+//     .attr("cx", component_w / 2)
+//     .attr("r", strength_r)
+//     .attr("fill", bar_color);
+//   reset_highlights();
+//   g.select_append("g.size_axis")
+//     .call(d3.axisLeft(sizes_Y).ticks(sizes_Y.domain()[1]))
+//     .call(extend_ticks, w, 0.4)
+//     .call(remove_domain)
+//     .call((g) => g.selectAll("text").remove());
+
+//   g.select_append("g.strength_axis")
+//     .attr(
+//       "transform",
+//       `translate(0, ${sizes.size + sizes.density + 2 * padding})`
+//     )
+//     .call(d3.axisLeft(strengths_Y).ticks(2));
+
+//   function emphasize_component(component_g) {
+//     reset_highlights();
+//     component_g.attr("stroke-width", 2.5);
+//   }
+//   function reset_highlights() {
+//     component_g.attr("stroke-width", 1);
+//   }
+
+//   function highlight_component(edge_indices) {
+//     component_g
+//       .filter((c) => edge_indices.includes(c.first_edge))
+//       .call(emphasize_component);
+//   }
+
+//   function info_for_component(edge_indices) {
+//     return components_df.find((c) => edge_indices.includes(c.first_edge));
+//   }
+
+//   function hide() {
+//     g.attr("opacity", 0);
+//   }
+//   function show() {
+//     g.attr("opacity", 1);
+//   }
+
+//   return {
+//     highlight_component,
+//     info_for_component,
+//     reset_highlights,
+//     hide,
+//     show,
+//   };
+// }
+//#endregion
 
 function draw_timelines(
   timeline_g,
