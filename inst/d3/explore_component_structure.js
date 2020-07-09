@@ -259,13 +259,32 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       .attr("cx", component_X.bandwidth() / 2);
 
     // Draw axes
+
+    const too_thin_for_unit_bars = component_pos.size.h / largest_component < 3;
+
     component.g
       .select_append("g.size_axis")
       .move_to({ x: max_label_width, y: component_pos.size.start })
-      .call(d3.axisLeft(component_pos.size.scale).ticks(largest_component))
+      .call(
+        d3
+          .axisLeft(component_pos.size.scale)
+          .ticks(too_thin_for_unit_bars ? 5 : largest_component)
+      )
       .call(extend_ticks, component.w, 0.8)
       .call(remove_domain)
       .call((g) => g.selectAll("text").remove());
+
+    component.g
+      .selectAll(`text.size_labels`)
+      .data(components_df.head(too_thin_for_unit_bars ? 3 : 0))
+      .join("text")
+      .text((d) => d.size)
+      .attr("class", "size_labels")
+      .attr("x", (d) => component_X(d.id) + component_X.bandwidth() / 2)
+      .attr("text-anchor", "middle")
+      .attr("text-size", "9px")
+      .attr("y", (d) => component_pos.size.scale(d.size) - 1)
+      .raise();
 
     component.g
       .select_append("g.strength_axis")
