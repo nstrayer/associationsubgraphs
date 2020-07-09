@@ -239,3 +239,15 @@ function units_to_sizes(units, h, padding = 5) {
   }
   return sizes;
 }
+
+const scale_scale = function (scale, rel_amnt = 0.05) {
+  const [range_min, range_max] = scale.domain();
+  const total_width = Math.abs(range_min - range_max);
+  const extension_amnt = total_width * rel_amnt;
+
+  scale.domain(
+    range_min < range_max
+      ? [range_min - extension_amnt / 2, range_max + extension_amnt / 2]
+      : [range_min + extension_amnt / 2, range_max - extension_amnt / 2]
+  );
+};
