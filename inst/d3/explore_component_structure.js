@@ -365,6 +365,8 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   const nodes_raw = HTMLWidgets.dataframeToD3(data.nodes);
 
+  let all_nodes;
+
   function update_network_plot(
     { nodes, edges, nodes_by_component },
     event_fns
@@ -378,6 +380,23 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     network.scales.link_color.domain(strength_extent);
 
     // Update simulation with data
+    if (all_nodes) {
+      // Make a map of old data so we can pass along current positions and velocities to nodes that are common
+      const prev_positions = new Map(all_nodes.data().map((d) => [d.id, d]));
+
+      nodes.forEach((node) => {
+        const prev_values = prev_positions.get(node.id);
+        if (prev_values) {
+          // If node is already in network, give it its same position
+          Object.assign(node, prev_values);
+        } else {
+          // If it's new, place it in the middle of its subgraph so it doesn't fly across screen
+          node.x = node.subgraph_x;
+          node.y = node.subgraph_y;
+        }
+      });
+    }
+
     simulation.nodes(nodes);
     simulation.force("link").links(edges);
     simulation.alpha(1).restart();
