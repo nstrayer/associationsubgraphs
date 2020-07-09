@@ -1,6 +1,8 @@
 function set_dom_elements({ div, width, height, margins, add_canvas = true }) {
   const res = {};
 
+  div.style("width", `${width}px`).style("height", `${height}px`);
+
   if (add_canvas) {
     // Get the device pixel ratio, falling back to 1.
     const dpr = window.devicePixelRatio || 1;
