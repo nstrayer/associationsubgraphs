@@ -411,17 +411,12 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       .attr("r", node_r)
       .attr("fill", (d) => d.color || "steelblue");
 
-    const zoom = d3
-      .zoom()
-      // .scaleExtent([0.5, 8])
-      .on("zoom", function () {
-        X = d3.event.transform.rescaleX(network.scales.X_default);
-        Y = d3.event.transform.rescaleY(network.scales.Y_default);
+    const zoom = d3.zoom().on("zoom", function () {
+      X = d3.event.transform.rescaleX(network.scales.X_default);
+      Y = d3.event.transform.rescaleY(network.scales.Y_default);
 
-        update_positions();
-      });
-
-    network.svg.call(zoom).on("dblclick.zoom", null).on("wheel.zoom", null);
+      update_positions();
+    });
 
     zoom_detector_rect.on("click", function () {
       event_fns.reset_focus();
@@ -562,6 +557,11 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         )
         .on("end", () => {
           zooming = false;
+          // Enable panning
+          network.svg
+            .call(zoom)
+            .on("dblclick.zoom", null)
+            .on("wheel.zoom", null);
         });
 
       const nodes_in_sel = component_containers
@@ -569,10 +569,14 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         .attr("opacity", 1)
         .selectAll("circle")
         .on("mouseover", function (n) {
-          node_highlight_fns.highlight_node(n.id);
+          if (!zooming) {
+            node_highlight_fns.highlight_node(n.id);
+          }
         })
         .on("mouseout", function () {
-          node_highlight_fns.reset_node_highlights();
+          if (!zooming) {
+            node_highlight_fns.reset_node_highlights();
+          }
         });
 
       function highlight_node(id) {
@@ -601,6 +605,9 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       reset_zoom: function () {
         current_focus = null;
         zooming = true;
+
+        //disable panning
+        network.svg.on(".zoom", null);
 
         component_containers.attr("opacity", 1);
 
