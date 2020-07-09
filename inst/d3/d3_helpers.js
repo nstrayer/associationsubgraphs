@@ -1,7 +1,20 @@
-function set_dom_elements({ div, width, height, margins, add_canvas = true }) {
+function set_dom_elements({
+  div,
+  width,
+  height,
+  margins,
+  add_canvas = true,
+  font_family = "sans-serif",
+  font_weight = 300,
+  font_size = 14,
+}) {
   const res = {};
 
-  div.style("width", `${width}px`).style("height", `${height}px`);
+  div
+    .style("width", `${width}px`)
+    .style("height", `${height}px`)
+    .style("font-family", font_family)
+    .style("font-weight", font_weight);
 
   if (add_canvas) {
     // Get the device pixel ratio, falling back to 1.
@@ -31,6 +44,9 @@ function set_dom_elements({ div, width, height, margins, add_canvas = true }) {
     .style("position", "absolute")
     .style("left", 0)
     .style("top", 0)
+    .style("font-family", font_family)
+    .style("font-weight", font_weight)
+    .style("font-size", font_size)
     .call(add_blur_filter);
 
   res.g = res.svg
