@@ -351,6 +351,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     event_fns
   ) {
     let current_focus = null;
+    let zooming = false;
     let X = network.scales.X_default.copy();
     let Y = network.scales.Y_default.copy();
     const strength_extent = d3.extent(edges, (d) => d.strength);
@@ -412,19 +413,23 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
     const zoom = d3
       .zoom()
-      .scaleExtent([0.5, 8])
+      // .scaleExtent([0.5, 8])
       .on("zoom", function () {
-        X = d3.event.transform.rescaleX(network.scales.X_default.copy());
-        Y = d3.event.transform.rescaleY(network.scales.Y_default.copy());
+        X = d3.event.transform.rescaleX(network.scales.X_default);
+        Y = d3.event.transform.rescaleY(network.scales.Y_default);
+
         update_positions();
       });
-    network.svg.call(zoom).on("dblclick.zoom", null);
+
+    network.svg.call(zoom).on("dblclick.zoom", null).on("wheel.zoom", null);
 
     zoom_detector_rect.on("click", function () {
       event_fns.reset_focus();
     });
 
+    let num_steps = 0;
     function update_positions() {
+      num_steps++;
       // Edges
       network.context.clearRect(
         0,
@@ -468,6 +473,42 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         network.context.stroke();
       }
 
+      if (!current_focus & !zooming & (num_steps > 20)) {
+        // Check to make sure node are not spilling out of viewport
+        let min_x = network.w;
+        let min_y = network.h;
+        let max_x = 0;
+        let max_y = 0;
+        all_nodes.each((n) => {
+          const x_pos = X(n.x);
+          const y_pos = Y(n.y);
+          max_x = Math.max(x_pos, max_x);
+          min_x = Math.min(x_pos, min_x);
+          min_y = Math.min(y_pos, min_y);
+          max_y = Math.max(y_pos, max_y);
+        });
+
+        const too_small_delta = 0.1;
+        const x_too_small = network.w * too_small_delta;
+        const y_too_small = network.h * too_small_delta;
+        const too_small =
+          (min_x > x_too_small) &
+          (min_y > y_too_small) &
+          (network.w - max_x > x_too_small) &
+          (network.h - max_y > y_too_small);
+        const too_large =
+          min_x < 0 || min_y < 0 || max_x > network.w || max_y > network.h;
+
+        if (too_large || too_small) {
+          const scale_amnt = too_large ? 0.05 : -0.05;
+          // Pullback scales a tiny bit to try and fit all nodes
+          scale_scale(network.scales.X_default, scale_amnt);
+          scale_scale(network.scales.Y_default, scale_amnt);
+
+          X = network.scales.X_default.copy();
+          Y = network.scales.Y_default.copy();
+        }
+      }
       // nodes
       all_nodes.attr("cx", (d) => X(d.x)).attr("cy", (d) => Y(d.y));
       // Update bounding rects for interaction purposes
@@ -490,15 +531,16 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     }
 
     function zoom_to_component(id, node_highlight_fns) {
-      current_focus = id;
       reset_component_highlights();
+      current_focus = id;
+
       const nodes_in_component = nodes_by_component.find((c) => c.id === id)
         .nodes;
 
-      const [x_min, x_max] = d3.extent(nodes_in_component, (n) => n.x);
-      const [y_min, y_max] = d3.extent(nodes_in_component, (n) => n.y);
-
-      network.g
+      const [x_min, x_max] = d3.extent(nodes_in_component, (n) => X(n.x));
+      const [y_min, y_max] = d3.extent(nodes_in_component, (n) => Y(n.y));
+      zooming = true;
+      network.svg
         .transition()
         .duration(750)
         .call(
@@ -515,8 +557,12 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
                   )
               )
             )
-            .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2)
-        );
+            .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2),
+          d3.mouse(network.svg.node())
+        )
+        .on("end", () => {
+          zooming = false;
+        });
 
       const nodes_in_sel = component_containers
         .filter((c) => c.id === id)
@@ -554,11 +600,17 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       reset_component_highlights,
       reset_zoom: function () {
         current_focus = null;
+        zooming = true;
+
         component_containers.attr("opacity", 1);
-        network.g
+
+        network.svg
           .transition()
           .duration(750)
-          .call(zoom.transform, d3.zoomIdentity);
+          .call(zoom.transform, d3.zoomIdentity)
+          .on("end", () => {
+            zooming = false;
+          });
 
         all_nodes
           .on("mouseover", null)
@@ -668,16 +720,27 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
   //#endregion
 
   //#region Neighbor tooltip
-  function setup_neighbor_tooltip({ edges, n_neighbors = 5 }) {
+  function setup_neighbor_tooltip({
+    edges,
+    nodes_by_component,
+    n_neighbors = 5,
+  }) {
+    const top_pad = 20; // A little bit of padding to avoid overlapping instruction text
     const tooltip_div = div
       .select_append("div#edges_tooltip")
       .style("width", "auto")
-      .style("max-width", "40%")
+      .style("top", `${top_pad}px`)
+      .style("max-height", `${viz_sizing.network.h - top_pad}px`)
       .style("box-shadow", div_shadow)
       .style("padding-top", "6px")
       .style("background", "white")
       .style("position", "absolute")
+      .style("overflow", "scroll")
       .style("display", "none");
+
+    const show_tooltip = function () {
+      tooltip_div.style("display", "block").raise();
+    };
 
     return {
       show_node_neighbors: function (node_id) {
@@ -693,12 +756,36 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           .sort((a, b) => b.strength - a.strength)
           .filter((d, i) => i < n_neighbors);
 
-        table_from_obj(tooltip_div.style("display", "block"), {
+        show_tooltip();
+        table_from_obj(tooltip_div.style("max-width", "40%"), {
           data: neighbors,
           id: "tooltip",
           keys_to_avoid: ["id", "first_edge"],
           even_cols: true,
           title: `Top ${neighbors.length} Neighbors`,
+          max_width: "95%",
+          colored_rows: true,
+        });
+      },
+      show_component_members: function (component_id) {
+        const all_nodes = nodes_by_component.find((c) => c.id === component_id)
+          .nodes;
+
+        if (d3.mean(all_nodes, (n) => n.x) < width / 2) {
+          tooltip_div.style("right", "0").style("left", "auto");
+        } else {
+          tooltip_div.style("left", "0").style("right", "auto");
+        }
+
+        show_tooltip();
+
+        table_from_obj(tooltip_div.style("max-width", "30%"), {
+          data: all_nodes.map((n) => ({
+            members: n.id,
+            color: n.color,
+          })),
+          id: "tooltip",
+          keys_to_avoid: [],
           max_width: "95%",
           colored_rows: true,
         });
@@ -750,6 +837,8 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     const neighbor_tooltip = setup_neighbor_tooltip(step_data);
 
     function focus_on_component(id) {
+      neighbor_tooltip.hide();
+
       instructions_text.text(in_focus_instructions);
 
       const highlight_fns = {
@@ -783,11 +872,13 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     function highlight_component(id) {
       network_plot.highlight_component(id);
       component_chart.highlight_component(id);
+      neighbor_tooltip.show_component_members(id);
     }
 
     function reset_component_highlights() {
       network_plot.reset_component_highlights();
       component_chart.reset_component_highlights();
+      neighbor_tooltip.hide();
     }
   }
   return { set_to_step };
