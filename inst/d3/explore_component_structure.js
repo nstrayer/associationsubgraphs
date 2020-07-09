@@ -1,6 +1,7 @@
 // !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_subgraphs.js"), d3_version = "5"
 
 const margins = { left: 15, right: 35, top: 20, bottom: 10 };
+const link_color_range = ["#edf8e9", "#006d2c"];
 const viz_sizing = units_to_sizes(
   {
     network: 4,
@@ -331,7 +332,10 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   network.scales = {
     link_dist: d3.scaleLog().range([10, 1]),
-    link_color: d3.scaleLog(),
+    link_color: d3
+      .scaleLog()
+      .range(link_color_range)
+      .interpolate(d3.interpolateHcl),
     X_default: d3.scaleLinear().range([0, network.w]).domain([0, network.w]),
     Y_default: d3.scaleLinear().range([0, network.h]).domain([0, network.h]),
   };
@@ -488,8 +492,8 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
             network.context.beginPath();
             draw_edge(edge);
             // Set color of edges
-            network.context.strokeStyle = d3.interpolateReds(
-              network.scales.link_color(edge.strength)
+            network.context.strokeStyle = network.scales.link_color(
+              edge.strength
             );
             network.context.stroke();
           });
@@ -788,7 +792,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           .map(({ source, target, strength }) => ({
             neighbor: source.id == node_id ? target.id : source.id,
             strength,
-            color: d3.interpolateReds(network.scales.link_color(strength)),
+            color: network.scales.link_color(strength),
           }))
           .sort((a, b) => b.strength - a.strength)
           .filter((d, i) => i < n_neighbors);
