@@ -338,7 +338,6 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   //#region Network plot setup
 
-  // May be able to replace this with just svg as network has its own svg now...
   const zoom_detector_rect = network.g
     .select_append("rect#zoom_detector")
     .attr("width", network.w + margins.left + margins.right)
@@ -700,7 +699,6 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .style("width", `${width}px`)
     .style("box-shadow", div_shadow)
     .style("background", "white")
-    // .style("overflow", "hidden")
     .style("display", "none");
 
   // What we want to not show in now info
@@ -736,27 +734,23 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     const header = info_div
       .select_append("div.header")
       .style("padding-top", to_percent(vert_pad))
-      // .style("outline", "2px solid green")
       .style("width", "100%")
       .style("height", to_percent(header_height));
 
     const body = info_div
       .select_append("div.body")
-      // .style("outline", "2px solid blue")
       .style("position", "relative")
       .style("width", "100%")
       .style("height", to_percent(body_height));
 
     const left_side = body
       .select_append("div.left_side")
-      // .style("outline", "2px solid red")
       .style("position", "absolute")
       .style("width", to_percent(left_width))
       .style("height", "100%");
 
     const right_side = body
       .select_append("div.right_side")
-      // .style("outline", "2px solid purple")
       .style("position", "absolute")
       .style("width", to_percent(right_width))
       .style("display", "none");
