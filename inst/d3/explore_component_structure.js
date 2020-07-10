@@ -63,6 +63,19 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     margins: { ...margins, right: margins.left },
   });
 
+  const top_pad = 25; // A little bit of padding to avoid overlapping instruction text
+  const member_glimpse_tooltip = network_div
+    .select_append("div#edges_tooltip")
+    .style("width", "auto")
+    .style("max-width", "30%")
+    .style("max-height", `${network.h - top_pad}px`)
+    .style("box-shadow", div_shadow)
+    .style("padding-top", "6px")
+    .style("background", "white")
+    .style("position", "absolute")
+    .style("overflow", "scroll")
+    .style("display", "none");
+
   const component_div = div
     .select_append("div#component_plot")
     .style("position", "absolute")
@@ -649,6 +662,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
     function reset_component_highlights() {
       component_containers.select("rect.bounding_rect").attr("stroke", "white");
+      member_glimpse_tooltip.style("display", "none");
     }
 
     return {
@@ -680,10 +694,55 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       },
       highlight_component: function (id) {
         reset_component_highlights();
-        component_containers
+
+        // Do some math to figure out where to place tooltip
+        const x_pad = 8;
+        const component_bbox = component_containers
           .filter((c) => c.id === id)
           .select("rect.bounding_rect")
           .attr("stroke", "black");
+
+        const box_left = +component_bbox.attr("x");
+        const box_right = +component_bbox.attr("width") + box_left;
+        const dist_to_left = box_left + margins.left;
+        const dist_to_right = network.w - box_right + margins.right;
+        const box_is_on_lower_half =
+          +component_bbox.attr("y") + +component_bbox.attr("height") / 2 >
+          network.h / 2;
+        if (dist_to_left < dist_to_right) {
+          // Component is on left of canvas so put tooltip to right of it
+          member_glimpse_tooltip
+            .style("right", "auto")
+            .style("left", `${box_right + margins.left + x_pad}px`);
+        } else {
+          member_glimpse_tooltip
+            .style("left", "auto")
+            .style("right", `${network.w - box_left + margins.left + x_pad}px`);
+        }
+
+        if (box_is_on_lower_half) {
+          member_glimpse_tooltip.style("top", "auto").style("bottom", `0`);
+        } else {
+          member_glimpse_tooltip
+            .style("bottom", "auto")
+            .style("top", `${top_pad}px`);
+        }
+
+        table_from_obj(
+          member_glimpse_tooltip.style("display", "block").raise(),
+          {
+            data: nodes_by_component
+              .find((c) => c.id === id)
+              .nodes.map((n) => ({
+                members: n.id,
+                color: n.color,
+              })),
+            id: "tooltip",
+            keys_to_avoid: [],
+            max_width: "95%",
+            colored_rows: true,
+          }
+        );
       },
     };
   }
@@ -886,30 +945,6 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     };
 
     return {
-      show_node_neighbors: function (node_id) {
-        const neighbors = edges
-          .filter(
-            (edge) => edge.source.id === node_id || edge.target.id === node_id
-          )
-          .map(({ source, target, strength }) => ({
-            neighbor: source.id == node_id ? target.id : source.id,
-            strength,
-            color: network.scales.link_color(strength),
-          }))
-          .sort((a, b) => b.strength - a.strength)
-          .filter((d, i) => i < n_neighbors);
-
-        show_tooltip();
-        table_from_obj(tooltip_div.style("max-width", "40%"), {
-          data: neighbors,
-          id: "tooltip",
-          keys_to_avoid: ["id", "first_edge"],
-          even_cols: true,
-          title: `Top ${neighbors.length} Neighbors`,
-          max_width: "95%",
-          colored_rows: true,
-        });
-      },
       show_component_members: function (component_id) {
         const all_nodes = nodes_by_component.find((c) => c.id === component_id)
           .nodes;
@@ -1015,7 +1050,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     function highlight_component(id) {
       network_plot.highlight_component(id);
       component_chart.highlight_component(id);
-      neighbor_tooltip.show_component_members(id);
+      // neighbor_tooltip.show_component_members(id);
     }
 
     function reset_component_highlights() {
