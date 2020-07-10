@@ -123,9 +123,9 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .select_append("g.axis_labels")
     .selectAll("text")
     .data([
-      { label: "Num members", id: "size" },
-      { label: "Avg density", id: "density" },
-      { label: "Total edge strength", id: "strength" },
+      { label: "num members", id: "size" },
+      { label: "avg density", id: "density" },
+      { label: "total edge strength", id: "strength" },
     ])
     .join("text")
     .text((d) => d.label)
