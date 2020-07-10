@@ -681,8 +681,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .style("width", `${width}px`)
     .style("box-shadow", div_shadow)
     .style("background", "white")
-    .style("overflow", "scroll")
-    .style("padding-top", "0.75rem")
+    // .style("overflow", "hidden")
     .style("display", "none");
 
   // What we want to not show in now info
@@ -701,12 +700,80 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
   ];
 
   function setup_info_div({ nodes, edges, nodes_by_component, components }) {
+    const both_shown_padding = 2;
+    const right_prop = 30;
+    const left_prop = 100 - right_prop;
+    const left_width = left_prop - 1.5 * both_shown_padding;
+    const right_width = right_prop - 1.5 * both_shown_padding;
+    const just_left_padding = (100 - left_width) / 2;
+
+    const vert_pad = 1;
+    const header_height = 17;
+    const body_height = 100 - header_height - vert_pad * 2;
+    const to_percent = (p) => `${p}%`;
+
+    const transition_speed = 250;
+
+    const header = info_div
+      .select_append("div.header")
+      .style("padding-top", to_percent(vert_pad))
+      // .style("outline", "2px solid green")
+      .style("width", "100%")
+      .style("height", to_percent(header_height));
+
+    const body = info_div
+      .select_append("div.body")
+      // .style("outline", "2px solid blue")
+      .style("position", "relative")
+      .style("width", "100%")
+      .style("height", to_percent(body_height));
+
+    const left_side = body
+      .select_append("div.left_side")
+      // .style("outline", "2px solid red")
+      .style("position", "absolute")
+      .style("width", to_percent(left_width))
+      .style("height", "100%");
+
+    const right_side = body
+      .select_append("div.right_side")
+      // .style("outline", "2px solid purple")
+      .style("position", "absolute")
+      .style("width", to_percent(right_width))
+      .style("display", "none");
+
+    const show_both = function () {
+      right_side
+        .style("display", "block")
+        .transition()
+        .duration(transition_speed)
+        .style("right", to_percent(both_shown_padding));
+      left_side
+        .transition()
+        .duration(transition_speed)
+        .style("left", to_percent(both_shown_padding));
+    };
+    const just_left = function () {
+      right_side
+        .transition()
+        .duration(transition_speed)
+        .style("right", to_percent(-right_width))
+        .on("end", function () {
+          d3.select(this).style("display", "none");
+        });
+      left_side
+        .transition()
+        .duration(transition_speed)
+        .style("left", to_percent(just_left_padding));
+    };
+    just_left();
+
     return {
       show_component: function (id, highlight_fns) {
         const component_i = components.id.findIndex((c_id) => c_id === id);
         info_div.style("display", "block").raise();
 
-        info_table = table_from_obj(info_div, {
+        info_table = table_from_obj(header, {
           data: [
             {
               density: components.density[component_i],
@@ -721,23 +788,42 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           title: `Component ${id} statistics`,
         });
 
-        nodes_table = table_from_obj(info_div, {
+        nodes_table = table_from_obj(left_side, {
           data: nodes_by_component.find((c) => c.id === id).nodes,
           id: "nodes",
           keys_to_avoid: non_column_keys,
+          max_width: "99%",
           title: "Nodes in component (hover to highlight in network plot)",
         });
 
-        nodes_table
-          .on("mouseover", function (n) {
-            highlight_fns.highlight_node(n.id);
-          })
-          .on("mouseout", function () {
-            highlight_fns.reset_node_highlights();
-          });
+        nodes_table.on("mouseover", function (n) {
+          highlight_fns.highlight_node(n.id);
+        });
+        body.on("mouseout", function () {
+          highlight_fns.reset_node_highlights();
+        });
 
         return {
           highlight_node(id) {
+            const neighbors = edges
+              .filter((edge) => edge.source.id === id || edge.target.id === id)
+              .map(({ source, target, strength }) => ({
+                neighbor: source.id == id ? target.id : source.id,
+                strength,
+                color: network.scales.link_color(strength),
+              }))
+              .sort((a, b) => b.strength - a.strength);
+
+            table_from_obj(right_side, {
+              data: neighbors,
+              id: "tooltip",
+              keys_to_avoid: ["id", "first_edge"],
+              even_cols: true,
+              title: `${neighbors.length} Neighbors`,
+              max_width: "100%",
+              colored_rows: true,
+            });
+
             nodes_table
               .filter((n) => n.id === id)
               .style("outline", "2px solid black")
@@ -747,8 +833,11 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
                   block: "nearest",
                 });
               });
+
+            show_both();
           },
           reset_node_highlights() {
+            just_left();
             nodes_table.style("outline", "none");
           },
         };
@@ -893,13 +982,13 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       function highlight_node(node_id) {
         focused_network.highlight_node(node_id);
         focused_info.highlight_node(node_id);
-        neighbor_tooltip.show_node_neighbors(node_id);
+        // neighbor_tooltip.show_node_neighbors(node_id);
       }
 
       function reset_node_highlights() {
         focused_network.reset_node_highlights();
         focused_info.reset_node_highlights();
-        neighbor_tooltip.hide();
+        // neighbor_tooltip.hide();
       }
     }
 
