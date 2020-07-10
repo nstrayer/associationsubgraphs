@@ -1002,8 +1002,10 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
   return { set_to_step };
 }
 
-function draw_timelines(div, { data, sizing, margins, on_new_step }) {
-  let default_step = 50;
+function draw_timelines(
+  div,
+  { data, sizing, margins, on_new_step, default_step }
+) {
   const section_pad = 8;
   const background_color = "grey";
   const background_alpha = 0.1;
@@ -1011,6 +1013,20 @@ function draw_timelines(div, { data, sizing, margins, on_new_step }) {
   const line_width = 1;
   const callout_r = 3;
   const div_width = +div.attr("width");
+
+  if (!default_step) {
+    // If no default step is provided we find the step with the lowest relative size of largest component
+    let min_rel_step = 0;
+    let lowest_rel_size = 1;
+    for (let step_i = 0; step_i < data.length; step_i++) {
+      const rel_max_for_step = data[step_i].rel_max_size;
+      if (rel_max_for_step < lowest_rel_size) {
+        lowest_rel_size = rel_max_for_step;
+        min_rel_step = step_i;
+      }
+    }
+    default_step = min_rel_step;
+  }
 
   const timelines = set_dom_elements({
     div: div
