@@ -49,7 +49,6 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
   const node_r = 3;
   const focus_r = 6;
   const lolly_r = 5;
-  const v_pad = 5; // padding added to top of selection rectangle
 
   const network_div = div
     .select_append("div#network_plot")
@@ -196,8 +195,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           .attr("ry", 5)
           .attr("stroke-width", 0)
           .attr("fill-opacity", 0)
-          .attr("height", component.h + v_pad)
-          .attr("y", -v_pad);
+          .attr("height", component.h);
 
         return main_g;
       })
