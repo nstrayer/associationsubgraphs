@@ -130,7 +130,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
   const component_X = d3
     .scaleBand()
     .range([max_label_width, component.w])
-    .paddingInner(0.03);
+    .paddingInner(0.2);
 
   function update_components_chart(components, event_fns) {
     const components_df = HTMLWidgets.dataframeToD3(components).sort(
