@@ -94,7 +94,8 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       density: 1,
       strength: 2,
     },
-    component.h
+    component.h,
+    3
   );
   component_pos.size.scale = d3.scaleLinear().range([component_pos.size.h, 0]);
   component_pos.density.scale = d3
