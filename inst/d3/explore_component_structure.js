@@ -141,7 +141,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     component_X.domain(components_df.map((d) => d.id));
     const largest_component = d3.max(components.size);
     component_pos.size.scale.domain([0, largest_component]);
-    component_pos.density.scale.domain(d3.extent(components.density));
+    component_pos.density.scale.domain([0, 1]);
     component_pos.strength.scale.domain([0, d3.max(components.strength)]);
 
     const single_component = component.g
