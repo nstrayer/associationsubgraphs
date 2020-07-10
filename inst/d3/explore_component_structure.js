@@ -161,11 +161,19 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           .append("g")
           .classed("density_chart", true)
           .move_to({ y: component_pos.density.start });
+
         density_g
           .append("rect")
           .classed("background", true)
           .attr("fill", "grey")
           .attr("fill-opacity", 0.5);
+
+        density_g
+          .append("defs")
+          .append("clipPath")
+          .attr("id", (d) => `${d.id}-clip`)
+          .append("rect");
+
         density_g
           .append("rect")
           .classed("density_fill", true)
@@ -231,13 +239,25 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
     const density_g = single_component.select("g.density_chart");
 
+    const density_round = 10;
+
+    single_component
+      .select("clipPath")
+      .select("rect")
+      .attr("height", component_pos.density.h)
+      .attr("width", component_X.bandwidth())
+      .attr("rx", density_round)
+      .attr("ry", density_round);
+
     density_g
       .select("rect.background")
       .attr("height", component_pos.density.h)
-      .attr("width", component_X.bandwidth());
+      .attr("width", component_X.bandwidth())
+      .attr("clip-path", (d) => `url(#${d.id}-clip)`);
 
     density_g
       .select("rect.density_fill")
+      .attr("clip-path", (d) => `url(#${d.id}-clip)`)
       .attr("y", (d) => component_pos.density.scale(d.density))
       .attr(
         "height",
