@@ -1,4 +1,4 @@
-// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_subgraphs.js"), d3_version = "5"
+// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_components.js"), d3_version = "5"
 
 const margins = { left: 15, right: 35, top: 20, bottom: 10 };
 const link_color_range = ["#edf8e9", "#006d2c"];
@@ -387,14 +387,14 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       d3
         .forceX()
         .strength(0.25)
-        .x((node) => node.subgraph_x)
+        .x((node) => node.component_x)
     )
     .force(
       "y",
       d3
         .forceY()
         .strength(0.25)
-        .y((node) => node.subgraph_y)
+        .y((node) => node.component_y)
     )
     .stop();
 
@@ -425,9 +425,9 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           // If node is already in network, give it its same position
           Object.assign(node, prev_values);
         } else {
-          // If it's new, place it in the middle of its subgraph so it doesn't fly across screen
-          node.x = node.subgraph_x;
-          node.y = node.subgraph_y;
+          // If it's new, place it in the middle of its component so it doesn't fly across screen
+          node.x = node.component_x;
+          node.y = node.component_y;
         }
       });
     }
@@ -762,9 +762,9 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   // What we want to not show in now info
   const non_column_keys = [
-    "subgraph_id",
-    "subgraph_x",
-    "subgraph_y",
+    "component_id",
+    "component_x",
+    "component_y",
     "index",
     "x",
     "fx",
@@ -923,7 +923,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   function harmonize_data(step_i) {
     const { n_edges, components } = component_info[step_i];
-    const { nodes, edges, nodes_by_component } = find_subgraphs({
+    const { nodes, edges, nodes_by_component } = find_components({
       nodes: nodes_raw,
       edge_source: all_edges.a,
       edge_target: all_edges.b,
@@ -935,7 +935,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
     // Match the component ids across the two datasets
     components.id = components.first_edge.map(
-      (edge_i) => edges[edge_i].subgraph
+      (edge_i) => edges[edge_i].component
     );
 
     return { nodes, edges, components, nodes_by_component };
