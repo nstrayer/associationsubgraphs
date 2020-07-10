@@ -921,61 +921,6 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
   }
   //#endregion
 
-  //#region Neighbor tooltip
-  function setup_neighbor_tooltip({
-    edges,
-    nodes_by_component,
-    n_neighbors = 5,
-  }) {
-    const top_pad = 20; // A little bit of padding to avoid overlapping instruction text
-    const tooltip_div = div
-      .select_append("div#edges_tooltip")
-      .style("width", "auto")
-      .style("top", `${top_pad}px`)
-      .style("max-height", `${viz_sizing.network.h - top_pad}px`)
-      .style("box-shadow", div_shadow)
-      .style("padding-top", "6px")
-      .style("background", "white")
-      .style("position", "absolute")
-      .style("overflow", "scroll")
-      .style("display", "none");
-
-    const show_tooltip = function () {
-      tooltip_div.style("display", "block").raise();
-    };
-
-    return {
-      show_component_members: function (component_id) {
-        const all_nodes = nodes_by_component.find((c) => c.id === component_id)
-          .nodes;
-
-        if (d3.mean(all_nodes, (n) => n.x) < width / 2) {
-          tooltip_div.style("right", "0").style("left", "auto");
-        } else {
-          tooltip_div.style("left", "0").style("right", "auto");
-        }
-
-        show_tooltip();
-
-        table_from_obj(tooltip_div.style("max-width", "30%"), {
-          data: all_nodes.map((n) => ({
-            members: n.id,
-            color: n.color,
-          })),
-          id: "tooltip",
-          keys_to_avoid: [],
-          max_width: "95%",
-          colored_rows: true,
-        });
-      },
-      hide: function () {
-        tooltip_div.style("display", "none");
-      },
-    };
-  }
-
-  //#endregion
-
   function harmonize_data(step_i) {
     const { n_edges, components } = component_info[step_i];
     const { nodes, edges, nodes_by_component } = find_subgraphs({
@@ -996,14 +941,17 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     return { nodes, edges, components, nodes_by_component };
   }
 
+  // Main interaction logic goes here.
   function set_to_step(step_i) {
     const step_data = harmonize_data(step_i);
+
     const component_chart = update_components_chart(step_data.components, {
       focus_on_component,
       reset_focus,
       highlight_component,
       reset_component_highlights,
     });
+
     const network_plot = update_network_plot(step_data, {
       focus_on_component,
       reset_focus,
@@ -1012,11 +960,8 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     });
 
     const info_panel = setup_info_div(step_data);
-    const neighbor_tooltip = setup_neighbor_tooltip(step_data);
 
     function focus_on_component(id) {
-      neighbor_tooltip.hide();
-
       instructions_text.text(in_focus_instructions);
 
       const highlight_fns = {
@@ -1030,13 +975,11 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       function highlight_node(node_id) {
         focused_network.highlight_node(node_id);
         focused_info.highlight_node(node_id);
-        // neighbor_tooltip.show_node_neighbors(node_id);
       }
 
       function reset_node_highlights() {
         focused_network.reset_node_highlights();
         focused_info.reset_node_highlights();
-        // neighbor_tooltip.hide();
       }
     }
 
@@ -1044,19 +987,16 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       instructions_text.text(default_instructions);
       network_plot.reset_zoom();
       info_panel.hide();
-      neighbor_tooltip.hide();
     }
 
     function highlight_component(id) {
       network_plot.highlight_component(id);
       component_chart.highlight_component(id);
-      // neighbor_tooltip.show_component_members(id);
     }
 
     function reset_component_highlights() {
       network_plot.reset_component_highlights();
       component_chart.reset_component_highlights();
-      neighbor_tooltip.hide();
     }
   }
   return { set_to_step };
