@@ -151,6 +151,11 @@ function table_from_obj(
   const table_holder = container
     .select_append(`div#table_holder${id}`)
     .style("max-width", max_width)
+    .style("height", "100%")
+    .style("overflow", "auto")
+    // .style("overflow-x", "hidden")
+    // .style("position", "relative")
+    // .style("width", "fit-content")
     .style("margin-left", "auto")
     .style("margin-right", "auto")
     .style("margin-bottom", "0.75rem");
@@ -165,7 +170,10 @@ function table_from_obj(
   const table = table_holder
     .select_append(`table#${id}`)
     .style("border-collapse", "collapse")
-    .style("border", `1px solid ${header_color.toString()}`);
+    .style("width", "100%")
+    .style("table-layout", "fixed")
+    .style("outline", `1px solid ${header_color.toString()}`)
+    .style("font-size", "0.9rem");
 
   // header
   table
@@ -203,6 +211,7 @@ function table_from_obj(
     .data((d) => column_names.map((key) => print_val(d[key])))
     .join("td")
     .attr("class", "table_cell")
+    .style("word-wrap", "break-word")
     .text((d) => d);
 
   // Style all the cells in common
