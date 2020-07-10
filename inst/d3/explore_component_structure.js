@@ -1124,16 +1124,16 @@ function draw_timelines(div, { data, sizing, margins, on_new_step }) {
 
   const pinned_step_line = chart_g
     .select_append("line.pinned_step")
-    .attr("y1", section_pad)
-    .attr("y2", h - section_pad)
+    .attr("y1", 0)
+    .attr("y2", h)
     .attr("stroke", "steelblue")
     .attr("stroke-opacity", 0.5)
     .attr("stroke-width", 1);
 
   const callout_line = chart_g
     .append("line")
-    .attr("y1", section_pad)
-    .attr("y2", h - section_pad)
+    .attr("y1", 0)
+    .attr("y2", h)
     .attr("stroke", "grey")
     .attr("stroke-opacity", 0.5)
     .attr("stroke-width", 1);
