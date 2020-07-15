@@ -18,7 +18,8 @@ Suggests:
     roxygen2,
     knitr,
     rmarkdown,
-    fs
+    fs,
+    testthat
 Depends: 
     R (>= 2.10)
 VignetteBuilder: knitr
