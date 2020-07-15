@@ -46,30 +46,3 @@
 calculate_subgraph_structure <- function(association_pairs, strength_column = "strength"){
   dplyr::as_tibble(calculate_subgraph_structure_rcpp(ensure_sorted(association_pairs), w_col = strength_column))
 }
-
-
-
-#' Visualize all possible subgraphs
-#'
-#' Companion function to \code{\link{find_all_subgraphs}} to visualize results.
-#' Shows a streamgraph of subgraph's by size, total number of subgraphs, and
-#' mergers of subgraphs that took place at every unique strength cutoff for
-#' association network.
-#'
-#' @param all_subgraphs results dataframe from calling \code{\link{find_all_subgraphs}}
-#'
-#' @return NULL
-#' @export
-#'
-#' @examples
-#'
-#' virus_net %>%
-#'   dplyr::arrange(desc(strength)) %>%
-#'     head(500) %>%
-#'     find_all_subgraphs() %>%
-#'     visualize_all_subgraphs()
-#'
-visualize_all_subgraphs <- function(all_subgraphs){
-
-  r2d3::r2d3(system.file("d3/visualize_all_subgraphs.js", package = "associationsubgraphs"), data=all_subgraphs)
-}
