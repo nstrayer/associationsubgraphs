@@ -67,8 +67,8 @@ simulate_sticky_association_network <- function(
   n_variables = 50,
   n_clusters = 4,
   cluster_coherence=2,
-  stickiness_dist = function(n){rbeta(n, shape1 = 1, shape2 = 4)},
-  association_dist = function(n){rbeta(n, shape1 = 0.5, shape2 = 10)}
+  stickiness_dist = function(n){stats::rbeta(n, shape1 = 1, shape2 = 4)},
+  association_dist = function(n){stats::rbeta(n, shape1 = 0.5, shape2 = 10)}
 ){
 
   # Start by setting up vectors that represent variables
@@ -85,7 +85,7 @@ simulate_sticky_association_network <- function(
   # First build indices of all unique pairs
   rep_counts <- (n_variables:1) - 1
   a_i <- rep(1:n_variables, times = rep_counts)
-  b_i <- unlist(lapply(rep_counts, function(x){tail(1:n_variables, x)}))
+  b_i <- unlist(lapply(rep_counts, function(x){utils::tail(1:n_variables, x)}))
   n_pairs <- length(a_i)
 
   # Now we use those indices

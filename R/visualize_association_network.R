@@ -151,8 +151,6 @@ visualize_subgraph_structure <- function(association_pairs,
   }
 
   if(missing(subgraph_results)){
-
-
     message("Calculating subgraph structure results...")
     subgraph_results <- associationsubgraphs::calculate_subgraph_structure(association_pairs)
     message("...finished")
