@@ -71,30 +71,39 @@ simulate_sticky_association_network <- function(
   association_dist = function(n){rbeta(n, shape1 = 0.5, shape2 = 10)}
 ){
 
+  # Start by setting up vectors that represent variables
+  cluster_membership <- sample(seq_len(n_clusters),
+                               size = n_variables,
+                               replace = TRUE)
 
-  variables <- dplyr::tibble(
-    variable = seq_len(n_variables),
-    stickiness = stickiness_dist(n_variables),
-    cluster = sample(seq_len(n_clusters), size = n_variables, replace = TRUE)
-  ) %>%
-    # Make sure stickiness averages out to a scalar of one
-    dplyr::mutate(stickiness = stickiness/mean(stickiness))
+  # Make sure stickiness averages out to a scalar of one
+  stickiness <- stickiness_dist(n_variables)
+  stickiness <- stickiness / mean(stickiness)
+
+  # Move on to building the association values for each combo
+
+  # First build indices of all unique pairs
+  rep_counts <- (n_variables:1) - 1
+  a_i <- rep(1:n_variables, times = rep_counts)
+  b_i <- unlist(lapply(rep_counts, function(x){tail(1:n_variables, x)}))
+  n_pairs <- length(a_i)
+
+  # Now we use those indices
+  same_cluster <- cluster_membership[a_i] == cluster_membership[b_i]
+  raw_association <-
+    association_dist(n_pairs) * ifelse(same_cluster, cluster_coherence, 1)
 
   list(
-    variables = variables,
-    associations = expand_combinations(n_variables) %>%
-      dplyr::mutate(
-        a_stickiness = variables$stickiness[a_index],
-        b_stickiness = variables$stickiness[b_index],
-        same_cluster = variables$cluster[a_index] == variables$cluster[b_index],
-        raw_association = association_dist(dplyr::n())*ifelse(same_cluster, cluster_coherence, 1),
-        strength = raw_association*(a_stickiness + b_stickiness)
-      ) %>%
-      dplyr::select(
-        a = a_index,
-        b = b_index,
-        same_cluster,
-        strength
-      )
+    variables = dplyr::tibble(
+      id = seq_len(n_variables),
+      stickiness = stickiness,
+      cluster = cluster_membership
+    ),
+    associations =  dplyr::tibble(
+      a = a_i,
+      b = b_i,
+      same_cluster = same_cluster,
+      strength = raw_association * (stickiness[a_i] + stickiness[b_i])
+    )
   )
 }
