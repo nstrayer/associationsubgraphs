@@ -754,7 +754,7 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
     .select_append("div#info_panel")
     .style("position", "absolute")
     .style("top", `${network_h}px`)
-    .style("height", `calc(100% - ${network_h}px`)
+    .style("height", `${height - network_h}px`)
     .style("width", `${width}px`)
     .style("box-shadow", div_shadow)
     .style("background", "white")
