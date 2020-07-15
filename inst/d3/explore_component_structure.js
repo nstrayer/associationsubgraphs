@@ -65,7 +65,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   const top_pad = 25; // A little bit of padding to avoid overlapping instruction text
   const member_glimpse_tooltip = network_div
-    .select_append("div#edges_tooltip")
+    .select_append("div#member_glimpse_tooltip")
     .style("width", "auto")
     .style("max-width", "30%")
     .style("max-height", `${network.h - top_pad}px`)

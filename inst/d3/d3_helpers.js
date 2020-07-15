@@ -193,7 +193,8 @@ function table_from_obj(
     .data(data)
     .join("tr");
 
-  if (colored_rows) {
+  // Dont try and color the rows if there is no color column to use
+  if (colored_rows && data[0].color) {
     const color_is_light = (cell_color) => d3.hcl(d3.color(cell_color)).l > 60;
 
     rows
