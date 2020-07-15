@@ -26,7 +26,7 @@ expand_combinations <- function(n, self_pairs = FALSE){
 
   dplyr::tibble(
     a_index = rep(1:n, times = rep_counts),
-    b_index = purrr::flatten_int( purrr::map(rep_counts, ~{tail(1:n, .x)}) )
+    b_index = unlist(lapply(rep_counts, function(x){tail(1:n, x)}))
   )
 }
 
