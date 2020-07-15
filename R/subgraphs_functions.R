@@ -92,6 +92,7 @@ find_all_subgraphs <- function(association_pairs){
 #' descending order of strength.
 #'
 #' @inheritParams visualize_association_network
+#' @strength_column Id of column that encodes the strength of the associations for pairs
 #'
 #' @return Dataframe with the following columns for the subgraph info
 #' @export
@@ -103,8 +104,8 @@ find_all_subgraphs <- function(association_pairs){
 #'     head(1000) %>%
 #'     explore_component_structure()
 #'
-explore_component_structure <- function(association_pairs){
-  dplyr::as_tibble(find_components(association_pairs))
+explore_component_structure <- function(association_pairs, strength_column = "strength"){
+  dplyr::as_tibble(find_components(ensure_sorted(association_pairs), w_col = strength_column))
 }
 
 
