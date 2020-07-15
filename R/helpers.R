@@ -95,3 +95,11 @@ gather_unique_nodes <- function(pairs){
   id,
   name = "degree")
 }
+
+# Lots of functions in package rely on association network being sorted
+ensure_sorted <- function(association_pairs){
+  if(is.unsorted(-association_pairs$strength)){
+    return(dplyr::arrange(association_pairs, -strength))
+  }
+  association_pairs
+}
