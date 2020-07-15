@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of `associationsubgraphs` is to provide tools to investigate association networks of any type using intuitive and visual tools. The main premise is to break down association networks into distinct subgraphs of variables connected to each other (often called components) above some association strength threshold. Includes functions for transforming associations to relative and investigating the found structure across all association thresholds through visualization and various network-analysis statistics. 
+The goal of `associationsubgraphs` is to provide tools to investigate association networks of any type using interpretable methods and exploratory visualizations. The main premise is to break down association networks into distinct subgraphs of variables connected to each other (often called components) above some association strength threshold. Includes functions for transforming associations to relative and investigating the found structure across all association thresholds through visualization and various network-analysis statistics. 
 
 ## Installation
 
