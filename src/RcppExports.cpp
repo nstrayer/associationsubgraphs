@@ -5,9 +5,9 @@
 
 using namespace Rcpp;
 
-// find_components
-List find_components(DataFrame associations, const String& a_col, const String& b_col, const String& w_col);
-RcppExport SEXP _associationsubgraphs_find_components(SEXP associationsSEXP, SEXP a_colSEXP, SEXP b_colSEXP, SEXP w_colSEXP) {
+// find_subgraphs
+List find_subgraphs(DataFrame associations, const String& a_col, const String& b_col, const String& w_col);
+RcppExport SEXP _associationsubgraphs_find_subgraphs(SEXP associationsSEXP, SEXP a_colSEXP, SEXP b_colSEXP, SEXP w_colSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -15,27 +15,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const String& >::type a_col(a_colSEXP);
     Rcpp::traits::input_parameter< const String& >::type b_col(b_colSEXP);
     Rcpp::traits::input_parameter< const String& >::type w_col(w_colSEXP);
-    rcpp_result_gen = Rcpp::wrap(find_components(associations, a_col, b_col, w_col));
-    return rcpp_result_gen;
-END_RCPP
-}
-// edges_to_all_nodes
-int edges_to_all_nodes(CharacterVector a, CharacterVector b, const int n);
-RcppExport SEXP _associationsubgraphs_edges_to_all_nodes(SEXP aSEXP, SEXP bSEXP, SEXP nSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< CharacterVector >::type a(aSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type b(bSEXP);
-    Rcpp::traits::input_parameter< const int >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(edges_to_all_nodes(a, b, n));
+    rcpp_result_gen = Rcpp::wrap(find_subgraphs(associations, a_col, b_col, w_col));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_associationsubgraphs_find_components", (DL_FUNC) &_associationsubgraphs_find_components, 4},
-    {"_associationsubgraphs_edges_to_all_nodes", (DL_FUNC) &_associationsubgraphs_edges_to_all_nodes, 3},
+    {"_associationsubgraphs_find_subgraphs", (DL_FUNC) &_associationsubgraphs_find_subgraphs, 4},
     {NULL, NULL, 0}
 };
 

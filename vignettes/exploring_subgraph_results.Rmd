@@ -23,10 +23,10 @@ First we will run subgraph finding algorithm across the associations
 
 ```{r, cache = TRUE}
 
-components <- association_pairs %>% head(10000) %>% explore_component_structure()
+subgraphs <- association_pairs %>% head(10000) %>% explore_subgraph_structure()
 
-components %>% 
-  select(-components) %>% 
+subgraphs %>% 
+  select(-subgraphs) %>% 
   head() %>% 
   knitr::kable()
 ```
@@ -37,23 +37,23 @@ Next we can investigate the subgraph structure over search
 
 ```{r}
 
-min_rel <- components %>%
+min_rel <- subgraphs %>%
   filter(rel_max_size == min(rel_max_size)) %>%
   tail(1)
 
-max_num_components <- components %>%
-  filter(n_components == max(n_components)) %>%
+max_num_subgraphs <- subgraphs %>%
+  filter(n_subgraphs == max(n_subgraphs)) %>%
   tail(1)
 
-max_num_triples <- components %>%
+max_num_triples <- subgraphs %>%
   filter(n_triples == max(n_triples)) %>%
   tail(1)
 
-components %>%
+subgraphs %>%
   # filter(rel_max_size < 0.5) %>%
   select(
     strength,
-    n_components,
+    n_subgraphs,
     max_size,
     rel_max_size,
     avg_density,
@@ -64,16 +64,16 @@ components %>%
   ggplot(aes(x = step, y = value)) +
   geom_step() +
   geom_vline(xintercept = min_rel$step, color = 'orangered') +
-  geom_vline(xintercept = max_num_components$step, color = 'forestgreen') +
+  geom_vline(xintercept = max_num_subgraphs$step, color = 'forestgreen') +
   geom_vline(xintercept = max_num_triples$step, color = 'steelblue') +
   facet_grid(rows = vars(name), scales = "free_y")
 
 ```
 
 ```{r}
-plot_component_info <- function(step_row, title) {
+plot_subgraph_info <- function(step_row, title) {
   step_row %>%
-    pluck("components", 1) %>%
+    pluck("subgraphs", 1) %>%
     arrange(-size,-strength) %>%
     mutate(id = forcats::fct_inorder(factor(id))) %>%
     ggplot(aes(
@@ -84,11 +84,11 @@ plot_component_info <- function(step_row, title) {
     )) +
     geom_col() +
     theme_phewas() +
-    labs(x = "component",
+    labs(x = "subgraph",
          title = title)
 }
 
-plot_component_info(min_rel, "Component structure for minimum relative cut")
+plot_subgraph_info(min_rel, "Subgraph structure for minimum relative cut")
 
 nodes_info <- virus_host_viruses %>% 
   rename(id = virus_id) %>% 
@@ -104,10 +104,10 @@ visualize_association_network(
 ```
 
 ```{r}
-plot_component_info(max_num_components, "Component structure for max number of components")
+plot_subgraph_info(max_num_subgraphs, "Subgraph structure for max number of subgraphs")
 
 visualize_association_network(
-  association_pairs = head(association_pairs, max_num_components$n_edges),
+  association_pairs = head(association_pairs, max_num_subgraphs$n_edges),
   node_info = nodes_info,
   measure_title = "relative smoothed mutual information",
   warn_of_mismatches = FALSE,
@@ -117,7 +117,7 @@ visualize_association_network(
 
 
 ```{r}
-plot_component_info(max_num_triples, "Component structure for max number of components larger than 2 nodes")
+plot_subgraph_info(max_num_triples, "Subgraph structure for max number of subgraphs larger than 2 nodes")
 
 visualize_association_network(
   association_pairs = head(association_pairs, max_num_triples$n_edges),

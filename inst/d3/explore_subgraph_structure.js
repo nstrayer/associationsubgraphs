@@ -1,34 +1,34 @@
-// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(associationsubgraphs::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(associationsubgraphs::virus_net, -strength), 5000), structure = associationsubgraphs::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_components.js"), d3_version = "5"
+// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(associationsubgraphs::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(associationsubgraphs::virus_net, -strength), 5000), structure = associationsubgraphs::virus_subgraph_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_subgraphs.js"), d3_version = "5"
 
 const margins = { left: 15, right: 35, top: 20, bottom: 10 };
 const link_color_range = ["#edf8e9", "#006d2c"];
 const viz_sizing = units_to_sizes(
   {
     network: 4,
-    component: 2,
+    subgraph: 2,
     timelines: 3,
   },
   height,
   10 //padding
 );
 
-const component_info = HTMLWidgets.dataframeToD3(data.structure);
+const subgraph_info = HTMLWidgets.dataframeToD3(data.structure);
 const div_shadow = "1px 1px 9px black";
 
 const network_views = setup_network_views({
   div,
   sizes: {
     network_h: viz_sizing.network.h,
-    component_h: viz_sizing.component.h,
+    subgraph_h: viz_sizing.subgraph.h,
     width,
     margins,
   },
   all_edges: data.edges,
-  component_info,
+  subgraph_info,
 });
 
 draw_timelines(div, {
-  data: component_info,
+  data: subgraph_info,
   sizing: viz_sizing.timelines,
   margins: { left: 5, right: 30, top: 5, bottom: 20 },
   on_new_step: function (new_step) {
@@ -39,8 +39,8 @@ draw_timelines(div, {
 // =============================================================================
 // Functions for drawing each section of the plots
 
-function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
-  const { network_h = 200, component_h = 200, width = 400, margins } = sizes;
+function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
+  const { network_h = 200, subgraph_h = 200, width = 400, margins } = sizes;
 
   const selection_color = "black";
   const bar_color = "grey";
@@ -55,7 +55,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .style("position", "absolute");
 
   // Make the horizontal margins equal for network plot.
-  // They're not even for the component charts because of axes drawing.
+  // They're not even for the subgraph charts because of axes drawing.
   const network = set_dom_elements({
     div: network_div,
     width,
@@ -76,23 +76,23 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .style("overflow", "scroll")
     .style("display", "none");
 
-  const component_div = div
-    .select_append("div#component_plot")
+  const subgraph_div = div
+    .select_append("div#subgraph_plot")
     .style("position", "absolute")
-    .style("top", `${viz_sizing.component.start}px`);
+    .style("top", `${viz_sizing.subgraph.start}px`);
 
-  const component = set_dom_elements({
-    div: component_div,
+  const subgraph = set_dom_elements({
+    div: subgraph_div,
     width,
-    height: component_h,
+    height: subgraph_h,
     margins,
     add_canvas: false,
   });
 
   const default_instructions =
-    "Click a component in network of chart to see details";
+    "Click a subgraph in network of chart to see details";
   const in_focus_instructions =
-    "Click anywhere outside of component to reset zoom";
+    "Click anywhere outside of subgraph to reset zoom";
   const instructions_text = network_div
     .select_append("span#instructions_text")
     .style("position", "absolute")
@@ -100,26 +100,26 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .style("right", "0")
     .text(default_instructions);
 
-  //#region Component chart setup
-  const component_pos = units_to_sizes(
+  //#region Subgraph chart setup
+  const subgraph_pos = units_to_sizes(
     {
       size: 2,
       density: 1,
       strength: 2,
     },
-    component.h,
+    subgraph.h,
     3
   );
-  component_pos.size.scale = d3.scaleLinear().range([component_pos.size.h, 0]);
-  component_pos.density.scale = d3
+  subgraph_pos.size.scale = d3.scaleLinear().range([subgraph_pos.size.h, 0]);
+  subgraph_pos.density.scale = d3
     .scaleLinear()
-    .range([component_pos.density.h, 0]);
-  component_pos.strength.scale = d3
+    .range([subgraph_pos.density.h, 0]);
+  subgraph_pos.strength.scale = d3
     .scaleLinear()
-    .range([0, component_pos.strength.h - lolly_r]);
+    .range([0, subgraph_pos.strength.h - lolly_r]);
 
   let max_label_width = 0;
-  component.g
+  subgraph.g
     .select_append("g.axis_labels")
     .selectAll("text")
     .data([
@@ -130,7 +130,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .join("text")
     .text((d) => d.label)
     .attr("dominant-baseline", "middle")
-    .attr("y", (d) => component_pos[d.id].start + component_pos[d.id].h / 2)
+    .attr("y", (d) => subgraph_pos[d.id].start + subgraph_pos[d.id].h / 2)
     .each(function () {
       max_label_width = Math.max(
         d3.select(this).node().getBBox().width,
@@ -140,31 +140,31 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     .attr("text-anchor", "end")
     .attr("x", max_label_width - 5);
 
-  const component_X = d3
+  const subgraph_X = d3
     .scaleBand()
-    .range([max_label_width, component.w])
+    .range([max_label_width, subgraph.w])
     .paddingInner(0.2);
 
-  function update_components_chart(components, event_fns) {
-    const components_df = HTMLWidgets.dataframeToD3(components).sort(
+  function update_subgraphs_chart(subgraphs, event_fns) {
+    const subgraphs_df = HTMLWidgets.dataframeToD3(subgraphs).sort(
       (c_a, c_b) => c_b.size - c_a.size
     );
 
     // Update scales
-    component_X.domain(components_df.map((d) => d.id));
-    const largest_component = d3.max(components.size);
-    component_pos.size.scale.domain([0, largest_component]);
-    component_pos.density.scale.domain([0, 1]);
-    component_pos.strength.scale.domain([0, d3.max(components.strength)]);
+    subgraph_X.domain(subgraphs_df.map((d) => d.id));
+    const largest_subgraph = d3.max(subgraphs.size);
+    subgraph_pos.size.scale.domain([0, largest_subgraph]);
+    subgraph_pos.density.scale.domain([0, 1]);
+    subgraph_pos.strength.scale.domain([0, d3.max(subgraphs.strength)]);
 
-    const single_component = component.g
+    const single_subgraph = subgraph.g
       .select_append("g.chart_elements")
-      .selectAll("g.component_stats")
-      .data(components_df, (d) => d.id)
+      .selectAll("g.subgraph_stats")
+      .data(subgraphs_df, (d) => d.id)
       .join(function (enter) {
         const main_g = enter
           .append("g")
-          .move_to({ x: (d) => component_X(d.id) });
+          .move_to({ x: (d) => subgraph_X(d.id) });
 
         // We have a size bar
         main_g.append("rect").classed("size_bar", true).attr("fill", bar_color);
@@ -173,7 +173,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         const density_g = main_g
           .append("g")
           .classed("density_chart", true)
-          .move_to({ y: component_pos.density.start });
+          .move_to({ y: subgraph_pos.density.start });
 
         density_g
           .append("rect")
@@ -196,7 +196,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         const strength_g = main_g
           .append("g")
           .classed("strength_lollypop", true)
-          .move_to({ y: component_pos.strength.start });
+          .move_to({ y: subgraph_pos.strength.start });
         strength_g
           .append("line")
           .classed("lollypop_stick", true)
@@ -217,135 +217,135 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           .attr("ry", 5)
           .attr("stroke-width", 0)
           .attr("fill-opacity", 0)
-          .attr("height", component.h);
+          .attr("height", subgraph.h);
 
         return main_g;
       })
-      .classed("component_stats", true)
+      .classed("subgraph_stats", true)
       .on("mouseover", function (d) {
-        event_fns.highlight_component(d.id);
+        event_fns.highlight_subgraph(d.id);
       })
       .on("mouseout", function (d) {
-        event_fns.reset_component_highlights();
+        event_fns.reset_subgraph_highlights();
       })
       .on("click", function (d) {
-        event_fns.focus_on_component(d.id);
+        event_fns.focus_on_subgraph(d.id);
       });
 
-    single_component
+    single_subgraph
       .select("rect.interaction_rect")
-      .attr("width", component_X.bandwidth());
+      .attr("width", subgraph_X.bandwidth());
 
-    single_component
+    single_subgraph
       .transition()
       .duration(100)
-      .attr("transform", (d) => `translate(${component_X(d.id)}, 0)`);
+      .attr("transform", (d) => `translate(${subgraph_X(d.id)}, 0)`);
 
-    single_component
+    single_subgraph
       .select("rect.size_bar")
-      .attr("width", component_X.bandwidth())
-      .attr("y", (d) => component_pos.size.scale(d.size))
+      .attr("width", subgraph_X.bandwidth())
+      .attr("y", (d) => subgraph_pos.size.scale(d.size))
       .attr(
         "height",
-        (d) => component_pos.size.h - component_pos.size.scale(d.size)
+        (d) => subgraph_pos.size.h - subgraph_pos.size.scale(d.size)
       );
 
-    const density_g = single_component.select("g.density_chart");
+    const density_g = single_subgraph.select("g.density_chart");
 
     const density_round = 10;
 
-    single_component
+    single_subgraph
       .select("clipPath")
       .select("rect")
-      .attr("height", component_pos.density.h)
-      .attr("width", component_X.bandwidth())
+      .attr("height", subgraph_pos.density.h)
+      .attr("width", subgraph_X.bandwidth())
       .attr("rx", density_round)
       .attr("ry", density_round);
 
     density_g
       .select("rect.background")
-      .attr("height", component_pos.density.h)
-      .attr("width", component_X.bandwidth())
+      .attr("height", subgraph_pos.density.h)
+      .attr("width", subgraph_X.bandwidth())
       .attr("clip-path", (d) => `url(#${d.id}-clip)`);
 
     density_g
       .select("rect.density_fill")
       .attr("clip-path", (d) => `url(#${d.id}-clip)`)
-      .attr("y", (d) => component_pos.density.scale(d.density))
+      .attr("y", (d) => subgraph_pos.density.scale(d.density))
       .attr(
         "height",
-        (d) => component_pos.density.h - component_pos.density.scale(d.density)
+        (d) => subgraph_pos.density.h - subgraph_pos.density.scale(d.density)
       )
-      .attr("width", component_X.bandwidth());
+      .attr("width", subgraph_X.bandwidth());
 
-    const strength_g = single_component.select("g.strength_lollypop");
+    const strength_g = single_subgraph.select("g.strength_lollypop");
 
     strength_g
       .select("line")
-      .attr("y1", (d) => component_pos.strength.scale(d.strength))
-      .attr("x1", component_X.bandwidth() / 2)
-      .attr("x2", component_X.bandwidth() / 2);
+      .attr("y1", (d) => subgraph_pos.strength.scale(d.strength))
+      .attr("x1", subgraph_X.bandwidth() / 2)
+      .attr("x2", subgraph_X.bandwidth() / 2);
 
     strength_g
       .select("circle")
-      .attr("cy", (d) => component_pos.strength.scale(d.strength))
-      .attr("cx", component_X.bandwidth() / 2);
+      .attr("cy", (d) => subgraph_pos.strength.scale(d.strength))
+      .attr("cx", subgraph_X.bandwidth() / 2);
 
     // Draw axes
 
-    const too_thin_for_unit_bars = component_pos.size.h / largest_component < 3;
+    const too_thin_for_unit_bars = subgraph_pos.size.h / largest_subgraph < 3;
 
-    component.g
+    subgraph.g
       .select_append("g.size_axis")
-      .move_to({ x: max_label_width, y: component_pos.size.start })
+      .move_to({ x: max_label_width, y: subgraph_pos.size.start })
       .call(
         d3
-          .axisLeft(component_pos.size.scale)
-          .ticks(too_thin_for_unit_bars ? 5 : largest_component)
+          .axisLeft(subgraph_pos.size.scale)
+          .ticks(too_thin_for_unit_bars ? 5 : largest_subgraph)
       )
-      .call(extend_ticks, component.w, 0.8)
+      .call(extend_ticks, subgraph.w, 0.8)
       .call(remove_domain)
       .call((g) => g.selectAll("text").remove());
 
-    component.g
+    subgraph.g
       .selectAll(`text.size_labels`)
-      .data(components_df.head(too_thin_for_unit_bars ? 3 : 0))
+      .data(subgraphs_df.head(too_thin_for_unit_bars ? 3 : 0))
       .join("text")
       .text((d) => d.size)
       .attr("class", "size_labels")
-      .attr("x", (d) => component_X(d.id) + component_X.bandwidth() / 2)
+      .attr("x", (d) => subgraph_X(d.id) + subgraph_X.bandwidth() / 2)
       .attr("text-anchor", "middle")
       .attr("text-size", "9px")
-      .attr("y", (d) => component_pos.size.scale(d.size) - 1)
+      .attr("y", (d) => subgraph_pos.size.scale(d.size) - 1)
       .raise();
 
-    component.g
+    subgraph.g
       .select_append("g.strength_axis")
-      .move_to({ x: component.w, y: component_pos.strength.start })
-      .call(d3.axisRight(component_pos.strength.scale).ticks(4))
+      .move_to({ x: subgraph.w, y: subgraph_pos.strength.start })
+      .call(d3.axisRight(subgraph_pos.strength.scale).ticks(4))
       .call(remove_domain);
 
-    function highlight_component(id) {
-      const component_sel = single_component.filter((c) => c.id === id);
+    function highlight_subgraph(id) {
+      const subgraph_sel = single_subgraph.filter((c) => c.id === id);
 
-      component_sel.select("rect.size_bar").attr("fill", selected_color);
-      component_sel.select("rect.density_fill").attr("fill", selected_color);
-      component_sel
+      subgraph_sel.select("rect.size_bar").attr("fill", selected_color);
+      subgraph_sel.select("rect.density_fill").attr("fill", selected_color);
+      subgraph_sel
         .select("circle")
         .attr("fill", selected_color)
         .attr("r", lolly_r * 1.5);
     }
 
-    function reset_component_highlights() {
-      single_component.select("rect.size_bar").attr("fill", bar_color);
-      single_component.select("rect.density_fill").attr("fill", bar_color);
-      single_component
+    function reset_subgraph_highlights() {
+      single_subgraph.select("rect.size_bar").attr("fill", bar_color);
+      single_subgraph.select("rect.density_fill").attr("fill", bar_color);
+      single_subgraph
         .select("circle")
         .attr("fill", bar_color)
         .attr("r", lolly_r);
     }
 
-    return { highlight_component, reset_component_highlights };
+    return { highlight_subgraph, reset_subgraph_highlights };
   }
   //#endregion
 
@@ -387,14 +387,14 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       d3
         .forceX()
         .strength(0.25)
-        .x((node) => node.component_x)
+        .x((node) => node.subgraph_x)
     )
     .force(
       "y",
       d3
         .forceY()
         .strength(0.25)
-        .y((node) => node.component_y)
+        .y((node) => node.subgraph_y)
     )
     .stop();
 
@@ -402,10 +402,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   let all_nodes;
 
-  function update_network_plot(
-    { nodes, edges, nodes_by_component },
-    event_fns
-  ) {
+  function update_network_plot({ nodes, edges, nodes_by_subgraph }, event_fns) {
     let current_focus = null;
     let zooming = false;
     let X = network.scales.X_default.copy();
@@ -425,9 +422,9 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           // If node is already in network, give it its same position
           Object.assign(node, prev_values);
         } else {
-          // If it's new, place it in the middle of its component so it doesn't fly across screen
-          node.x = node.component_x;
-          node.y = node.component_y;
+          // If it's new, place it in the middle of its subgraph so it doesn't fly across screen
+          node.x = node.subgraph_x;
+          node.y = node.subgraph_y;
         }
       });
     }
@@ -437,13 +434,13 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     simulation.alpha(1).restart();
     simulation.on("tick", update_positions);
 
-    const component_containers = network.g
+    const subgraph_containers = network.g
       .attr("stroke", "#fff")
       .attr("stroke-width", node_r / 3)
-      .selectAll("g.component")
-      .data(nodes_by_component, (component) => component.id)
+      .selectAll("g.subgraph")
+      .data(nodes_by_subgraph, (subgraph) => subgraph.id)
       .join((enter) => {
-        const main_g = enter.append("g").attr("class", "component");
+        const main_g = enter.append("g").attr("class", "subgraph");
         main_g
           .append("rect")
           .attr("class", "bounding_rect")
@@ -455,21 +452,21 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       })
       .on("click", function (d) {
         if (!current_focus & !zooming) {
-          event_fns.focus_on_component(d.id);
+          event_fns.focus_on_subgraph(d.id);
         }
       })
       .on("mouseover", function (d) {
         if (!current_focus & !zooming) {
-          event_fns.highlight_component(d.id);
+          event_fns.highlight_subgraph(d.id);
         }
       })
       .on("mouseout", function (d) {
         if (!current_focus & !zooming) {
-          event_fns.reset_component_highlights();
+          event_fns.reset_subgraph_highlights();
         }
       });
 
-    all_nodes = component_containers
+    all_nodes = subgraph_containers
       .select("g.node_container")
       .selectAll("circle")
       .data(
@@ -515,7 +512,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
       if (current_focus) {
         network.context.lineWidth = 2.5;
-        nodes_by_component
+        nodes_by_subgraph
           .find((c) => c.id === current_focus)
           .edge_indices.forEach((edge_i) => {
             const edge = edges[edge_i];
@@ -576,10 +573,10 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       // nodes
       all_nodes.attr("cx", (d) => X(d.x)).attr("cy", (d) => Y(d.y));
       // Update bounding rects for interaction purposes
-      component_containers.each(function (d) {
+      subgraph_containers.each(function (d) {
         const pad = 5;
 
-        const component_bbox = d3
+        const subgraph_bbox = d3
           .select(this)
           .select("g.node_container")
           .node()
@@ -587,25 +584,25 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
         d3.select(this)
           .select("rect.bounding_rect")
-          .attr("width", component_bbox.width + pad * 2)
-          .attr("height", component_bbox.height + pad * 2)
-          .attr("x", component_bbox.x - pad)
-          .attr("y", component_bbox.y - pad);
+          .attr("width", subgraph_bbox.width + pad * 2)
+          .attr("height", subgraph_bbox.height + pad * 2)
+          .attr("x", subgraph_bbox.x - pad)
+          .attr("y", subgraph_bbox.y - pad);
       });
     }
 
-    function zoom_to_component(id, node_highlight_fns) {
-      reset_component_highlights();
+    function zoom_to_subgraph(id, node_highlight_fns) {
+      reset_subgraph_highlights();
       current_focus = id;
-      const nodes_in_sel = component_containers
+      const nodes_in_sel = subgraph_containers
         .filter((c) => c.id === id)
         .attr("opacity", 1)
         .selectAll("circle");
-      const nodes_in_component = nodes_by_component.find((c) => c.id === id)
+      const nodes_in_subgraph = nodes_by_subgraph.find((c) => c.id === id)
         .nodes;
 
-      const [x_min, x_max] = d3.extent(nodes_in_component, (n) => X(n.x));
-      const [y_min, y_max] = d3.extent(nodes_in_component, (n) => Y(n.y));
+      const [x_min, x_max] = d3.extent(nodes_in_subgraph, (n) => X(n.x));
+      const [y_min, y_max] = d3.extent(nodes_in_subgraph, (n) => Y(n.y));
       zooming = true;
       network.svg
         .transition()
@@ -650,7 +647,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
       nodes_in_sel.transition().duration(750).attr("r", focus_r);
 
-      component_containers.filter((c) => c.id !== id).attr("opacity", 0);
+      subgraph_containers.filter((c) => c.id !== id).attr("opacity", 0);
 
       return {
         highlight_node,
@@ -660,14 +657,14 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       };
     }
 
-    function reset_component_highlights() {
-      component_containers.select("rect.bounding_rect").attr("stroke", "white");
+    function reset_subgraph_highlights() {
+      subgraph_containers.select("rect.bounding_rect").attr("stroke", "white");
       member_glimpse_tooltip.style("display", "none");
     }
 
     return {
-      zoom_to_component,
-      reset_component_highlights,
+      zoom_to_subgraph,
+      reset_subgraph_highlights,
       reset_zoom: function () {
         current_focus = null;
         zooming = true;
@@ -675,7 +672,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         //disable panning
         network.svg.on(".zoom", null);
 
-        component_containers.attr("opacity", 1);
+        subgraph_containers.attr("opacity", 1);
 
         network.svg
           .transition()
@@ -692,25 +689,25 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
           .duration(750)
           .attr("r", node_r);
       },
-      highlight_component: function (id) {
-        reset_component_highlights();
+      highlight_subgraph: function (id) {
+        reset_subgraph_highlights();
 
         // Do some math to figure out where to place tooltip
         const x_pad = 8;
-        const component_bbox = component_containers
+        const subgraph_bbox = subgraph_containers
           .filter((c) => c.id === id)
           .select("rect.bounding_rect")
           .attr("stroke", "black");
 
-        const box_left = +component_bbox.attr("x");
-        const box_right = +component_bbox.attr("width") + box_left;
+        const box_left = +subgraph_bbox.attr("x");
+        const box_right = +subgraph_bbox.attr("width") + box_left;
         const dist_to_left = box_left + margins.left;
         const dist_to_right = network.w - box_right + margins.right;
         const box_is_on_lower_half =
-          +component_bbox.attr("y") + +component_bbox.attr("height") / 2 >
+          +subgraph_bbox.attr("y") + +subgraph_bbox.attr("height") / 2 >
           network.h / 2;
         if (dist_to_left < dist_to_right) {
-          // Component is on left of canvas so put tooltip to right of it
+          // Subgraph is on left of canvas so put tooltip to right of it
           member_glimpse_tooltip
             .style("right", "auto")
             .style("left", `${box_right + margins.left + x_pad}px`);
@@ -731,7 +728,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         table_from_obj(
           member_glimpse_tooltip.style("display", "block").raise(),
           {
-            data: nodes_by_component
+            data: nodes_by_subgraph
               .find((c) => c.id === id)
               .nodes.map((n) => ({
                 members: n.id,
@@ -762,9 +759,9 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
 
   // What we want to not show in now info
   const non_column_keys = [
-    "component_id",
-    "component_x",
-    "component_y",
+    "subgraph_id",
+    "subgraph_x",
+    "subgraph_y",
     "index",
     "x",
     "fx",
@@ -775,7 +772,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     "color",
   ];
 
-  function setup_info_div({ nodes, edges, nodes_by_component, components }) {
+  function setup_info_div({ nodes, edges, nodes_by_subgraph, subgraphs }) {
     const both_shown_padding = 2;
     const right_prop = 30;
     const left_prop = 100 - right_prop;
@@ -841,31 +838,31 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     just_left();
 
     return {
-      show_component: function (id, highlight_fns) {
-        const component_i = components.id.findIndex((c_id) => c_id === id);
+      show_subgraph: function (id, highlight_fns) {
+        const subgraph_i = subgraphs.id.findIndex((c_id) => c_id === id);
         info_div.style("display", "block").raise();
 
         info_table = table_from_obj(header, {
           data: [
             {
-              density: components.density[component_i],
-              strength: components.strength[component_i],
-              size: components.size[component_i],
+              density: subgraphs.density[subgraph_i],
+              strength: subgraphs.strength[subgraph_i],
+              size: subgraphs.size[subgraph_i],
             },
           ],
-          id: "component_info",
+          id: "subgraph_info",
           keys_to_avoid: ["first_edge"],
           alignment: "center",
           even_cols: true,
-          title: `Component ${id} statistics`,
+          title: `Subgraph ${id} statistics`,
         });
 
         nodes_table = table_from_obj(left_side, {
-          data: nodes_by_component.find((c) => c.id === id).nodes,
+          data: nodes_by_subgraph.find((c) => c.id === id).nodes,
           id: "nodes",
           keys_to_avoid: non_column_keys,
           max_width: "99%",
-          title: "Nodes in component (hover to highlight in network plot)",
+          title: "Nodes in subgraph (hover to highlight in network plot)",
         });
 
         nodes_table.on("mouseover", function (n) {
@@ -922,8 +919,8 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
   //#endregion
 
   function harmonize_data(step_i) {
-    const { n_edges, components } = component_info[step_i];
-    const { nodes, edges, nodes_by_component } = find_components({
+    const { n_edges, subgraphs } = subgraph_info[step_i];
+    const { nodes, edges, nodes_by_subgraph } = find_subgraphs({
       nodes: nodes_raw,
       edge_source: all_edges.a,
       edge_target: all_edges.b,
@@ -933,35 +930,33 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       height: network.h,
     });
 
-    // Match the component ids across the two datasets
-    components.id = components.first_edge.map(
-      (edge_i) => edges[edge_i].component
-    );
+    // Match the subgraph ids across the two datasets
+    subgraphs.id = subgraphs.first_edge.map((edge_i) => edges[edge_i].subgraph);
 
-    return { nodes, edges, components, nodes_by_component };
+    return { nodes, edges, subgraphs, nodes_by_subgraph };
   }
 
   // Main interaction logic goes here.
   function set_to_step(step_i) {
     const step_data = harmonize_data(step_i);
 
-    const component_chart = update_components_chart(step_data.components, {
-      focus_on_component,
+    const subgraph_chart = update_subgraphs_chart(step_data.subgraphs, {
+      focus_on_subgraph,
       reset_focus,
-      highlight_component,
-      reset_component_highlights,
+      highlight_subgraph,
+      reset_subgraph_highlights,
     });
 
     const network_plot = update_network_plot(step_data, {
-      focus_on_component,
+      focus_on_subgraph,
       reset_focus,
-      highlight_component,
-      reset_component_highlights,
+      highlight_subgraph,
+      reset_subgraph_highlights,
     });
 
     const info_panel = setup_info_div(step_data);
 
-    function focus_on_component(id) {
+    function focus_on_subgraph(id) {
       instructions_text.text(in_focus_instructions);
 
       const highlight_fns = {
@@ -969,8 +964,8 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
         reset_node_highlights,
       };
 
-      const focused_network = network_plot.zoom_to_component(id, highlight_fns);
-      const focused_info = info_panel.show_component(id, highlight_fns);
+      const focused_network = network_plot.zoom_to_subgraph(id, highlight_fns);
+      const focused_info = info_panel.show_subgraph(id, highlight_fns);
 
       function highlight_node(node_id) {
         focused_network.highlight_node(node_id);
@@ -989,14 +984,14 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
       info_panel.hide();
     }
 
-    function highlight_component(id) {
-      network_plot.highlight_component(id);
-      component_chart.highlight_component(id);
+    function highlight_subgraph(id) {
+      network_plot.highlight_subgraph(id);
+      subgraph_chart.highlight_subgraph(id);
     }
 
-    function reset_component_highlights() {
-      network_plot.reset_component_highlights();
-      component_chart.reset_component_highlights();
+    function reset_subgraph_highlights() {
+      network_plot.reset_subgraph_highlights();
+      subgraph_chart.reset_subgraph_highlights();
     }
   }
   return { set_to_step };
@@ -1015,7 +1010,7 @@ function draw_timelines(
   const div_width = +div.attr("width");
 
   if (!default_step) {
-    // If no default step is provided we find the step with the lowest relative size of largest component
+    // If no default step is provided we find the step with the lowest relative size of largest subgraph
     let min_rel_step = 0;
     let lowest_rel_size = 1;
     for (let step_i = 0; step_i < data.length; step_i++) {
@@ -1043,7 +1038,7 @@ function draw_timelines(
 
   const non_metric_keys = [
     "step",
-    "components",
+    "subgraphs",
     "n_edges",
     "max_size",
     "n_nodes_seen",

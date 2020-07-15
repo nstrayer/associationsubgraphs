@@ -83,9 +83,9 @@ visualize_association_network <- function(association_pairs,
   )
 }
 
-#' Interactive association components visualization
+#' Interactive association subgraphs visualization
 #'
-#' Produces an interactive plot of network structure for all possible component
+#' Produces an interactive plot of network structure for all possible subgraph
 #' arrangements for passed association pairs with summary statistics to guide
 #' exploration of cut-points.
 #'
@@ -96,34 +96,34 @@ visualize_association_network <- function(association_pairs,
 #' @param node_info Optional dataframe that has a column `id` that corresponds
 #'   to the variables codded in `a` and `b` of `association_pairs` that contains
 #'   additional info nade available on hover in visualization.
-#' @param component_results Dataframe of component results as returned by
-#'   \code{\link{explore_component_structure}}. If it isnt provided it is
+#' @param subgraph_results Dataframe of subgraph results as returned by
+#'   \code{\link{explore_subgraph_structure}}. If it isnt provided it is
 #'   calculated. Automatic calculation will slow down code depending on how
 #'   large dataset is.
-#' @param trim_component_results Should component results after a giant
-#'   component has taken over be filtered out? Rule for filtering is at least
-#'   10% of the variables are in components and largest component contains less
-#'   than 95% of all variables in components. Allows for easier investigating of
-#'   the component structure over strength.
+#' @param trim_subgraph_results Should subgraph results after a giant
+#'   subgraph has taken over be filtered out? Rule for filtering is at least
+#'   10% of the variables are in subgraphs and largest subgraph contains less
+#'   than 95% of all variables in subgraphs. Allows for easier investigating of
+#'   the subgraph structure over strength.
 #' @param warn_of_mismatches If there are differences in the ids present in
 #'   `association_pairs` and `node_info` should a warning be issued?
 #'
 #' @return Interactive javascript visualization of association network
-#'   components at all possible cut-points
+#'   subgraphs at all possible cut-points
 #' @export
 #'
 #' @examples
-#' visualize_component_structure(
+#' visualize_subgraph_structure(
 #'   virus_net,
 #'   node_info = virus_host_viruses %>%
 #'     dplyr::rename(id = virus_id) %>%
 #'     dplyr::mutate(color = ifelse(type == "RNA", "orangered", "steelblue"))
 #' )
 #'
-visualize_component_structure <- function(association_pairs,
+visualize_subgraph_structure <- function(association_pairs,
                                           node_info,
-                                          component_results,
-                                          trim_component_results = TRUE,
+                                          subgraph_results,
+                                          trim_subgraph_results = TRUE,
                                           warn_of_mismatches = TRUE) {
   unique_nodes <- gather_unique_nodes(association_pairs)
 
@@ -150,17 +150,17 @@ visualize_component_structure <- function(association_pairs,
     nodes <- dplyr::right_join(node_info, unique_nodes, by = "id")
   }
 
-  if(missing(component_results)){
+  if(missing(subgraph_results)){
 
 
-    message("Calculating component structure results...")
-    component_results <- associationsubgraphs::explore_component_structure(association_pairs)
+    message("Calculating subgraph structure results...")
+    subgraph_results <- associationsubgraphs::explore_subgraph_structure(association_pairs)
     message("...finished")
   }
 
-  if(trim_component_results){
-    component_results <- dplyr::filter(
-        component_results,
+  if(trim_subgraph_results){
+    subgraph_results <- dplyr::filter(
+        subgraph_results,
         rel_max_size < 0.95 | n_nodes_seen < nrow(unique_nodes)*0.1
       )
   }
@@ -168,7 +168,7 @@ visualize_component_structure <- function(association_pairs,
   get_js <- function(name){system.file(paste0("d3/", name), package = "associationsubgraphs")}
 
   r2d3::r2d3(
-    get_js("explore_component_structure.js"),
+    get_js("explore_subgraph_structure.js"),
     data = list(
       nodes = nodes,
       edges = dplyr::select(
@@ -177,11 +177,11 @@ visualize_component_structure <- function(association_pairs,
         b,
         strength
       ),
-      structure = component_results
+      structure = subgraph_results
     ),
     container = "div",
     dependencies = c(
-      get_js("find_components.js"),
+      get_js("find_subgraphs.js"),
       get_js("d3_helpers.js")
     ),
     d3_version = "5"
