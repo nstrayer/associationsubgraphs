@@ -9,7 +9,9 @@ visualize_subgraph_structure(
   node_info,
   subgraph_results,
   trim_subgraph_results = TRUE,
-  warn_of_mismatches = TRUE
+  warn_of_mismatches = TRUE,
+  width = "100\%",
+  height = "800px"
 )
 }
 \arguments{
@@ -34,6 +36,8 @@ the subgraph structure over strength.}
 
 \item{warn_of_mismatches}{If there are differences in the ids present in
 \code{association_pairs} and \code{node_info} should a warning be issued?}
+
+\item{width, height}{Valid css units for output size (e.g. pixels (\code{px}) or percent(\verb{\%})).}
 }
 \value{
 Interactive javascript visualization of association network

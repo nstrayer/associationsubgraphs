@@ -107,6 +107,7 @@ visualize_association_network <- function(association_pairs,
 #'   the subgraph structure over strength.
 #' @param warn_of_mismatches If there are differences in the ids present in
 #'   `association_pairs` and `node_info` should a warning be issued?
+#' @param width,height Valid css units for output size (e.g. pixels (`px`) or percent(`%`)).
 #'
 #' @return Interactive javascript visualization of association network
 #'   subgraphs at all possible cut-points
@@ -121,10 +122,13 @@ visualize_association_network <- function(association_pairs,
 #' )
 #'
 visualize_subgraph_structure <- function(association_pairs,
-                                          node_info,
-                                          subgraph_results,
-                                          trim_subgraph_results = TRUE,
-                                          warn_of_mismatches = TRUE) {
+                                         node_info,
+                                         subgraph_results,
+                                         trim_subgraph_results = TRUE,
+                                         warn_of_mismatches = TRUE,
+                                         width = "100%",
+                                         height = "800px") {
+
   unique_nodes <- gather_unique_nodes(association_pairs)
 
   association_pairs <- ensure_sorted(association_pairs)
@@ -184,7 +188,9 @@ visualize_subgraph_structure <- function(association_pairs,
       get_js("find_subgraphs.js"),
       get_js("d3_helpers.js")
     ),
-    d3_version = "5"
+    d3_version = "5",
+    width = width,
+    height = height
   )
 }
 
