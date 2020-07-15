@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Build logical occurrence vec — build_occurrence_vec • associationsubgraphs</title>
+<title>Gather average association strength — gather_avg_strength • associationsubgraphs</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,10 @@
 
 
 
-<meta property="og:title" content="Build logical occurrence vec — build_occurrence_vec" />
-<meta property="og:description" content="Build logical occurrence vec" />
+<meta property="og:title" content="Gather average association strength — gather_avg_strength" />
+<meta property="og:description" content="Takes an association pairs dataframe and collapses it to compute each
+variable/ids average strength. Used for normalizing pairs or investigating
+patterns in average strength." />
 
 
 
@@ -120,36 +122,50 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Build logical occurrence vec</h1>
-    <small class="dont-index">Source: <a href='https://github.com/nstrayer/associationsubgraphs/blob/master/R/helpers.R'><code>R/helpers.R</code></a></small>
-    <div class="hidden name"><code>build_occurrence_vec.Rd</code></div>
+    <h1>Gather average association strength</h1>
+    <small class="dont-index">Source: <a href='https://github.com/nstrayer/associationsubgraphs/blob/master/R/relative_association_functions.R'><code>R/relative_association_functions.R</code></a></small>
+    <div class="hidden name"><code>gather_avg_strength.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Build logical occurrence vec</p>
+    <p>Takes an association pairs dataframe and collapses it to compute each
+variable/ids average strength. Used for normalizing pairs or investigating
+patterns in average strength.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>build_occurrence_vec</span>(<span class='no'>n</span>, <span class='no'>fill_indices</span>)</pre>
+    <pre class="usage"><span class='fu'>gather_avg_strength</span>(<span class='no'>association_pairs</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>n</th>
-      <td><p>Total number of observations (aka the length of the final vector).</p></td>
-    </tr>
-    <tr>
-      <th>fill_indices</th>
-      <td><p>Integer vector of all indices an occurrence happened.</p></td>
+      <th>association_pairs</th>
+      <td><p>dataframe with columns <code>a</code> and <code>b</code> representing the
+ids of the variables or nodes and columns <code>strength</code> that is a numeric
+indicator of strength of association (higher = stronger).</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Array of length <code>n</code> with <code>TRUE</code> in every place indicated by <code>fill_indices</code> and <code>FALSE</code> elsewhere.</p>
+    <p>Dataframe with <code>id</code> and <code>avg_strength</code> columns for each unique variable in association pairs</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>build_occurrence_vec</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>3</span>,<span class='fl'>5</span>), <span class='fl'>6</span>)</div><div class='output co'>#&gt; <span class='error'>Error in rep(FALSE, n): invalid 'times' argument</span></div></pre>
+    <pre class="examples"><div class='input'><span class='fu'>gather_avg_strength</span>(<span class='no'>virus_net</span>)</div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 586 x 2</span><span>
+#&gt;    id                                      avg_strength
+#&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>                                          </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #555555;'> 1</span><span> Adelaide River virus                        0.001</span><span style='text-decoration: underline;'>37</span><span> 
+#&gt; </span><span style='color: #555555;'> 2</span><span> Adeno-associated virus-1                    0.003</span><span style='text-decoration: underline;'>79</span><span> 
+#&gt; </span><span style='color: #555555;'> 3</span><span> Adeno-associated virus-2                    0.004</span><span style='text-decoration: underline;'>13</span><span> 
+#&gt; </span><span style='color: #555555;'> 4</span><span> Adeno-associated virus-5                    0.004</span><span style='text-decoration: underline;'>92</span><span> 
+#&gt; </span><span style='color: #555555;'> 5</span><span> African green monkey polyomavirus           0.003</span><span style='text-decoration: underline;'>91</span><span> 
+#&gt; </span><span style='color: #555555;'> 6</span><span> African green monkey simian foamy virus     0.000</span><span style='text-decoration: underline;'>166</span><span>
+#&gt; </span><span style='color: #555555;'> 7</span><span> African horse sickness virus                0.001</span><span style='text-decoration: underline;'>10</span><span> 
+#&gt; </span><span style='color: #555555;'> 8</span><span> African swine fever virus                   0.000</span><span style='text-decoration: underline;'>700</span><span>
+#&gt; </span><span style='color: #555555;'> 9</span><span> Aichi virus                                 0.004</span><span style='text-decoration: underline;'>92</span><span> 
+#&gt; </span><span style='color: #555555;'>10</span><span> Akabane virus                               0.002</span><span style='text-decoration: underline;'>36</span><span> 
+#&gt; </span><span style='color: #555555;'># … with 576 more rows</span><span></div><div class='input'>
+</div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

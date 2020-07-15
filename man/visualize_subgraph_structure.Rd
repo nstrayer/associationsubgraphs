@@ -22,7 +22,7 @@ to the variables codded in \code{a} and \code{b} of \code{association_pairs} tha
 additional info nade available on hover in visualization.}
 
 \item{subgraph_results}{Dataframe of subgraph results as returned by
-\code{\link{explore_subgraph_structure}}. If it isnt provided it is
+\code{\link{calculate_subgraph_structure}}. If it isnt provided it is
 calculated. Automatic calculation will slow down code depending on how
 large dataset is.}
 

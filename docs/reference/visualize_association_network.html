@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Interactive association network visualization — visualize_association_network • entropynet</title>
+<title>Interactive association network visualization — visualize_association_network • associationsubgraphs</title>
 
 
 <!-- jquery -->
@@ -72,7 +72,7 @@ strength of association." />
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">entropynet</a>
+        <a class="navbar-link" href="../index.html">associationsubgraphs</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
       </span>
     </div>
@@ -103,7 +103,7 @@ strength of association." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/nstrayer/entropynet/">
+  <a href="https://github.com/nstrayer/associationsubgraphs/">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -122,7 +122,7 @@ strength of association." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Interactive association network visualization</h1>
-    <small class="dont-index">Source: <a href='https://github.com/nstrayer/entropynet/blob/master/R/visualize_association_network.R'><code>R/visualize_association_network.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/nstrayer/associationsubgraphs/blob/master/R/visualize_association_network.R'><code>R/visualize_association_network.R</code></a></small>
     <div class="hidden name"><code>visualize_association_network.Rd</code></div>
     </div>
 
@@ -189,7 +189,7 @@ overlap between unrelated parts of the network.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
-<span class='no'>virus_net</span> <span class='kw'>%&gt;%</span>
+<span class='kw pkg'>associationsubgraphs</span><span class='kw ns'>::</span><span class='no'>virus_net</span> <span class='kw'>%&gt;%</span>
   <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/arrange.html'>arrange</a></span>(<span class='fu'>desc</span>(<span class='no'>strength</span>)) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span>(<span class='fl'>300</span>) <span class='kw'>%&gt;%</span>
   <span class='fu'>visualize_association_network</span>()</div></pre>

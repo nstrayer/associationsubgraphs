@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Build logical occurrence vec — build_occurrence_vec • associationsubgraphs</title>
+<title>Interactive association subgraphs visualization — visualize_subgraph_structure • associationsubgraphs</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,10 @@
 
 
 
-<meta property="og:title" content="Build logical occurrence vec — build_occurrence_vec" />
-<meta property="og:description" content="Build logical occurrence vec" />
+<meta property="og:title" content="Interactive association subgraphs visualization — visualize_subgraph_structure" />
+<meta property="og:description" content="Produces an interactive plot of network structure for all possible subgraph
+arrangements for passed association pairs with summary statistics to guide
+exploration of cut-points." />
 
 
 
@@ -120,36 +122,75 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Build logical occurrence vec</h1>
-    <small class="dont-index">Source: <a href='https://github.com/nstrayer/associationsubgraphs/blob/master/R/helpers.R'><code>R/helpers.R</code></a></small>
-    <div class="hidden name"><code>build_occurrence_vec.Rd</code></div>
+    <h1>Interactive association subgraphs visualization</h1>
+    <small class="dont-index">Source: <a href='https://github.com/nstrayer/associationsubgraphs/blob/master/R/visualize_association_network.R'><code>R/visualize_association_network.R</code></a></small>
+    <div class="hidden name"><code>visualize_subgraph_structure.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Build logical occurrence vec</p>
+    <p>Produces an interactive plot of network structure for all possible subgraph
+arrangements for passed association pairs with summary statistics to guide
+exploration of cut-points.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>build_occurrence_vec</span>(<span class='no'>n</span>, <span class='no'>fill_indices</span>)</pre>
+    <pre class="usage"><span class='fu'>visualize_subgraph_structure</span>(
+  <span class='no'>association_pairs</span>,
+  <span class='no'>node_info</span>,
+  <span class='no'>subgraph_results</span>,
+  <span class='kw'>trim_subgraph_results</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>warn_of_mismatches</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>n</th>
-      <td><p>Total number of observations (aka the length of the final vector).</p></td>
+      <th>association_pairs</th>
+      <td><p>dataframe with columns <code>a</code> and <code>b</code> representing the
+ids of the variables or nodes and columns <code>strength</code> that is a numeric
+indicator of strength of association (higher = stronger).</p></td>
     </tr>
     <tr>
-      <th>fill_indices</th>
-      <td><p>Integer vector of all indices an occurrence happened.</p></td>
+      <th>node_info</th>
+      <td><p>Optional dataframe that has a column <code>id</code> that corresponds
+to the variables codded in <code>a</code> and <code>b</code> of <code>association_pairs</code> that contains
+additional info nade available on hover in visualization.</p></td>
+    </tr>
+    <tr>
+      <th>subgraph_results</th>
+      <td><p>Dataframe of subgraph results as returned by
+<code><a href='explore_subgraph_structure.html'>explore_subgraph_structure</a></code>. If it isnt provided it is
+calculated. Automatic calculation will slow down code depending on how
+large dataset is.</p></td>
+    </tr>
+    <tr>
+      <th>trim_subgraph_results</th>
+      <td><p>Should subgraph results after a giant
+subgraph has taken over be filtered out? Rule for filtering is at least
+10% of the variables are in subgraphs and largest subgraph contains less
+than 95% of all variables in subgraphs. Allows for easier investigating of
+the subgraph structure over strength.</p></td>
+    </tr>
+    <tr>
+      <th>warn_of_mismatches</th>
+      <td><p>If there are differences in the ids present in
+<code>association_pairs</code> and <code>node_info</code> should a warning be issued?</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Array of length <code>n</code> with <code>TRUE</code> in every place indicated by <code>fill_indices</code> and <code>FALSE</code> elsewhere.</p>
+    <p>Interactive javascript visualization of association network
+subgraphs at all possible cut-points</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>build_occurrence_vec</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>3</span>,<span class='fl'>5</span>), <span class='fl'>6</span>)</div><div class='output co'>#&gt; <span class='error'>Error in rep(FALSE, n): invalid 'times' argument</span></div></pre>
+    <pre class="examples"><div class='input'><span class='fu'>visualize_subgraph_structure</span>(
+  <span class='no'>virus_net</span>,
+  <span class='kw'>node_info</span> <span class='kw'>=</span> <span class='no'>virus_host_viruses</span> <span class='kw'>%&gt;%</span>
+    <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/rename.html'>rename</a></span>(<span class='kw'>id</span> <span class='kw'>=</span> <span class='no'>virus_id</span>) <span class='kw'>%&gt;%</span>
+    <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>color</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/ifelse.html'>ifelse</a></span>(<span class='no'>type</span> <span class='kw'>==</span> <span class='st'>"RNA"</span>, <span class='st'>"orangered"</span>, <span class='st'>"steelblue"</span>))
+)</div><div class='output co'>#&gt; <span class='message'>Calculating subgraph structure results...</span></div><div class='output co'>#&gt; <span class='message'>...finished</span></div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
