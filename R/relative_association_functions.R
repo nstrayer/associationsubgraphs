@@ -12,14 +12,16 @@
 #' @examples
 #' gather_avg_strength(virus_net)
 #'
-gather_avg_strength <- function(association_pairs){
-
-  dplyr::tibble(
-    id = c(association_pairs$a, association_pairs$b),
-    strength = c(association_pairs$strength, association_pairs$strength)
-  ) %>%
-    dplyr::group_by(id) %>%
-    dplyr::summarise(avg_strength = mean(strength),.groups = "drop")
+gather_avg_strength <- function(association_pairs) {
+  dplyr::summarise(
+    dplyr::group_by(dplyr::tibble(
+      id = c(association_pairs$a, association_pairs$b),
+      strength = c(association_pairs$strength, association_pairs$strength)
+    ),
+    id),
+    avg_strength = mean(strength),
+    .groups = "drop"
+  )
 }
 
 
