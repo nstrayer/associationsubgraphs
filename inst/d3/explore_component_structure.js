@@ -160,7 +160,7 @@ function setup_network_views({ div, all_edges, component_info, sizes = {} }) {
     const single_component = component.g
       .select_append("g.chart_elements")
       .selectAll("g.component_stats")
-      .data(components_df)
+      .data(components_df, (d) => d.id)
       .join(function (enter) {
         const main_g = enter
           .append("g")
