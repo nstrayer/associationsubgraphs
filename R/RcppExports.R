@@ -8,10 +8,8 @@
 #' descending order of strength.
 #'
 #' @param associations Dataframe of association between two ids with a strength
-#' @param a_col,b_col Names of columns that store the id's for the association
-NULL
-
-#'
+#' @param a_col,b_col Names of columns that store the id's for the association pair
+#' @param w_col Name of the column storing the strength of association
 #' @export
 calculate_subgraph_structure_rcpp <- function(associations, a_col = "a", b_col = "b", w_col = "w") {
     .Call(`_associationsubgraphs_calculate_subgraph_structure_rcpp`, associations, a_col, b_col, w_col)

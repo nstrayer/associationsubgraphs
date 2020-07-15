@@ -10,6 +10,8 @@ calculate_subgraph_structure(association_pairs, strength_column = "strength")
 \item{association_pairs}{dataframe with columns \code{a} and \code{b} representing the
 ids of the variables or nodes and columns \code{strength} that is a numeric
 indicator of strength of association (higher = stronger).}
+
+\item{strength_column}{Id of column that encodes the strength of the associations for pairs}
 }
 \value{
 Dataframe with the following columns for each unique subgraph state.\tabular{lll}{
