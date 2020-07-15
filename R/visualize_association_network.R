@@ -87,10 +87,7 @@ visualize_association_network <- function(association_pairs,
 #' arrangements for passed association pairs with summary statistics to guide
 #' exploration of cut-points.
 #'
-#'
-#' @param association_pairs dataframe with columns `a` and `b` representing the
-#'   ids of the variables or nodes and columns `strength` that is a numeric
-#'   indicator of strength of association (higher = stronger).
+#' @inheritParams calculate_subgraph_structure
 #' @param node_info Optional dataframe that has a column `id` that corresponds
 #'   to the variables codded in `a` and `b` of `association_pairs` that contains
 #'   additional info nade available on hover in visualization.
@@ -112,7 +109,7 @@ visualize_association_network <- function(association_pairs,
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' node_info <- dplyr::rename(virus_host_viruses, id = virus_id)
 #' node_info$color <- ifelse(node_info$type == "RNA", "orangered", "steelblue")
 #' visualize_subgraph_structure(

@@ -17,7 +17,9 @@
 #' |`first_edge` || 0-based integer index of first edge that made up subgraph. Used internally to match subgraphs in interactive visualizations with these results.|
 #'
 #'
-#' @inheritParams visualize_association_network
+#' @param association_pairs dataframe with columns `a` and `b` representing the
+#'   ids of the variables or nodes and columns `strength` that is a numeric
+#'   indicator of strength of association (higher = stronger).
 #' @param strength_column Id of column that encodes the strength of the associations for pairs
 #'
 #' @return Dataframe with the following columns for each unique subgraph state.
@@ -44,5 +46,5 @@
 #' calculate_subgraph_structure(head(virus_associations, 1000))
 #'
 calculate_subgraph_structure <- function(association_pairs, strength_column = "strength"){
-  dplyr::as_tibble(calculate_subgraph_structure_rcpp(ensure_sorted(association_pairs), w_col = strength_column))
+  dplyr::as_tibble(calculate_subgraph_structure_rcpp(ensure_sorted(association_pairs, strength_column), w_col = strength_column))
 }
