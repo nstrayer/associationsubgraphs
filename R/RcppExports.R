@@ -8,8 +8,9 @@
 #' descending order of strength.
 #'
 #' @param associations Dataframe of association between two ids with a strength
-#' @param a_col,b_col Names of columns that store the id's for the association pair
-#' @param w_col Name of the column storing the strength of association
+#' @param a_col,b_col Names of columns that store the id's for the association
+NULL
+
 #'
 #' @export
 find_components <- function(associations, a_col = "a", b_col = "b", w_col = "w") {
