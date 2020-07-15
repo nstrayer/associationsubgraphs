@@ -4,97 +4,38 @@
 #' info on every subgraph state achieved by adding nodes in one-at-a-time in
 #' descending order of strength.
 #'
-#' @inheritParams visualize_association_network
+#' @section `subgraph` list column:
 #'
-#' @return Dataframe with the following columns for each unique subgraph state.
-#' \describe{
-#'   \item{cutoff}{The lowest of the edge(s) added to achieve network state}
-#'   \item{subgraphs}{List column of dataframes that contains each node residing in a subgraph at this state and that subgraphs id.}
-#'   \item{step}{Integer step, aka the number of unique edge strengths in network at state}
-#'   \item{largest_size}{Size in number of nodes of the largest current subgraph}
-#'   \item{smallest_size}{Size of the smallest current subgraph}
-#'   \item{avg_size}{Average size of subgraphs}
-#'   \item{n}{Total number of subgraphs}
-#'   \item{n_mergers}{Number of subgraphs with more than two nodes that were merged in the last step}
-#'   \item{total_merger_magnitude}{Sum of sizes of all merged subgraphs}
-#' }
-#' @export
+#' The subgraph list column in the results contains information on the present subgraphs at each step. It is a list with the following format, but can be turned into a dataframe/tibble easily with `dplyr::as_tibble/as.data.frame`.
 #'
-#' @examples
-#' virus_net %>%
-#'   dplyr::arrange(dplyr::desc(strength)) %>%
-#'     head(1000) %>%
-#'     find_all_subgraphs()
+#' |**Column** | | **Description**|
+#' | ----- |-| ---------- |
+#' |`id` || Integer ID for subgraph. Can be used to track subgraph evolution over steps.|
+#' |`size` || How many variables/nodes subgraph has|
+#' |`density` || Density of subgraph. Scale from >0 - 1. Where a density of 1 is a fully-connected subgraph.|
+#' |`strength` || How many unique nodes/variables are currently in network|
+#' |`first_edge` || 0-based integer index of first edge that made up subgraph. Used internally to match subgraphs in interactive visualizations with these results.|
 #'
-find_all_subgraphs <- function(association_pairs){
-
-  ctx <- V8::v8()
-
-  # Load subgraph finding function
-  ctx$eval(readr::read_file(system.file("d3/find_all_subgraphs.js", package = "associationsubgraphs")))
-
-  node_ids <- gather_unique_nodes(association_pairs)$id
-
-  # Call js function to get results list
-  results <- ctx$call(
-    "function(nodes, edges){ return find_all_subgraphs(nodes,edges); }",
-    node_ids,
-    association_pairs
-  )
-
-  subgraph_stats <- purrr::map2_dfr(
-    results$subgraph_stats,
-    1: length(results$subgraph_stats),
-    function(stats, i){dplyr::mutate(stats, step = i) }
-  ) %>%
-    dplyr::group_by(step) %>%
-    dplyr::summarise(
-      largest_size = max(size),
-      smallest_size = min(size),
-      avg_size = mean(size),
-      n = dplyr::n(),
-      .groups = "drop"
-    ) %>%
-    dplyr::left_join(
-      dplyr::summarise(
-        dplyr::group_by(results$mergers, step),
-        n_mergers = dplyr::n(),
-        total_merger_magnitude = sum(smaller_n + larger_n),
-        .groups = "drop"
-      ),
-      by = "step"
-    ) %>%
-    dplyr::mutate(
-      n_mergers = ifelse(is.na(n_mergers), 0L, n_mergers),
-      total_merger_magnitude = ifelse(is.na(total_merger_magnitude), 0L, total_merger_magnitude),
-    )
-
-  t(results$membership_vecs) %>%
-    dplyr::as_tibble() %>%
-    stats::setNames(results$cutoff_values) %>%
-    dplyr::mutate(node = node_ids) %>%
-    tidyr::pivot_longer(cols = -node, names_to = "cutoff", values_to = "subgraph") %>%
-    dplyr::filter(subgraph != 0) %>%
-    dplyr::group_by(cutoff) %>%
-    tidyr::nest() %>%
-    dplyr::ungroup() %>%
-    dplyr::rename(subgraphs = data) %>%
-    dplyr::mutate(cutoff = as.numeric(cutoff)) %>%
-    dplyr::arrange(-cutoff) %>%
-    dplyr::bind_cols(subgraph_stats)
-}
-
-
-#' Find all subgraphs in pairs for every subset of edges (c++ version)
-#'
-#' Given a dataframe of edges with strength between nodes this function returns
-#' info on every subgraph state achieved by adding nodes in one-at-a-time in
-#' descending order of strength.
 #'
 #' @inheritParams visualize_association_network
 #' @strength_column Id of column that encodes the strength of the associations for pairs
 #'
-#' @return Dataframe with the following columns for the subgraph info
+#' @return Dataframe with the following columns for each unique subgraph state.
+#'
+#' |**Column** | |**Description**|
+#' | ----- |-|---------- |
+#' |`step` | | Integer step, aka the number of unique edge strengths in network at state|
+#' |`n_edges` | | How many edges have been added thus far|
+#' |`strength` | | The lowest strength of the edge(s) added|
+#' |`n_nodes_seen` | | How many unique nodes/variables are currently in network|
+#' |`n_subgraphs` | | How many isolated subgraphs/components of size > 2 are in current network|
+#' |`n_triples` | | How many isolated subgraphs of size 3 or larger are in current network|
+#' |`max_size` | | Size in number of nodes of the largest current subgraph|
+#' |`max_rel_size` | | Proportion of all seen nodes (`n_nodes_seen`) that the largest subgraph includes. Large values indicate presence of a giant-component.|
+#' |`avg_size` | | Average size of subgraphs|
+#' |`avg_density` | | Average density of subgraphs. Scale from >0 - 1. Where a density of 1 is a fully-connected subgraph.|
+#' |`subgraphs` | | List column of summary stats for each subgraph at a given step. See the `subgraph` list column section for more info.|
+#'
 #' @export
 #'
 #' @examples
