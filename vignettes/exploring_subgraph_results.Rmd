@@ -21,7 +21,7 @@ association_pairs <- virus_net %>%
 
 First we will run subgraph finding algorithm across the associations
 
-```{r, cache = TRUE}
+```{r}
 
 subgraphs <- association_pairs %>% head(10000) %>% calculate_subgraph_structure()
 
