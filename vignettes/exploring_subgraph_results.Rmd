@@ -23,7 +23,7 @@ First we will run subgraph finding algorithm across the associations
 
 ```{r, cache = TRUE}
 
-subgraphs <- association_pairs %>% head(10000) %>% explore_subgraph_structure()
+subgraphs <- association_pairs %>% head(10000) %>% calculate_subgraph_structure()
 
 subgraphs %>% 
   select(-subgraphs) %>% 

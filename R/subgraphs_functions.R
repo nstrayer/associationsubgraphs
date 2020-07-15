@@ -102,10 +102,10 @@ find_all_subgraphs <- function(association_pairs){
 #' virus_net %>%
 #'   dplyr::arrange(dplyr::desc(strength)) %>%
 #'     head(1000) %>%
-#'     explore_subgraph_structure()
+#'     calculate_subgraph_structure()
 #'
-explore_subgraph_structure <- function(association_pairs, strength_column = "strength"){
-  dplyr::as_tibble(find_subgraphs(ensure_sorted(association_pairs), w_col = strength_column))
+calculate_subgraph_structure <- function(association_pairs, strength_column = "strength"){
+  dplyr::as_tibble(calculate_subgraph_structure_rcpp(ensure_sorted(association_pairs), w_col = strength_column))
 }
 
 

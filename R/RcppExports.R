@@ -13,7 +13,7 @@ NULL
 
 #'
 #' @export
-find_subgraphs <- function(associations, a_col = "a", b_col = "b", w_col = "w") {
-    .Call(`_associationsubgraphs_find_subgraphs`, associations, a_col, b_col, w_col)
+calculate_subgraph_structure_rcpp <- function(associations, a_col = "a", b_col = "b", w_col = "w") {
+    .Call(`_associationsubgraphs_calculate_subgraph_structure_rcpp`, associations, a_col, b_col, w_col)
 }
 

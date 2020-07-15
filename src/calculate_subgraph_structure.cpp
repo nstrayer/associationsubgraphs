@@ -90,7 +90,7 @@ inline void merge_subgraphs(Subgraph& C_a,
 //'
 //' @export
 // [[Rcpp::export]]
-List find_subgraphs(DataFrame associations,
+List calculate_subgraph_structure_rcpp(DataFrame associations,
                     const String& a_col = "a",
                     const String& b_col = "b",
                     const String& w_col = "w") {
@@ -229,7 +229,7 @@ List find_subgraphs(DataFrame associations,
 # library(associationsubgraphs)
 data <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 1000)
 
-res <- dplyr::as_tibble(find_subgraphs(data, w_col = "strength"))
+res <- dplyr::as_tibble(calculate_subgraph_structure_rcpp(data, w_col = "strength"))
 
 res$subgraphs %>% purrr::pluck(5) %>% as_tibble()
 */

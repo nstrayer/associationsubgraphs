@@ -97,7 +97,7 @@ visualize_association_network <- function(association_pairs,
 #'   to the variables codded in `a` and `b` of `association_pairs` that contains
 #'   additional info nade available on hover in visualization.
 #' @param subgraph_results Dataframe of subgraph results as returned by
-#'   \code{\link{explore_subgraph_structure}}. If it isnt provided it is
+#'   \code{\link{calculate_subgraph_structure}}. If it isnt provided it is
 #'   calculated. Automatic calculation will slow down code depending on how
 #'   large dataset is.
 #' @param trim_subgraph_results Should subgraph results after a giant
@@ -154,7 +154,7 @@ visualize_subgraph_structure <- function(association_pairs,
 
 
     message("Calculating subgraph structure results...")
-    subgraph_results <- associationsubgraphs::explore_subgraph_structure(association_pairs)
+    subgraph_results <- associationsubgraphs::calculate_subgraph_structure(association_pairs)
     message("...finished")
   }
 
