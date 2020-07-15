@@ -2,6 +2,8 @@
 
 const margins = { left: 15, right: 35, top: 20, bottom: 10 };
 const link_color_range = ["#edf8e9", "#006d2c"];
+const div_shadow = "1px 1px 9px black";
+
 const viz_sizing = units_to_sizes(
   {
     network: 4,
@@ -13,8 +15,9 @@ const viz_sizing = units_to_sizes(
 );
 
 const subgraph_info = HTMLWidgets.dataframeToD3(data.structure);
-const div_shadow = "1px 1px 9px black";
 
+// If we dont do this the viz gets messed up when embedded in a report/doc
+div.style("position", "relative");
 const network_views = setup_network_views({
   div,
   sizes: {
