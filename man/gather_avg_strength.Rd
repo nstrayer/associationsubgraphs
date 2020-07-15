@@ -4,12 +4,14 @@
 \alias{gather_avg_strength}
 \title{Gather average association strength}
 \usage{
-gather_avg_strength(association_pairs)
+gather_avg_strength(association_pairs, strength_column = "strength")
 }
 \arguments{
 \item{association_pairs}{dataframe with columns \code{a} and \code{b} representing the
 ids of the variables or nodes and columns \code{strength} that is a numeric
 indicator of strength of association (higher = stronger).}
+
+\item{strength_column}{Id of column that encodes the strength of the associations for pairs}
 }
 \value{
 Dataframe with \code{id} and \code{avg_strength} columns for each unique variable in association pairs
