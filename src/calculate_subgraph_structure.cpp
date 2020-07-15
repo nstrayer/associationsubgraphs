@@ -85,9 +85,8 @@ inline void merge_subgraphs(Subgraph& C_a,
 //' descending order of strength.
 //'
 //' @param associations Dataframe of association between two ids with a strength
-//' @param a_col,b_col Names of columns that store the id's for the association
-// pair ' @param w_col Name of the column storing the strength of association
-//'
+//' @param a_col,b_col Names of columns that store the id's for the association pair
+//' @param w_col Name of the column storing the strength of association
 //' @export
 // [[Rcpp::export]]
 List calculate_subgraph_structure_rcpp(DataFrame associations,
