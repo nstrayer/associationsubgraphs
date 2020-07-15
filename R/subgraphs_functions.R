@@ -48,3 +48,6 @@
 calculate_subgraph_structure <- function(association_pairs, strength_column = "strength"){
   dplyr::as_tibble(calculate_subgraph_structure_rcpp(ensure_sorted(association_pairs, strength_column), w_col = strength_column))
 }
+
+utils::globalVariables(c("a","b", "id", "n_nodes_seen", "rel_max_size", "strength"))
+
