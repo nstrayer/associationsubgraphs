@@ -71,59 +71,16 @@ subgraphs %>%
 ```
 
 ```{r}
-plot_subgraph_info <- function(step_row, title) {
-  step_row %>%
-    pluck("subgraphs", 1) %>%
-    arrange(-size,-strength) %>%
-    mutate(id = forcats::fct_inorder(factor(id))) %>%
-    ggplot(aes(
-      x = id,
-      y = size,
-      fill = strength,
-      alpha = density
-    )) +
-    geom_col() +
-    theme_phewas() +
-    labs(x = "subgraph",
-         title = title)
-}
 
-plot_subgraph_info(min_rel, "Subgraph structure for minimum relative cut")
-
-nodes_info <- virus_host_viruses %>% 
+node_info <- virus_host_viruses %>% 
   rename(id = virus_id) %>% 
   mutate(color = ifelse(type == "RNA", "orangered", "steelblue"))
 
-visualize_association_network(
-  association_pairs = head(association_pairs, min_rel$n_edges),
-  node_info = nodes_info,
-  measure_title = "relative smoothed mutual information",
-  warn_of_mismatches = FALSE,
-  alphaDecay = 0.01
+visualize_subgraph_structure(
+  association_pairs,
+  node_info = node_info,
+  subgraph_results = subgraphs,
+  trim_subgraph_results = TRUE
 )
-```
 
-```{r}
-plot_subgraph_info(max_num_subgraphs, "Subgraph structure for max number of subgraphs")
-
-visualize_association_network(
-  association_pairs = head(association_pairs, max_num_subgraphs$n_edges),
-  node_info = nodes_info,
-  measure_title = "relative smoothed mutual information",
-  warn_of_mismatches = FALSE,
-  alphaDecay = 0.01
-)
-```
-
-
-```{r}
-plot_subgraph_info(max_num_triples, "Subgraph structure for max number of subgraphs larger than 2 nodes")
-
-visualize_association_network(
-  association_pairs = head(association_pairs, max_num_triples$n_edges),
-  node_info = nodes_info,
-  measure_title = "relative smoothed mutual information",
-  warn_of_mismatches = FALSE,
-  alphaDecay = 0.01
-)
 ```
