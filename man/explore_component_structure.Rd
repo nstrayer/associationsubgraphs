@@ -4,7 +4,7 @@
 \alias{explore_component_structure}
 \title{Find all components in pairs for every subset of edges (c++ version)}
 \usage{
-explore_component_structure(association_pairs)
+explore_component_structure(association_pairs, strength_column = "strength")
 }
 \arguments{
 \item{association_pairs}{dataframe with columns \code{a} and \code{b} representing the
