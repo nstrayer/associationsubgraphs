@@ -1,5 +1,5 @@
 ## code to prepare `virus_host_net` dataset goes here
-library(entropynet)
+library(associationsubgraphs)
 
 virus_net <- calc_entropy_net(
   pairs = virus_host,

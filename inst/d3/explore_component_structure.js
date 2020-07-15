@@ -1,4 +1,4 @@
-// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 5000), structure = entropynet::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_components.js"), d3_version = "5"
+// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(associationsubgraphs::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(associationsubgraphs::virus_net, -strength), 5000), structure = associationsubgraphs::virus_component_results), container = "div", dependencies = c("inst/d3/d3_helpers.js", "inst/d3/find_components.js"), d3_version = "5"
 
 const margins = { left: 15, right: 35, top: 20, bottom: 10 };
 const link_color_range = ["#edf8e9", "#006d2c"];

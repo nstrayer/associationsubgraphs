@@ -49,7 +49,7 @@ overlap between unrelated parts of the network.
 }
 \examples{
 
-entropynet::virus_net \%>\%
+associationsubgraphs::virus_net \%>\%
   dplyr::arrange(desc(strength)) \%>\%
   head(300) \%>\%
   visualize_association_network()

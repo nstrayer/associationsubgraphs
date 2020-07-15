@@ -43,7 +43,7 @@
 #' #'
 bootstrap_info_interval <- function(a_vec,
                                     b_vec,
-                                    measure_func = entropynet::calc_mutual_info,
+                                    measure_func = associationsubgraphs::calc_mutual_info,
                                     B = 500,
                                     ...
                                     ) {

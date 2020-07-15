@@ -9,7 +9,7 @@ calc_entropy_net(
   id_col,
   target_col,
   count_col,
-  info_func = entropynet::calc_mutual_info,
+  info_func = associationsubgraphs::calc_mutual_info,
   possible_targets,
   parallel = TRUE,
   subset_pairs = FALSE,

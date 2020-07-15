@@ -1,4 +1,4 @@
-// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(entropynet::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(entropynet::virus_net, -strength), 500)), container = "div", options = list(source_id = "a", target_id = "b"), dependencies = c("inst/d3/find_subgraphs.js")
+// !preview r2d3 data=list(nodes = dplyr::mutate(dplyr::rename(associationsubgraphs::virus_host_viruses, id = virus_id), color = ifelse(type == "RNA", "orangered", "steelblue")),edges = head(dplyr::arrange(associationsubgraphs::virus_net, -strength), 500)), container = "div", options = list(source_id = "a", target_id = "b"), dependencies = c("inst/d3/find_subgraphs.js")
 
 const margins = { top: 130, bottom: 50, left: 100, right: 100 };
 const w = width - margins.left - margins.right;

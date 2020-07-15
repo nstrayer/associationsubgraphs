@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // find_components
 List find_components(DataFrame associations, const String& a_col, const String& b_col, const String& w_col);
-RcppExport SEXP _entropynet_find_components(SEXP associationsSEXP, SEXP a_colSEXP, SEXP b_colSEXP, SEXP w_colSEXP) {
+RcppExport SEXP _associationsubgraphs_find_components(SEXP associationsSEXP, SEXP a_colSEXP, SEXP b_colSEXP, SEXP w_colSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,7 +21,7 @@ END_RCPP
 }
 // edges_to_all_nodes
 int edges_to_all_nodes(CharacterVector a, CharacterVector b, const int n);
-RcppExport SEXP _entropynet_edges_to_all_nodes(SEXP aSEXP, SEXP bSEXP, SEXP nSEXP) {
+RcppExport SEXP _associationsubgraphs_edges_to_all_nodes(SEXP aSEXP, SEXP bSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -34,12 +34,12 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_entropynet_find_components", (DL_FUNC) &_entropynet_find_components, 4},
-    {"_entropynet_edges_to_all_nodes", (DL_FUNC) &_entropynet_edges_to_all_nodes, 3},
+    {"_associationsubgraphs_find_components", (DL_FUNC) &_associationsubgraphs_find_components, 4},
+    {"_associationsubgraphs_edges_to_all_nodes", (DL_FUNC) &_associationsubgraphs_edges_to_all_nodes, 3},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_entropynet(DllInfo *dll) {
+RcppExport void R_init_associationsubgraphs(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

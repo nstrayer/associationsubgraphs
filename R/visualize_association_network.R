@@ -28,7 +28,7 @@
 #'
 #' @examples
 #'
-#' entropynet::virus_net %>%
+#' associationsubgraphs::virus_net %>%
 #'   dplyr::arrange(desc(strength)) %>%
 #'   head(300) %>%
 #'   visualize_association_network()
@@ -63,8 +63,8 @@ visualize_association_network <- function(association_pairs,
   }
 
   r2d3::r2d3(
-    system.file("d3/information_network.js", package = "entropynet"),
-    dependencies = system.file("d3/find_subgraphs.js", package = "entropynet"),
+    system.file("d3/information_network.js", package = "associationsubgraphs"),
+    dependencies = system.file("d3/find_subgraphs.js", package = "associationsubgraphs"),
     data = list(
       nodes = nodes,
       edges = dplyr::select(
@@ -154,7 +154,7 @@ visualize_component_structure <- function(association_pairs,
 
 
     message("Calculating component structure results...")
-    component_results <- entropynet::explore_component_structure(association_pairs)
+    component_results <- associationsubgraphs::explore_component_structure(association_pairs)
     message("...finished")
   }
 
@@ -165,7 +165,7 @@ visualize_component_structure <- function(association_pairs,
       )
   }
 
-  get_js <- function(name){system.file(paste0("d3/", name), package = "entropynet")}
+  get_js <- function(name){system.file(paste0("d3/", name), package = "associationsubgraphs")}
 
   r2d3::r2d3(
     get_js("explore_component_structure.js"),

@@ -31,7 +31,7 @@ find_all_subgraphs <- function(association_pairs){
   ctx <- V8::v8()
 
   # Load subgraph finding function
-  ctx$eval(readr::read_file(system.file("d3/find_all_subgraphs.js", package = "entropynet")))
+  ctx$eval(readr::read_file(system.file("d3/find_all_subgraphs.js", package = "associationsubgraphs")))
 
   node_ids <- gather_unique_nodes(association_pairs)$id
 
@@ -132,5 +132,5 @@ explore_component_structure <- function(association_pairs, strength_column = "st
 #'
 visualize_all_subgraphs <- function(all_subgraphs){
 
-  r2d3::r2d3(system.file("d3/visualize_all_subgraphs.js", package = "entropynet"), data=all_subgraphs)
+  r2d3::r2d3(system.file("d3/visualize_all_subgraphs.js", package = "associationsubgraphs"), data=all_subgraphs)
 }

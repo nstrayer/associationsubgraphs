@@ -1,13 +1,13 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# entropynet
+# associationsubgraphs
 
 <!-- badges: start -->
 
 <!-- badges: end -->
 
-The goal of `entropynet` is to provide tools to build robust entropy
+The goal of `associationsubgraphs` is to provide tools to build robust entropy
 association networks from both binary occurrence and count data.
 Includes functions for investigating the found networks through
 visualization and various network-analysis statistics.
@@ -31,5 +31,5 @@ To install the package from from [GitHub](https://github.com/) run:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("nstrayer/entropynet")
+devtools::install_github("nstrayer/associationsubgraphs")
 ```

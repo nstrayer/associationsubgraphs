@@ -226,7 +226,7 @@ List find_components(DataFrame associations,
 }
 
 /*** R
-# library(entropynet)
+# library(associationsubgraphs)
 data <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 1000)
 
 res <- dplyr::as_tibble(find_components(data, w_col = "strength"))

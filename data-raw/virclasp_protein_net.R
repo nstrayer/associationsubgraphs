@@ -1,5 +1,5 @@
 ## code to prepare `virclasp_protein_net` dataset goes here
-library(entropynet)
+library(associationsubgraphs)
 library(fs)
 
 cache_loc <- here::here("data-raw/virclasp_protein_net.rds")

@@ -14,10 +14,10 @@ NULL
 #'
 #' @export
 find_components <- function(associations, a_col = "a", b_col = "b", w_col = "w") {
-    .Call(`_entropynet_find_components`, associations, a_col, b_col, w_col)
+    .Call(`_associationsubgraphs_find_components`, associations, a_col, b_col, w_col)
 }
 
 edges_to_all_nodes <- function(a, b, n) {
-    .Call(`_entropynet_edges_to_all_nodes`, a, b, n)
+    .Call(`_associationsubgraphs_edges_to_all_nodes`, a, b, n)
 }
 

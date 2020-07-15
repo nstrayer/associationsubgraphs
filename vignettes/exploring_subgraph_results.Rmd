@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE, out.width = "100%")
 library(dplyr)
 library(tidyverse)
 library(phewasHelper)
-library(entropynet)
+library(associationsubgraphs)
 
 association_pairs <- virus_net %>% 
   arrange(desc(strength))

@@ -1,5 +1,5 @@
 ## usethis namespace: start
-#' @useDynLib entropynet, .registration = TRUE
+#' @useDynLib associationsubgraphs, .registration = TRUE
 ## usethis namespace: end
 NULL
 
