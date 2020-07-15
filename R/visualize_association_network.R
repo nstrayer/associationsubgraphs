@@ -28,10 +28,8 @@
 #'
 #' @examples
 #'
-#' associationsubgraphs::virus_net %>%
-#'   dplyr::arrange(desc(strength)) %>%
-#'   head(300) %>%
-#'   visualize_association_network()
+#' virus_associations <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 300)
+#' visualize_association_network(virus_associations)
 #'
 visualize_association_network <- function(association_pairs,
                                           node_info,
@@ -47,8 +45,8 @@ visualize_association_network <- function(association_pairs,
     all_passed_nodes <- unique(node_info$id)
     in_edges <- unique_nodes$id
 
-    n_not_in_edges <- dplyr::setdiff(all_passed_nodes, in_edges) %>% length()
-    n_not_in_info <- dplyr::setdiff(in_edges, all_passed_nodes) %>% length()
+    n_not_in_edges <- length(dplyr::setdiff(all_passed_nodes, in_edges))
+    n_not_in_info <-  length(dplyr::setdiff(in_edges, all_passed_nodes))
 
     if(n_not_in_edges > 0 & warn_of_mismatches){
       warning(glue::glue("There are {n_not_in_edges} ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
@@ -114,11 +112,12 @@ visualize_association_network <- function(association_pairs,
 #' @export
 #'
 #' @examples
+#' 
+#' node_info <- dplyr::rename(virus_host_viruses, id = virus_id)
+#' node_info$color <- ifelse(node_info$type == "RNA", "orangered", "steelblue")
 #' visualize_subgraph_structure(
 #'   virus_net,
-#'   node_info = virus_host_viruses %>%
-#'     dplyr::rename(id = virus_id) %>%
-#'     dplyr::mutate(color = ifelse(type == "RNA", "orangered", "steelblue"))
+#'   node_info = node_info
 #' )
 #'
 visualize_subgraph_structure <- function(association_pairs,
@@ -139,8 +138,8 @@ visualize_subgraph_structure <- function(association_pairs,
     all_passed_nodes <- unique(node_info$id)
     in_edges <- unique_nodes$id
 
-    n_not_in_edges <- dplyr::setdiff(all_passed_nodes, in_edges) %>% length()
-    n_not_in_info <- dplyr::setdiff(in_edges, all_passed_nodes) %>% length()
+    n_not_in_edges <- length(dplyr::setdiff(all_passed_nodes, in_edges))
+    n_not_in_info <-  length(dplyr::setdiff(in_edges, all_passed_nodes))
 
     if(n_not_in_edges > 0 & warn_of_mismatches){
       warning(glue::glue("There are {n_not_in_edges} ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
