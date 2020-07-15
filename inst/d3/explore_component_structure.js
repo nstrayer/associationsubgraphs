@@ -1085,7 +1085,7 @@ function draw_timelines(
 
   const step_metrics = all_metrics.map((metric_id, i) => {
     let integer_valued = true;
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < Math.min(15, data.length); i++) {
       if (not_integer(data[i][metric_id])) {
         integer_valued = false;
         break;
