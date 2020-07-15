@@ -7,25 +7,16 @@
 
 <!-- badges: end -->
 
-The goal of `associationsubgraphs` is to provide tools to build robust entropy
-association networks from both binary occurrence and count data.
-Includes functions for investigating the found networks through
-visualization and various network-analysis statistics.
+The goal of `associationsubgraphs` is to provide tools to investigate
+association networks of any type using intuitive and visual tools. The
+main premise is to break down association networks into distinct
+subgraphs of variables connected to each other (often called components)
+above some association strength threshold. Includes functions for
+transforming associations to relative and investigating the found
+structure across all association thresholds through visualization and
+various network-analysis statistics.
 
 ## Installation
-
-The package `V8` needs to be installed and can be a tiny bit tricky. If
-you get an error run:
-
-``` bash
-# (Debian / Ubuntu)
-apt-get install libv8-dev
-
-# (OSX)
-brew install v8
-```
-
-Follow the error messages for other operating systems.
 
 To install the package from from [GitHub](https://github.com/) run:
 
