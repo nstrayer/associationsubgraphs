@@ -4,7 +4,7 @@
 #' variable/ids average strength. Used for normalizing pairs or investigating
 #' patterns in average strength.
 #'
-#' @inheritParams visualize_association_network
+#' @inheritParams calculate_subgraph_structure
 #'
 #' @return Dataframe with `id` and `avg_strength` columns for each unique variable in association pairs
 #' @export
@@ -12,11 +12,11 @@
 #' @examples
 #' gather_avg_strength(virus_net)
 #'
-gather_avg_strength <- function(association_pairs) {
+gather_avg_strength <- function(association_pairs, strength_column = "strength") {
   dplyr::summarise(
     dplyr::group_by(dplyr::tibble(
       id = c(association_pairs$a, association_pairs$b),
-      strength = c(association_pairs$strength, association_pairs$strength)
+      strength = c(association_pairs[[strength_column]], association_pairs[[strength_column]])
     ),
     id),
     avg_strength = mean(strength),
