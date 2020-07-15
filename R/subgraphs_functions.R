@@ -18,7 +18,7 @@
 #'
 #'
 #' @inheritParams visualize_association_network
-#' @strength_column Id of column that encodes the strength of the associations for pairs
+#' @param strength_column Id of column that encodes the strength of the associations for pairs
 #'
 #' @return Dataframe with the following columns for each unique subgraph state.
 #'
