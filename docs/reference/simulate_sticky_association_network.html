@@ -193,33 +193,33 @@ that take <code>association_pairs</code> as an input.</p>
   <span class='kw'>association_dist</span> <span class='kw'>=</span> <span class='kw'>function</span>(<span class='no'>n</span>) {<span class='fu'><a href='https://rdrr.io/r/stats/Beta.html'>rbeta</a></span>(<span class='no'>n</span>, <span class='kw'>shape1</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>shape2</span> <span class='kw'>=</span> <span class='fl'>10</span>)}
 )</div><div class='output co'>#&gt; $variables
 #&gt; <span style='color: #555555;'># A tibble: 10 x 3</span><span>
-#&gt;    variable stickiness cluster
-#&gt;       </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span>
-#&gt; </span><span style='color: #555555;'> 1</span><span>        1      1.06        2
-#&gt; </span><span style='color: #555555;'> 2</span><span>        2      1.39        2
-#&gt; </span><span style='color: #555555;'> 3</span><span>        3      1.81        2
-#&gt; </span><span style='color: #555555;'> 4</span><span>        4      1.50        3
-#&gt; </span><span style='color: #555555;'> 5</span><span>        5      0.817       2
-#&gt; </span><span style='color: #555555;'> 6</span><span>        6      0.882       2
-#&gt; </span><span style='color: #555555;'> 7</span><span>        7      0.298       3
-#&gt; </span><span style='color: #555555;'> 8</span><span>        8      0.924       1
-#&gt; </span><span style='color: #555555;'> 9</span><span>        9      1.19        2
-#&gt; </span><span style='color: #555555;'>10</span><span>       10      0.144       1
+#&gt;       id stickiness cluster
+#&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span>
+#&gt; </span><span style='color: #555555;'> 1</span><span>     1     0.091</span><span style='text-decoration: underline;'>3</span><span>       1
+#&gt; </span><span style='color: #555555;'> 2</span><span>     2     0.854        3
+#&gt; </span><span style='color: #555555;'> 3</span><span>     3     1.07         3
+#&gt; </span><span style='color: #555555;'> 4</span><span>     4     0.521        1
+#&gt; </span><span style='color: #555555;'> 5</span><span>     5     1.08         2
+#&gt; </span><span style='color: #555555;'> 6</span><span>     6     0.170        3
+#&gt; </span><span style='color: #555555;'> 7</span><span>     7     1.04         3
+#&gt; </span><span style='color: #555555;'> 8</span><span>     8     2.60         3
+#&gt; </span><span style='color: #555555;'> 9</span><span>     9     0.773        2
+#&gt; </span><span style='color: #555555;'>10</span><span>    10     1.81         1
 #&gt; 
 #&gt; $associations
 #&gt; </span><span style='color: #555555;'># A tibble: 45 x 4</span><span>
 #&gt;        a     b same_cluster strength
 #&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;lgl&gt;</span><span>           </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'> 1</span><span>     1     2 TRUE          0.163  
-#&gt; </span><span style='color: #555555;'> 2</span><span>     1     3 TRUE          0.096</span><span style='text-decoration: underline;'>6</span><span> 
-#&gt; </span><span style='color: #555555;'> 3</span><span>     1     4 FALSE         0.032</span><span style='text-decoration: underline;'>3</span><span> 
-#&gt; </span><span style='color: #555555;'> 4</span><span>     1     5 TRUE          0.435  
-#&gt; </span><span style='color: #555555;'> 5</span><span>     1     6 TRUE          0.228  
-#&gt; </span><span style='color: #555555;'> 6</span><span>     1     7 FALSE         0.015</span><span style='text-decoration: underline;'>4</span><span> 
-#&gt; </span><span style='color: #555555;'> 7</span><span>     1     8 FALSE         0.154  
-#&gt; </span><span style='color: #555555;'> 8</span><span>     1     9 TRUE          0.570  
-#&gt; </span><span style='color: #555555;'> 9</span><span>     1    10 FALSE         0.002</span><span style='text-decoration: underline;'>26</span><span>
-#&gt; </span><span style='color: #555555;'>10</span><span>     2     3 TRUE          0.681  
+#&gt; </span><span style='color: #555555;'> 1</span><span>     1     2 FALSE         0.032</span><span style='text-decoration: underline;'>8</span><span> 
+#&gt; </span><span style='color: #555555;'> 2</span><span>     1     3 FALSE         0.048</span><span style='text-decoration: underline;'>7</span><span> 
+#&gt; </span><span style='color: #555555;'> 3</span><span>     1     4 TRUE          0.231  
+#&gt; </span><span style='color: #555555;'> 4</span><span>     1     5 FALSE         0.114  
+#&gt; </span><span style='color: #555555;'> 5</span><span>     1     6 FALSE         0.081</span><span style='text-decoration: underline;'>5</span><span> 
+#&gt; </span><span style='color: #555555;'> 6</span><span>     1     7 FALSE         0.050</span><span style='text-decoration: underline;'>6</span><span> 
+#&gt; </span><span style='color: #555555;'> 7</span><span>     1     8 FALSE         0.142  
+#&gt; </span><span style='color: #555555;'> 8</span><span>     1     9 FALSE         0.002</span><span style='text-decoration: underline;'>62</span><span>
+#&gt; </span><span style='color: #555555;'> 9</span><span>     1    10 TRUE          0.397  
+#&gt; </span><span style='color: #555555;'>10</span><span>     2     3 TRUE          0.358  
 #&gt; </span><span style='color: #555555;'># … with 35 more rows</span><span>
 #&gt; </div><div class='input'>
 </div></span></pre>

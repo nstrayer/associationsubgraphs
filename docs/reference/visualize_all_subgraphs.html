@@ -129,7 +129,7 @@ association network." />
     </div>
 
     <div class="ref-description">
-    <p>Companion function to <code><a href='find_all_subgraphs.html'>find_all_subgraphs</a></code> to visualize results.
+    <p>Companion function to <code>find_all_subgraphs</code> to visualize results.
 Shows a streamgraph of subgraph's by size, total number of subgraphs, and
 mergers of subgraphs that took place at every unique strength cutoff for
 association network.</p>
@@ -142,7 +142,7 @@ association network.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>all_subgraphs</th>
-      <td><p>results dataframe from calling <code><a href='find_all_subgraphs.html'>find_all_subgraphs</a></code></p></td>
+      <td><p>results dataframe from calling <code>find_all_subgraphs</code></p></td>
     </tr>
     </table>
 
@@ -152,8 +152,8 @@ association network.</p>
 <span class='no'>virus_net</span> <span class='kw'>%&gt;%</span>
   <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/arrange.html'>arrange</a></span>(<span class='fu'>desc</span>(<span class='no'>strength</span>)) <span class='kw'>%&gt;%</span>
     <span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span>(<span class='fl'>500</span>) <span class='kw'>%&gt;%</span>
-    <span class='fu'><a href='find_all_subgraphs.html'>find_all_subgraphs</a></span>() <span class='kw'>%&gt;%</span>
-    <span class='fu'>visualize_all_subgraphs</span>()</div><div class='output co'>#&gt; <span class='error'>Error: '' does not exist in current working directory ('/Users/nick/R_code/associationsubgraphs/docs/reference').</span></div><div class='input'>
+    <span class='fu'>find_all_subgraphs</span>() <span class='kw'>%&gt;%</span>
+    <span class='fu'>visualize_all_subgraphs</span>()</div><div class='output co'>#&gt; <span class='error'>Error in find_all_subgraphs(.): could not find function "find_all_subgraphs"</span></div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

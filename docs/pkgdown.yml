@@ -2,7 +2,6 @@ pandoc: 2.7.3
 pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
-  _calculating_mutual_information_network: _calculating_mutual_information_network.html
   exploring_subgraph_results: exploring_subgraph_results.html
-last_built: 2020-07-15T17:27Z
+last_built: 2020-07-15T21:11Z
 

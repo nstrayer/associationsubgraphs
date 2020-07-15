@@ -138,7 +138,9 @@ exploration of cut-points.</p>
   <span class='no'>node_info</span>,
   <span class='no'>subgraph_results</span>,
   <span class='kw'>trim_subgraph_results</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>warn_of_mismatches</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+  <span class='kw'>warn_of_mismatches</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>width</span> <span class='kw'>=</span> <span class='st'>"100%"</span>,
+  <span class='kw'>height</span> <span class='kw'>=</span> <span class='st'>"800px"</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -159,7 +161,7 @@ additional info nade available on hover in visualization.</p></td>
     <tr>
       <th>subgraph_results</th>
       <td><p>Dataframe of subgraph results as returned by
-<code><a href='explore_subgraph_structure.html'>explore_subgraph_structure</a></code>. If it isnt provided it is
+<code><a href='calculate_subgraph_structure.html'>calculate_subgraph_structure</a></code>. If it isnt provided it is
 calculated. Automatic calculation will slow down code depending on how
 large dataset is.</p></td>
     </tr>
@@ -176,6 +178,10 @@ the subgraph structure over strength.</p></td>
       <td><p>If there are differences in the ids present in
 <code>association_pairs</code> and <code>node_info</code> should a warning be issued?</p></td>
     </tr>
+    <tr>
+      <th>width, height</th>
+      <td><p>Valid css units for output size (e.g. pixels (<code>px</code>) or percent(<code>%</code>)).</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -184,11 +190,12 @@ the subgraph structure over strength.</p></td>
 subgraphs at all possible cut-points</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>visualize_subgraph_structure</span>(
+    <pre class="examples"><div class='input'>
+<span class='no'>node_info</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/rename.html'>rename</a></span>(<span class='no'>virus_host_viruses</span>, <span class='kw'>id</span> <span class='kw'>=</span> <span class='no'>virus_id</span>)
+<span class='no'>node_info</span>$<span class='no'>color</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/ifelse.html'>ifelse</a></span>(<span class='no'>node_info</span>$<span class='no'>type</span> <span class='kw'>==</span> <span class='st'>"RNA"</span>, <span class='st'>"orangered"</span>, <span class='st'>"steelblue"</span>)
+<span class='fu'>visualize_subgraph_structure</span>(
   <span class='no'>virus_net</span>,
-  <span class='kw'>node_info</span> <span class='kw'>=</span> <span class='no'>virus_host_viruses</span> <span class='kw'>%&gt;%</span>
-    <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/rename.html'>rename</a></span>(<span class='kw'>id</span> <span class='kw'>=</span> <span class='no'>virus_id</span>) <span class='kw'>%&gt;%</span>
-    <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>color</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/ifelse.html'>ifelse</a></span>(<span class='no'>type</span> <span class='kw'>==</span> <span class='st'>"RNA"</span>, <span class='st'>"orangered"</span>, <span class='st'>"steelblue"</span>))
+  <span class='kw'>node_info</span> <span class='kw'>=</span> <span class='no'>node_info</span>
 )</div><div class='output co'>#&gt; <span class='message'>Calculating subgraph structure results...</span></div><div class='output co'>#&gt; <span class='message'>...finished</span></div><div class='input'>
 </div></pre>
   </div>

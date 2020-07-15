@@ -83,19 +83,12 @@
 <a href="#associationsubgraphs" class="anchor"></a>associationsubgraphs</h1></div>
 <!-- badges: start -->
 <!-- badges: end -->
-<p>The goal of <code>associationsubgraphs</code> is to provide tools to build robust entropy association networks from both binary occurrence and count data. Includes functions for investigating the found networks through visualization and various network-analysis statistics.</p>
+<p>The goal of <code>associationsubgraphs</code> is to provide tools to investigate association networks of any type using intuitive and visual tools. The main premise is to break down association networks into distinct subgraphs of variables connected to each other (often called components) above some association strength threshold. Includes functions for transforming associations to relative and investigating the found structure across all association thresholds through visualization and various network-analysis statistics.</p>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<p>The package <code>V8</code> needs to be installed and can be a tiny bit tricky. If you get an error run:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># (Debian / Ubuntu)</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="ex">apt-get</span> install libv8-dev</span>
-<span id="cb1-3"><a href="#cb1-3"></a></span>
-<span id="cb1-4"><a href="#cb1-4"></a><span class="co"># (OSX)</span></span>
-<span id="cb1-5"><a href="#cb1-5"></a><span class="ex">brew</span> install v8</span></code></pre></div>
-<p>Follow the error messages for other operating systems.</p>
 <p>To install the package from from <a href="https://github.com/">GitHub</a> run:</p>
-<div class="sourceCode" id="cb2"><pre class="r"><span class="co"># install.packages("devtools")</span>
+<div class="sourceCode" id="cb1"><pre class="r"><span class="co"># install.packages("devtools")</span>
 <span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"nstrayer/associationsubgraphs"</span>)</pre></div>
 </div>
 </div>
