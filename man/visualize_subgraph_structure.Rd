@@ -49,11 +49,12 @@ arrangements for passed association pairs with summary statistics to guide
 exploration of cut-points.
 }
 \examples{
+
+node_info <- dplyr::rename(virus_host_viruses, id = virus_id)
+node_info$color <- ifelse(node_info$type == "RNA", "orangered", "steelblue")
 visualize_subgraph_structure(
   virus_net,
-  node_info = virus_host_viruses \%>\%
-    dplyr::rename(id = virus_id) \%>\%
-    dplyr::mutate(color = ifelse(type == "RNA", "orangered", "steelblue"))
+  node_info = node_info
 )
 
 }

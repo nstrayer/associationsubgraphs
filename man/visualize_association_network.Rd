@@ -49,9 +49,7 @@ overlap between unrelated parts of the network.
 }
 \examples{
 
-associationsubgraphs::virus_net \%>\%
-  dplyr::arrange(desc(strength)) \%>\%
-  head(300) \%>\%
-  visualize_association_network()
+virus_associations <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 300)
+visualize_association_network(virus_associations)
 
 }
