@@ -141,13 +141,19 @@ visualize_subgraph_structure <- function(association_pairs,
   # In this case we want to trim the data sent to the visualization to only be what's necessary
   # because sending the data over to javascript is expensive
   if (trim_subgraph_results) {
-    subgraph_results <- dplyr::filter(subgraph_results,
-                                      rel_max_size < 0.95 | n_nodes_seen < nrow(unique_nodes) * 0.1)
+    tenth_of_nodes <- nrow(unique_nodes) * 0.1
+
+    # The head is in here because sometimes we have a junk row at end of subgraph results (needs fixing)
+    subgraph_results <- dplyr::filter(
+      utils::head(subgraph_results, -1),
+      rel_max_size < 0.95 |  n_nodes_seen < tenth_of_nodes
+    )
 
     # We can now get rid of all the excess edges we wont ever use
     max_num_edges <- utils::tail(subgraph_results$n_edges, 1)
     association_pairs <- head(association_pairs, max_num_edges)
   }
+
 
   if (missing(node_info)) {
     # When no node info is supplied we just use our unique node list
