@@ -11,7 +11,8 @@ Encoding: UTF-8
 LazyData: true
 Imports: 
     dplyr,
-    Rcpp
+    Rcpp,
+    r2d3 (>= 0.2.4)
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.0
 Suggests: 
