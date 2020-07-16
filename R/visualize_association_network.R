@@ -125,45 +125,73 @@ visualize_subgraph_structure <- function(association_pairs,
                                          width = "100%",
                                          height = "800px") {
 
-  unique_nodes <- gather_unique_nodes(association_pairs)
-
+  # If association pairs are not sorted bad things happen in the algorithm
   association_pairs <- ensure_sorted(association_pairs)
 
-  if (missing(node_info)) {
-    nodes <- unique_nodes
-  } else {
-    all_passed_nodes <- unique(node_info$id)
-    in_edges <- unique_nodes$id
-
-    n_not_in_edges <- length(dplyr::setdiff(all_passed_nodes, in_edges))
-    n_not_in_info <-  length(dplyr::setdiff(in_edges, all_passed_nodes))
-
-    if(n_not_in_edges > 0 & warn_of_mismatches){
-      warning(paste("There are", n_not_in_edges, "ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
-    }
-
-    if(n_not_in_info > 0 & warn_of_mismatches){
-      warning(paste("There are", n_not_in_info,  "ids in the association_pairs dataframe that are not in the node_info dataframe."))
-    }
-
-    # unique_nodes
-    nodes <- dplyr::right_join(node_info, unique_nodes, by = "id")
-  }
-
-  if(missing(subgraph_results)){
+  if (missing(subgraph_results)) {
     message("Calculating subgraph structure results...")
-    subgraph_results <- associationsubgraphs::calculate_subgraph_structure(association_pairs)
+    subgraph_results <- calculate_subgraph_structure(association_pairs)
     message("...finished")
   }
 
-  if(trim_subgraph_results){
-    subgraph_results <- dplyr::filter(
-        subgraph_results,
-        rel_max_size < 0.95 | n_nodes_seen < nrow(unique_nodes)*0.1
-      )
+  # We need to know what ids are present in pairs for trimming and checking for mismatches
+  unique_nodes <- gather_unique_nodes(association_pairs)
+
+  # Often just the first little bit of the edges have interesting info
+  # In this case we want to trim the data sent to the visualization to only be what's necessary
+  # because sending the data over to javascript is expensive
+  if (trim_subgraph_results) {
+    subgraph_results <- dplyr::filter(subgraph_results,
+                                      rel_max_size < 0.95 | n_nodes_seen < nrow(unique_nodes) * 0.1)
+
+    # We can now get rid of all the excess edges we wont ever use
+    max_num_edges <- utils::tail(subgraph_results$n_edges, 1)
+    association_pairs <- head(association_pairs, max_num_edges)
   }
 
-  get_js <- function(name){system.file(paste0("d3/", name), package = "associationsubgraphs")}
+  if (missing(node_info)) {
+    # When no node info is supplied we just use our unique node list
+    nodes <- unique_nodes
+  } else {
+    # Otherwise we need to make sure we have matching node and edge datsets
+    all_passed_nodes <- unique(node_info$id)
+    in_edges <- unique_nodes$id
+
+    n_not_in_edges <-
+      length(dplyr::setdiff(all_passed_nodes, in_edges))
+    n_not_in_info <-
+      length(dplyr::setdiff(in_edges, all_passed_nodes))
+
+    if (n_not_in_edges > 0 &
+        warn_of_mismatches & !trim_subgraph_results) {
+      warning(
+        paste(
+          "There are",
+          n_not_in_edges,
+          "ids in the node_info dataframe that were not seen in association pairs. These are omitted."
+        )
+      )
+    }
+
+    if (n_not_in_info > 0 & warn_of_mismatches) {
+      warning(
+        paste(
+          "There are",
+          n_not_in_info,
+          "ids in the association_pairs dataframe that are not in the node_info dataframe."
+        )
+      )
+    }
+
+    # A right join will make sure we dont pull in the node info we don't need
+    nodes <- dplyr::right_join(node_info, unique_nodes, by = "id")
+  }
+
+  # Typing out the system file command is tiresome. Also this helps if we change the location root
+  get_js <-
+    function(name) {
+      system.file(paste0("d3/", name), package = "associationsubgraphs")
+    }
 
   r2d3::r2d3(
     get_js("explore_subgraph_structure.js"),
@@ -182,7 +210,7 @@ visualize_subgraph_structure <- function(association_pairs,
       get_js("find_subgraphs.js"),
       get_js("d3_helpers.js")
     ),
-    d3_version = "5",
+    d3_version = "5", # We use the .join() method a lot so we need 5.0 or later
     width = width,
     height = height
   )
