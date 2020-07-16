@@ -49,11 +49,11 @@ visualize_association_network <- function(association_pairs,
     n_not_in_info <-  length(dplyr::setdiff(in_edges, all_passed_nodes))
 
     if(n_not_in_edges > 0 & warn_of_mismatches){
-      warning(glue::glue("There are {n_not_in_edges} ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
+      warning(paste("There are", n_not_in_edges, "ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
     }
 
     if(n_not_in_info > 0 & warn_of_mismatches){
-      warning(glue::glue("There are {n_not_in_info} ids in the association_pairs dataframe that are not in the node_info dataframe."))
+      warning(paste("There are", n_not_in_info,  "ids in the association_pairs dataframe that are not in the node_info dataframe."))
     }
 
     # unique_nodes
@@ -139,11 +139,11 @@ visualize_subgraph_structure <- function(association_pairs,
     n_not_in_info <-  length(dplyr::setdiff(in_edges, all_passed_nodes))
 
     if(n_not_in_edges > 0 & warn_of_mismatches){
-      warning(glue::glue("There are {n_not_in_edges} ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
+      warning(paste("There are", n_not_in_edges, "ids in the node_info dataframe that were not seen in association pairs. These are omitted."))
     }
 
     if(n_not_in_info > 0 & warn_of_mismatches){
-      warning(glue::glue("There are {n_not_in_info} ids in the association_pairs dataframe that are not in the node_info dataframe."))
+      warning(paste("There are", n_not_in_info,  "ids in the association_pairs dataframe that are not in the node_info dataframe."))
     }
 
     # unique_nodes
