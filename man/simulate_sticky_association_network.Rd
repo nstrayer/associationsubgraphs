@@ -8,8 +8,8 @@ simulate_sticky_association_network(
   n_variables = 50,
   n_clusters = 4,
   cluster_coherence = 2,
-  stickiness_dist = function(n) {     rbeta(n, shape1 = 1, shape2 = 4) },
-  association_dist = function(n) {     rbeta(n, shape1 = 0.5, shape2 = 10) }
+  stickiness_dist = function(n) {     stats::rbeta(n, shape1 = 1, shape2 = 4) },
+  association_dist = function(n) {     stats::rbeta(n, shape1 = 0.5, shape2 = 10) }
 )
 }
 \arguments{
