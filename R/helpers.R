@@ -15,3 +15,12 @@ ensure_sorted <- function(association_pairs, strength_column = "strength"){
   }
   association_pairs
 }
+
+# Setup indices for all possible pairs of n values
+build_all_pairs <- function(n){
+  rep_counts <- (n:1) - 1
+  list(
+    a_i = rep(1:n, times = rep_counts),
+    b_i = unlist(lapply(rep_counts, function(x){utils::tail(1:n, x)}))
+  )
+}
