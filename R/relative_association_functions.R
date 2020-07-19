@@ -25,6 +25,135 @@ gather_avg_strength <- function(association_pairs, strength_column = "strength")
 }
 
 
+#' Generate a relative association network
+#'
+#' Takes as input a raw association network and normalizes it to
+#' relative-associations. Every edge's strength is transformed by dividing by
+#' the average strength of each of the variables it connects. E.g. if edge `a-b`
+#' has strength `1` and `a`'s average association is `0.5` and `b`'s average
+#' association is `0.75` that means this edge has a higher than normal weight
+#' for both nodes and its normalized strength is `1/((0.5 + 0.75)/2) = 1.6`.
+#'
+#' @section missing association pairs:
+#'
+#'   If there are missing pairs - I.e. not all `n*(n-1)/2` combinations of
+#'   variables are represented - the function will throw a warning fill in the
+#'   missing values with the minimum seen association strength.
+#'
+#'   The following options are available using the `impute_missing` argument:
+#'   - `"minimum"`: The lowest seen strenght is assumed to be the value for all missing pairs (same
+#'   as default but no warning is given).
+#'   - `"zero"`: Value of `0` is substituted. This option only makes sense if your association is
+#'   naturally lower bounded at `0`.
+#'   - `"ignore"`: Here no action is taken and the averages are just used as is. Since it is likely this missingness is not at random it's likely the best option is an imputation of some sort.
+#'
+#' @inheritParams calculate_subgraph_structure
+#' @param impute_missing If not all possible pairs are present in
+#'   `association_pairs`, this parameter controls how the function deals with
+#'   these missing values. Current options are `"minimum"`(lowest seen edge
+#'   value is substituted) and `zero` (`0` is substituted). See the section
+#'   "missing association pairs" for more details.
+#'
+#' @return A new association pairs dataframe (with columns `a`, `b`, and
+#'   `strength`) where `strength` is transformed to relative strength.
+#' @export
+#'
+#' @examples
+#'
+# dplyr::tibble(
+#          a = c("A", "A", "A", "B", "B", "C"),
+#          b = c("B", "C", "D", "C", "D", "D"),
+#   strength = c(  3,   6,   9,  12,  15,  18)
+# )
+
+# association_pairs <-
+# dplyr::tibble(
+#          a = c("A", "A", "B", "B", "C"),
+#          b = c("B", "C", "C", "D", "D"),
+#   strength = c(  3,   6,  12,  15,  18)
+# )
+# build_relative_associations(association_pairs, impute_missing = "zero")
+build_relative_associations <- function(association_pairs, strength_col = "strength", impute_missing){
+  if(strength_col != "strength"){
+    # We use "strength" as the normal column name for association strength so if
+    # the user is using something different we need to update the dataframe so
+    # we dont continually pass through this strength_col value and make code
+    # ugly
+    colnames(association_pairs)[colnames(association_pairs) == strength_col] <- "strength"
+  }
+
+  # First we setup the average values table. This will allow us to check if
+  # we're missing any values
+  average_strengths <- gather_avg_strength(association_pairs)
+
+  # Figure out if we have all the possible pairs.
+  # This setup assumes that our association pairs are distinct
+  n_variables <- nrow(average_strengths)
+  n_pairs <- nrow(association_pairs)
+  have_missing_pairs <- n_pairs <  n_variables*(n_variables-1)/2
+
+  # The user has passed us data with missing pairs and didn't specify an imputation behavior
+  if(have_missing_pairs & missing(impute_missing)){
+    warning(paste("There are missing association pairs. Defaulting to minimum imputation.",
+                  "Run ?build_relative_associations and see section ",
+                  "\"missing association pairs\" for more information."))
+    impute_missing <- "minimum"
+  }
+
+  # We'll need to do some data surgery if we have missing values and it hasn't
+  # been explicitly requested we leave them alone
+  if(have_missing_pairs & impute_missing != "ignore"){
+
+    if(impute_missing == "minimum"){
+      imputation_value <- min(association_pairs$strength)
+    } else if(impute_missing == "zero") {
+      imputation_value <- 0
+    } else {
+      stop(
+        paste("The imputation option passed:",
+              inpute_missing,
+              "does not match the available options of {\"missing\", \"zero\", \"ignore\"}"))
+    }
+
+    # Build a complete association pairs table with missing values encoded as NA
+    # due to the left join's default value for rows missing in right dataframe.
+    pair_indices <- build_all_pairs(n_variables)
+
+    association_pairs <- dplyr::left_join(
+      dplyr::tibble(
+        a = average_strengths$id[pair_indices$a_i],
+        b = average_strengths$id[pair_indices$b_i]
+      ),
+      association_pairs,
+      by = c("a", "b")
+    )
+
+    # Now we can do the actual imputation
+    association_pairs <-  dplyr::mutate(
+      association_pairs,
+      strength = ifelse(is.na(strength), imputation_value, strength)
+    )
+
+    # Need to recalculate the avg strength table now that we have an updated
+    # association pairs table
+    average_strengths <- gather_avg_strength(association_pairs)
+  }
+
+  # Turn average strength into a named array so we can use names to index to values
+  id_to_avg_strength <- setNames(
+    average_strengths$avg_strength,
+    average_strengths$id
+  )
+
+  # Now we can do the fun part: calculating the new relative strength and returning
+  dplyr::mutate(
+    association_pairs,
+    strength = strength/((id_to_avg_strength[a] + id_to_avg_strength[b])/2)
+  )
+}
+
+
+
 #' Simulate a sticky association network
 #'
 #' Used for testing properties of algorithms. Will create an association network
