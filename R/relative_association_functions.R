@@ -212,13 +212,11 @@ simulate_sticky_association_network <- function(
   # Move on to building the association values for each combo
 
   # First build indices of all unique pairs
-  rep_counts <- (n_variables:1) - 1
-  a_i <- rep(1:n_variables, times = rep_counts)
-  b_i <- unlist(lapply(rep_counts, function(x){utils::tail(1:n_variables, x)}))
-  n_pairs <- length(a_i)
+  all_pairs <- build_all_pairs(n_variables)
+  n_pairs <- length(all_pairs$a_i)
 
   # Now we use those indices
-  same_cluster <- cluster_membership[a_i] == cluster_membership[b_i]
+  same_cluster <- cluster_membership[all_pairs$a_i] == cluster_membership[all_pairs$b_i]
   raw_association <-
     association_dist(n_pairs) * ifelse(same_cluster, cluster_coherence, 1)
 
@@ -229,10 +227,12 @@ simulate_sticky_association_network <- function(
       cluster = cluster_membership
     ),
     associations =  dplyr::tibble(
-      a = a_i,
-      b = b_i,
+      a = all_pairs$a_i_i,
+      b = all_pairs$b_i,
       same_cluster = same_cluster,
-      strength = raw_association * (stickiness[a_i] + stickiness[b_i])
+      strength = raw_association * (stickiness[all_pairs$a_i] + stickiness[all_pairs$b_i])
     )
   )
 }
+
+
