@@ -119,25 +119,13 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
     # due to the left join's default value for rows missing in right dataframe.
     pair_indices <- build_all_pairs(n_variables)
 
-    # To make our pairs match up we need to know all the pairs have the same a-b order
-    # By making a always be the first in alphabetical order then this is assured.
-    alphabetize_ids <- function(pairs){
-      new_a <- ifelse(pairs$a < pairs$b, pairs$a, pairs$b)
-      new_b <- ifelse(pairs$a < pairs$b, pairs$b, pairs$a)
 
-      pairs$a <- new_a
-      pairs$b <- new_b
-
-      pairs
-    }
-
-    association_pairs <- dplyr::left_join(
-      alphabetize_ids(dplyr::tibble(
+    association_pairs <- join_pair_lists(
+      dplyr::tibble(
         a = average_strengths$id[pair_indices$a_i],
         b = average_strengths$id[pair_indices$b_i]
-      )),
-      alphabetize_ids(association_pairs),
-      by = c("a", "b")
+      ),
+      association_pairs
     )
 
     # Now we can do the actual imputation
