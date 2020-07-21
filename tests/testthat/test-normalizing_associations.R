@@ -29,7 +29,7 @@ test_that("Relative associations transformation", {
       a = c("A", "A", "A", "B", "B", "C"),
       b = c("B", "C", "D", "C", "D", "D"),
       strength = c(3/8, 6/9, 9/10, 12/11, 15/12, 18/13)
-    )
+    ) %>% arrange(-strength)
   )
 
 })
@@ -57,7 +57,7 @@ test_that("Getting relative associations handles missing values", {
              a = c("A", "A", "A", "B", "B", "C"),
              b = c("B", "C", "D", "C", "D", "D"),
       strength = c(  3/7,   6/8,   3/8,  12/11,  15/11,  18/12)
-    )
+    ) %>% arrange(-strength)
   )
 
   expect_equivalent(
@@ -66,7 +66,7 @@ test_that("Getting relative associations handles missing values", {
       a = c("A", "A", "B", "B", "C"),
       b = c("B", "C", "C", "D", "D"),
       strength = c(  6/(9/2 + 10),   12/(9/2 + 12), 24/22,  30/(10 + 33/2),  36/(12 + 33/2))
-    )
+    ) %>% arrange(-strength)
   )
 
 

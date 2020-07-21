@@ -48,6 +48,10 @@ gather_avg_strength <- function(association_pairs, strength_column = "strength")
 #'   - `"ignore"`: Here no action is taken and the averages are just used as is. Since it is likely this missingness is not at random it's likely the best option is an imputation of some sort.
 #'
 #' @inheritParams calculate_subgraph_structure
+#' @param rank_based Should the relative strength be calculated using ranks?
+#'   Here instead of using the raw values of strength, the ranking of edges is
+#'   used with the max "strength" being the number of edges. Set to `FALSE` to
+#'   use the raw strengths.
 #' @param impute_missing If not all possible pairs are present in
 #'   `association_pairs`, this parameter controls how the function deals with
 #'   these missing values. Current options are `"minimum"`(lowest seen edge
@@ -73,7 +77,7 @@ gather_avg_strength <- function(association_pairs, strength_column = "strength")
 #   strength = c(  3,   6,  12,  15,  18)
 # )
 # build_relative_associations(association_pairs, impute_missing = "zero")
-build_relative_associations <- function(association_pairs, strength_col = "strength", impute_missing){
+build_relative_associations <- function(association_pairs, strength_col = "strength", rank_based = FALSE, impute_missing){
   if(strength_col != "strength"){
     # We use "strength" as the normal column name for association strength so if
     # the user is using something different we need to update the dataframe so
@@ -82,13 +86,14 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
     colnames(association_pairs)[colnames(association_pairs) == strength_col] <- "strength"
   }
 
-  # First we setup the average values table. This will allow us to check if
-  # we're missing any values
-  average_strengths <- gather_avg_strength(association_pairs)
+
+  # We need the unique nodes to find out if we're missing edges and to know what
+  # pairs we need to impute if any are missing
+  all_node_ids <- unique(c(association_pairs$a, association_pairs$b))
 
   # Figure out if we have all the possible pairs.
   # This setup assumes that our association pairs are distinct
-  n_variables <- nrow(average_strengths)
+  n_variables <- length(all_node_ids)
   n_pairs <- nrow(association_pairs)
   have_missing_pairs <- n_pairs <  n_variables*(n_variables-1)/2
 
@@ -119,25 +124,34 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
     # due to the left join's default value for rows missing in right dataframe.
     pair_indices <- build_all_pairs(n_variables)
 
-
     association_pairs <- join_pair_lists(
       dplyr::tibble(
-        a = average_strengths$id[pair_indices$a_i],
-        b = average_strengths$id[pair_indices$b_i]
+        a = all_node_ids[pair_indices$a_i],
+        b = all_node_ids[pair_indices$b_i]
       ),
       association_pairs
     )
 
-    # Now we can do the actual imputation
-    association_pairs <-  dplyr::mutate(
+    # Now we can do the actual imputation and replace the original association
+    # pairs variable so we can work with it as before
+    association_pairs <- dplyr::mutate(
       association_pairs,
       strength = ifelse(is.na(strength), imputation_value, strength)
     )
-
-    # Need to recalculate the avg strength table now that we have an updated
-    # association pairs table
-    average_strengths <- gather_avg_strength(association_pairs)
   }
+
+
+  # If we're doing rank based relativeness we need to swap out the strength column
+  if(rank_based){
+    # Ranking here means 1 is the lowest (worst) strength. This is so we keep with
+    # the concept of a high strength being a strong association
+    association_pairs <- ensure_sorted(association_pairs)
+    association_pairs$strength <- rev(seq_len(nrow(association_pairs)))
+  }
+
+
+  # Build a table of node to average strength so we can bind to each edge
+  average_strengths <- gather_avg_strength(association_pairs)
 
   # Turn average strength into a named array so we can use names to index to values
   id_to_avg_strength <- setNames(
@@ -146,12 +160,19 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
   )
 
   # Now we can do the fun part: calculating the new relative strength and returning
-  dplyr::mutate(
-    association_pairs,
-    strength = strength/((id_to_avg_strength[a] + id_to_avg_strength[b])/2)
-  )
-}
 
+  # The "expected" strength of an edge is just in between the average strengths
+  # of the two end points
+  expected_strength <- (id_to_avg_strength[association_pairs$a] +
+                        id_to_avg_strength[association_pairs$b])/2
+
+  # We divide the expected by the observed so the interpretation is strength relative to its expected value.
+  # A value > 1 means the edge outperformed its expected strength. Minimum is 0.
+  association_pairs$strength <- association_pairs$strength / expected_strength
+
+  # To be safe, return the pairs sorted on our new strength
+  dplyr::arrange(association_pairs, -strength)
+}
 
 
 

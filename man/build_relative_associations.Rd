@@ -7,6 +7,7 @@
 build_relative_associations(
   association_pairs,
   strength_col = "strength",
+  rank_based = FALSE,
   impute_missing
 )
 }
@@ -14,6 +15,11 @@ build_relative_associations(
 \item{association_pairs}{dataframe with columns \code{a} and \code{b} representing the
 ids of the variables or nodes and columns \code{strength} that is a numeric
 indicator of strength of association (higher = stronger).}
+
+\item{rank_based}{Should the relative strength be calculated using ranks?
+Here instead of using the raw values of strength, the ranking of edges is
+used with the max "strength" being the number of edges. Set to \code{FALSE} to
+use the raw strengths.}
 
 \item{impute_missing}{If not all possible pairs are present in
 \code{association_pairs}, this parameter controls how the function deals with
