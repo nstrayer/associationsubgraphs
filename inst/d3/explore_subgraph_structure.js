@@ -51,7 +51,6 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
   const alphaDecay = 0.01;
   const node_r = 3;
   const focus_r = 6;
-  const lolly_r = 5;
 
   const network_div = div
     .select_append("div#network_plot")
@@ -111,8 +110,12 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
       strength: 2,
     },
     subgraph.h,
-    3
+    3 // Pixels of padding between charts
   );
+  // Make sure the circle of the lollypop chart never is big enough to encroach
+  // on the density chart
+  const lolly_r = 3;
+
   subgraph_pos.size.scale = d3.scaleLinear().range([subgraph_pos.size.h, 0]);
   subgraph_pos.density.scale = d3
     .scaleLinear()
