@@ -108,16 +108,23 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
   # We'll need to do some data surgery if we have missing values and it hasn't
   # been explicitly requested we leave them alone
   if(have_missing_pairs & impute_missing != "ignore"){
+    imputation_fns <- c(
+      "minimum" = function(s){min(s, na.rm = TRUE)},
+      "zero" = function(s){rep_len(0, length(s))},
+      "mean" = function(s){mean(s, na.rm = TRUE)},
+      "median" = function(s){median(s, na.rm = TRUE)}
+    )
 
-    if(impute_missing == "minimum"){
-      imputation_value <- min(association_pairs$strength)
-    } else if(impute_missing == "zero") {
-      imputation_value <- 0
+    if(impute_missing %in% names(imputation_fns)){
+      imputation_value <- imputation_fns[[impute_missing]](association_pairs$strength)
     } else {
       stop(
-        paste("The imputation option passed:",
+        paste0("The imputation option passed: \"",
               inpute_missing,
-              "does not match the available options of {\"missing\", \"zero\", \"ignore\"}"))
+              "\" does not match the available options of {",
+              paste0('"',names(imputation_fns),'"', collapse = ", "),
+              "}")
+      )
     }
 
     # Build a complete association pairs table with missing values encoded as NA
@@ -148,7 +155,6 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
     association_pairs <- ensure_sorted(association_pairs)
     association_pairs$strength <- rev(seq_len(nrow(association_pairs)))
   }
-
 
   # Build a table of node to average strength so we can bind to each edge
   average_strengths <- gather_avg_strength(association_pairs)
