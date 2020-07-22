@@ -168,25 +168,28 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
 
   # Now we can do the fun part: calculating the new relative strength and returning
 
-  # The "expected" strength of an edge is just in between the average strengths
-  # of the two end points
-  expected_strength <- (id_to_avg_strength[association_pairs$a] +
-                        id_to_avg_strength[association_pairs$b])/2
+  # Dont want to re-calculate this every time...
+  # After this math the strength is just observed( (observed/(a average + b_average)/2)
+  # Or the original edge value scaled bigger if it's strength is greater than expected from
+  # each end's average, and scaled smaller if it's smaller than expected.
+  log_of_2 <- log(2)
+  log_relative_strength <- log_of_2 + 2*log(association_pairs$strength) - log(id_to_avg_strength[association_pairs$a] + id_to_avg_strength[association_pairs$b])
+  # Return to original non-logged scale
+  association_pairs$strength <- exp(log_relative_strength)
 
-
-  # We treat the relative strength differently when in rank based mode versus
-  # raw-value mode
-  if(rank_based){
-    # When using ranks as strength the relative strength is how many positions
-    # the given edge outperformed its expected ranking based on the average of
-    # its incident variables
-    association_pairs$strength <- association_pairs$strength - expected_strength
-  } else {
-    # We divide the expected by the observed so the interpretation is strength
-    # relative to its expected value. A value > 1 means the edge outperformed
-    # its expected strength. Minimum is 0.
-    association_pairs$strength <- association_pairs$strength / expected_strength
-  }
+  # # We treat the relative strength differently when in rank based mode versus
+  # # raw-value mode
+  # if(rank_based){
+  #   # When using ranks as strength the relative strength is how many positions
+  #   # the given edge outperformed its expected ranking based on the average of
+  #   # its incident variables
+  #   association_pairs$strength <- association_pairs$strength - expected_strength
+  # } else {
+  #   # We divide the expected by the observed so the interpretation is strength
+  #   # relative to its expected value. A value > 1 means the edge outperformed
+  #   # its expected strength. Minimum is 0.
+  #   association_pairs$strength <- association_pairs$strength / expected_strength
+  # }
 
   if(!return_imputed_pairs){
     # If imputed pairs are not to be returned, filter them out
