@@ -143,7 +143,9 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
     # Now we can do the actual imputation and replace the original association
     # pairs variable so we can work with it as before
     missing_pairs <- is.na(association_pairs$strength)
-    association_pairs$strength <- ifelse(missing_pairs, imputation_value, association_pairs$strength)
+    # We need to make a repeated vector here because we get a warning when
+    # filling multiple values with a scalar for tibbles
+    association_pairs$strength <- replace(association_pairs$strength, which(missing_pairs), imputation_value)
     association_pairs$imputed <- missing_pairs
   }
 
