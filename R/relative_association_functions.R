@@ -57,6 +57,7 @@ gather_avg_strength <- function(association_pairs, strength_column = "strength")
 #'   these missing values. Current options are `"minimum"`(lowest seen edge
 #'   value is substituted) and `zero` (`0` is substituted). See the section
 #'   "missing association pairs" for more details.
+#' @param return_imputed_pairs If pairs were imputed to calculate averages, should those imputed pairs also be returned?
 #'
 #' @return A new association pairs dataframe (with columns `a`, `b`, and
 #'   `strength`) where `strength` is transformed to relative strength.
@@ -77,7 +78,7 @@ gather_avg_strength <- function(association_pairs, strength_column = "strength")
 #   strength = c(  3,   6,  12,  15,  18)
 # )
 # build_relative_associations(association_pairs, impute_missing = "zero")
-build_relative_associations <- function(association_pairs, strength_col = "strength", rank_based = FALSE, impute_missing){
+build_relative_associations <- function(association_pairs, strength_col = "strength", rank_based = FALSE, impute_missing, return_imputed_pairs = TRUE){
   if(strength_col != "strength"){
     # We use "strength" as the normal column name for association strength so if
     # the user is using something different we need to update the dataframe so
@@ -141,12 +142,10 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
 
     # Now we can do the actual imputation and replace the original association
     # pairs variable so we can work with it as before
-    association_pairs <- dplyr::mutate(
-      association_pairs,
-      strength = ifelse(is.na(strength), imputation_value, strength)
-    )
+    missing_pairs <- is.na(association_pairs$strength)
+    association_pairs$strength[missing_pairs] <- imputation_value
+    association_pairs$imputed <- missing_pairs
   }
-
 
   # If we're doing rank based relativeness we need to swap out the strength column
   if(rank_based){
@@ -186,6 +185,14 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
     # its expected strength. Minimum is 0.
     association_pairs$strength <- association_pairs$strength / expected_strength
   }
+
+  if(!return_imputed_pairs){
+    # If imputed pairs are not to be returned, filter them out
+    association_pairs <- association_pairs[!association_pairs$imputed,]
+  }
+
+  # Make sure we dont have a dangling imputed column returned
+  association_pairs$imputed <- NULL
 
   # To be safe, return the pairs sorted on our new strength
   dplyr::arrange(association_pairs, -strength)

@@ -61,6 +61,15 @@ test_that("Getting relative associations handles missing values", {
   )
 
   expect_equivalent(
+    build_relative_associations(association_pairs, impute_missing = "minimum", return_imputed_pairs = FALSE),
+    dplyr::tibble(
+      a = c("A", "A","B", "B", "C"),
+      b = c("B", "C","C", "D", "D"),
+      strength = c(  3/7,   6/8,   12/11,  15/11,  18/12)
+    ) %>% arrange(-strength)
+  )
+
+  expect_equivalent(
     build_relative_associations(association_pairs, impute_missing = "ignore"),
     dplyr::tibble(
       a = c("A", "A", "B", "B", "C"),
@@ -68,9 +77,6 @@ test_that("Getting relative associations handles missing values", {
       strength = c(  6/(9/2 + 10),   12/(9/2 + 12), 24/22,  30/(10 + 33/2),  36/(12 + 33/2))
     ) %>% arrange(-strength)
   )
-
-
-
 
 })
 

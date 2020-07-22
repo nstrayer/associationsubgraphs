@@ -8,7 +8,8 @@ build_relative_associations(
   association_pairs,
   strength_col = "strength",
   rank_based = FALSE,
-  impute_missing
+  impute_missing,
+  return_imputed_pairs = TRUE
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ use the raw strengths.}
 these missing values. Current options are \code{"minimum"}(lowest seen edge
 value is substituted) and \code{zero} (\code{0} is substituted). See the section
 "missing association pairs" for more details.}
+
+\item{return_imputed_pairs}{If pairs were imputed to calculate averages, should those imputed pairs also be returned?}
 }
 \value{
 A new association pairs dataframe (with columns \code{a}, \code{b}, and
