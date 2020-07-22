@@ -166,9 +166,20 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
   expected_strength <- (id_to_avg_strength[association_pairs$a] +
                         id_to_avg_strength[association_pairs$b])/2
 
-  # We divide the expected by the observed so the interpretation is strength relative to its expected value.
-  # A value > 1 means the edge outperformed its expected strength. Minimum is 0.
-  association_pairs$strength <- association_pairs$strength / expected_strength
+
+  # We treat the relative strength differently when in rank based mode versus
+  # raw-value mode
+  if(rank_based){
+    # When using ranks as strength the relative strength is how many positions
+    # the given edge outperformed its expected ranking based on the average of
+    # its incident variables
+    association_pairs$strength <- association_pairs$strength - expected_strength
+  } else {
+    # We divide the expected by the observed so the interpretation is strength
+    # relative to its expected value. A value > 1 means the edge outperformed
+    # its expected strength. Minimum is 0.
+    association_pairs$strength <- association_pairs$strength / expected_strength
+  }
 
   # To be safe, return the pairs sorted on our new strength
   dplyr::arrange(association_pairs, -strength)
