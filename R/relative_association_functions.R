@@ -143,7 +143,7 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
     # Now we can do the actual imputation and replace the original association
     # pairs variable so we can work with it as before
     missing_pairs <- is.na(association_pairs$strength)
-    association_pairs$strength[missing_pairs] <- imputation_value
+    association_pairs$strength <- ifelse(missing_pairs, imputation_value, association_pairs$strength)
     association_pairs$imputed <- missing_pairs
   }
 
