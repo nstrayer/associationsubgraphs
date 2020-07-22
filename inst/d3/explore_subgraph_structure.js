@@ -470,6 +470,15 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
         }
       });
 
+    subgraph_containers.select("rect.bounding_rect").on("click", function () {
+      if (current_focus) {
+        // If the plot is zoomed in on a given subgraph make any click reset
+        // the viz. It can be very frustrating to figure out where is
+        // "outside the subgraph".
+        event_fns.reset_focus();
+      }
+    });
+
     all_nodes = subgraph_containers
       .select("g.node_container")
       .selectAll("circle")
