@@ -455,7 +455,9 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
         return main_g;
       })
       .on("click", function (d) {
-        if (!current_focus & !zooming) {
+        if (!(zooming || current_focus)) {
+          // Dont let the interactions break zooming animation or happen when we're
+          // already focused on something
           event_fns.focus_on_subgraph(d.id);
         }
       })
@@ -497,10 +499,17 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
       update_positions();
     });
 
+    // Clicking outside of the subgraph will reset the focus but only if focus
+    // can be reset. Ignore it otherwise as it will just waste cycles.
     zoom_detector_rect.on("click", function () {
-      event_fns.reset_focus();
+      if (current_focus) {
+        event_fns.reset_focus();
+      }
     });
 
+    // A counter variable to keep track of how long simulation has been running.
+    // The idea being we don't want to triger resizing immediately as it may just reflect
+    // the settling of the nodes from the initial positioning.
     let num_steps = 0;
     function update_positions() {
       num_steps++;
