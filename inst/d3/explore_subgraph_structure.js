@@ -414,7 +414,8 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
     network.scales.link_dist.domain(strength_extent);
     network.scales.link_color.domain(strength_extent);
 
-    // Update simulation with data
+    // Update simulation with data so points that are already in plot maintain continuitity and don't fly around
+    // randomly and make it hard to follow progression.
     if (all_nodes) {
       // Make a map of old data so we can pass along current positions and velocities to nodes that are common
       const prev_positions = new Map(all_nodes.data().map((d) => [d.id, d]));
@@ -431,7 +432,7 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
         }
       });
     }
-
+    // Now we update all the simulation stuff with new data
     simulation.nodes(nodes);
     simulation.force("link").links(edges);
     simulation.alpha(1).restart();
