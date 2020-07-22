@@ -111,7 +111,7 @@ build_relative_associations <- function(association_pairs, strength_col = "stren
   if(have_missing_pairs & impute_missing != "ignore"){
     imputation_fns <- c(
       "minimum" = function(s){min(s, na.rm = TRUE)},
-      "zero" = function(s){rep_len(0, length(s))},
+      "zero" = function(s){0},
       "mean" = function(s){mean(s, na.rm = TRUE)},
       "median" = function(s){median(s, na.rm = TRUE)}
     )
