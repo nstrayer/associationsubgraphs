@@ -87,12 +87,18 @@ inline void merge_subgraphs(Subgraph& C_a,
 //' @param associations Dataframe of association between two ids with a strength
 //' @param a_col,b_col Names of columns that store the id's for the association pair
 //' @param w_col Name of the column storing the strength of association
+//' @param return_subgraph_matrix Should an integer matrix of the subgraph
+//'   membership for all nodes at all step be returned? This can be useful for
+//'   comparing consistency of structure across different networks etc. but '
+//'   comes at the cost of speed and memory usage.
 //' @export
 // [[Rcpp::export]]
-List calculate_subgraph_structure_rcpp(DataFrame associations,
-                    const String& a_col = "a",
-                    const String& b_col = "b",
-                    const String& w_col = "w") {
+List calculate_subgraph_structure_rcpp(
+    DataFrame associations,
+    const String& a_col = "a",
+    const String& b_col = "b",
+    const String& w_col = "w",
+    const bool return_subgraph_matrix = false) {
   CharacterVector a = associations[a_col];
   CharacterVector b = associations[b_col];
   NumericVector w = associations[w_col];
@@ -113,6 +119,18 @@ List calculate_subgraph_structure_rcpp(DataFrame associations,
   NumericVector avg_density(n_steps);
   NumericVector density_score(n_steps);
   List step_subgraph_info(n_steps);
+
+  // If we're returning the subgraph matrix we need to know all nodes present
+  // before running anything so we can preallocate the right size and build our
+  // matrix of (num nodes) columns x (num_steps) rows
+  CharacterVector all_nodes = return_subgraph_matrix
+                                  ? union_(unique(a), unique(b))
+                                  : CharacterVector(0);
+  // Initialize the matrix that will store the memberships.
+  // If we're not returning it just make in 0x0 so it takes up the least space
+  IntegerMatrix subgraph_membership(return_subgraph_matrix ? n_steps : 0,
+                                    all_nodes.length());
+  colnames(subgraph_membership) = all_nodes;
 
   std::map<int, Subgraph> subgraphs;
   Node_to_Subgraph node_to_subgraph;
@@ -198,6 +216,35 @@ List calculate_subgraph_structure_rcpp(DataFrame associations,
           step_max_size = Nv;
         k++;
       }
+
+      if (return_subgraph_matrix) {
+        // Loop through all nodes and check for a subgraph membership.
+
+        // If no membership is available, we give the node a unique negative
+        // integer This allows us to easily test what nodes are yet to be
+        // clustered (subgraph_id < 0) While also letting us keep node info
+        // separate so we don't accidentally confuse every node that isn't
+        // clustered as in the same giant subgraph.
+        int non_subgraphed_counter = -1;
+        for (int node_index = 0; node_index < all_nodes.length();
+             node_index++) {
+          // Check node's subgraph status to decide how to fill membership id
+          auto node_membership = node_to_subgraph.find(all_nodes[node_index]);
+          const bool node_has_assigned_subgraph =
+              node_membership != node_to_subgraph.end();
+
+          if (node_has_assigned_subgraph) {
+            // The node has been assigned a subgraph so we can use that
+            subgraph_membership(step_i, node_index) = node_membership->second;
+
+          } else {
+            // Node has yet to be seen and thus should use the negative integer
+            // format
+            subgraph_membership(step_i, node_index) = non_subgraphed_counter--;
+          }
+        }
+      }
+
       strengths[step_i] = w_i;
       n_nodes_seen[step_i] = nodes_seen;
       n_edges[step_i] = i + 1;
@@ -215,20 +262,32 @@ List calculate_subgraph_structure_rcpp(DataFrame associations,
     }
   }
 
-  return List::create(
-      _["step"] = seq_len(n_steps), _["n_edges"] = n_edges,
-      _["strength"] = strengths, _["n_nodes_seen"] = n_nodes_seen,
-      _["n_subgraphs"] = n_subgraphs, _["max_size"] = max_size,
-      _["rel_max_size"] = rel_max_size, _["avg_size"] = avg_size,
-      _["avg_density"] = avg_density, _["n_triples"] = n_triples,
-      _["subgraphs"] = step_subgraph_info);
+  List to_return =
+      List::create(_["step"] = seq_len(n_steps), _["n_edges"] = n_edges,
+                   _["strength"] = strengths, _["n_nodes_seen"] = n_nodes_seen,
+                   _["n_subgraphs"] = n_subgraphs, _["max_size"] = max_size,
+                   _["rel_max_size"] = rel_max_size, _["avg_size"] = avg_size,
+                   _["avg_density"] = avg_density, _["n_triples"] = n_triples,
+                   _["subgraphs"] = step_subgraph_info);
+
+  if (return_subgraph_matrix) {
+    to_return["nodes"] = all_nodes;
+    to_return["subgraph_membership"] = subgraph_membership;
+  }
+
+  return to_return;
 }
 
 /*** R
 # library(associationsubgraphs)
 data <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 1000)
 
-res <- dplyr::as_tibble(calculate_subgraph_structure_rcpp(data, w_col = "strength"))
+res <- calculate_subgraph_structure_rcpp(data, w_col = "strength",
+return_subgraph_matrix = TRUE)
 
-res$subgraphs %>% purrr::pluck(5) %>% as_tibble()
+dim(res$subgraph_membership)
+res$subgraph_membership[326, ]
+
+
+res$nodes %>% head()
 */
