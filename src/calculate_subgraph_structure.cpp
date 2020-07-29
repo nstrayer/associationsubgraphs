@@ -271,7 +271,6 @@ List calculate_subgraph_structure_rcpp(
                    _["subgraphs"] = step_subgraph_info);
 
   if (return_subgraph_matrix) {
-    to_return["nodes"] = all_nodes;
     to_return["subgraph_membership"] = subgraph_membership;
   }
 
@@ -282,12 +281,18 @@ List calculate_subgraph_structure_rcpp(
 # library(associationsubgraphs)
 data <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 1000)
 
-res <- calculate_subgraph_structure_rcpp(data, w_col = "strength",
-return_subgraph_matrix = TRUE)
-
-dim(res$subgraph_membership)
-res$subgraph_membership[326, ]
-
-
-res$nodes %>% head()
+res <- calculate_subgraph_structure_rcpp(data, w_col = "strength", return_subgraph_matrix = TRUE)
+res$subgraph_membership <- lapply(seq_len(nrow(res$subgraph_membership)), function(i) res$subgraph_membership[i,])
+as_tibble(res)
+#
+# listed_memberships %>% length()
+# res$step %>% length()
+#
+# dim(res$subgraph_membership)
+# res$subgraph_membership[326, ]
+#
+#
+# listed_memberships[[1]]
+#
+# res$nodes %>% head()
 */
