@@ -21,6 +21,10 @@
 #'   ids of the variables or nodes and columns `strength` that is a numeric
 #'   indicator of strength of association (higher = stronger).
 #' @param strength_column Id of column that encodes the strength of the associations for pairs
+#' @param return_subgraph_membership Should a column with a named integer vector
+#'   of each node's subgraph membership be returned? This can be useful for
+#'   comparing consistency of structure across different networks etc. but comes
+#'   at the cost of speed and memory usage.
 #'
 #' @return Dataframe with the following columns for each unique subgraph state.
 #'
@@ -45,8 +49,24 @@
 #' virus_associations <- dplyr::arrange(virus_net, dplyr::desc(strength))
 #' calculate_subgraph_structure(head(virus_associations, 1000))
 #'
-calculate_subgraph_structure <- function(association_pairs, strength_column = "strength"){
-  dplyr::as_tibble(calculate_subgraph_structure_rcpp(ensure_sorted(association_pairs, strength_column), w_col = strength_column))
+#' # We can also return each nodes membership at every step
+#' # although it will slow things down a bit
+#' calculate_subgraph_structure(head(virus_associations, 1000),
+#'                              return_subgraph_membership = TRUE)
+#'
+calculate_subgraph_structure <- function(association_pairs, strength_column = "strength", return_subgraph_membership = FALSE){
+  res <- calculate_subgraph_structure_rcpp(
+    associations = ensure_sorted(association_pairs, strength_column),
+    w_col = strength_column,
+    return_subgraph_membership = return_subgraph_membership )
+
+  if(return_subgraph_membership){
+    # We need to convert the subgraph membership matrix to a list format before
+    # we can place it in a column of the returned tibble
+    res$subgraph_membership <- lapply(seq_len(nrow(res$subgraph_membership)), function(i) res$subgraph_membership[i,])
+  }
+
+  dplyr::as_tibble(res)
 }
 
 utils::globalVariables(c("a","b", "id", "n_nodes_seen", "rel_max_size", "strength"))
