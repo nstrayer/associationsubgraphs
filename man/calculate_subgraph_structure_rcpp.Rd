@@ -8,7 +8,8 @@ calculate_subgraph_structure_rcpp(
   associations,
   a_col = "a",
   b_col = "b",
-  w_col = "w"
+  w_col = "w",
+  return_subgraph_membership = FALSE
 )
 }
 \arguments{
@@ -17,6 +18,11 @@ calculate_subgraph_structure_rcpp(
 \item{a_col, b_col}{Names of columns that store the id's for the association pair}
 
 \item{w_col}{Name of the column storing the strength of association}
+
+\item{return_subgraph_membership}{Should an integer matrix of the subgraph
+membership for all nodes at all step be returned? This can be useful for
+comparing consistency of structure across different networks etc. but
+comes at the cost of speed and memory usage.}
 }
 \description{
 Given a dataframe of edges with strength between nodes this function returns

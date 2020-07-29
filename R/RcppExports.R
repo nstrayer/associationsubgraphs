@@ -10,8 +10,12 @@
 #' @param associations Dataframe of association between two ids with a strength
 #' @param a_col,b_col Names of columns that store the id's for the association pair
 #' @param w_col Name of the column storing the strength of association
+#' @param return_subgraph_membership Should an integer matrix of the subgraph
+#'   membership for all nodes at all step be returned? This can be useful for
+#'   comparing consistency of structure across different networks etc. but
+#'   comes at the cost of speed and memory usage.
 #' @export
-calculate_subgraph_structure_rcpp <- function(associations, a_col = "a", b_col = "b", w_col = "w") {
-    .Call(`_associationsubgraphs_calculate_subgraph_structure_rcpp`, associations, a_col, b_col, w_col)
+calculate_subgraph_structure_rcpp <- function(associations, a_col = "a", b_col = "b", w_col = "w", return_subgraph_membership = FALSE) {
+    .Call(`_associationsubgraphs_calculate_subgraph_structure_rcpp`, associations, a_col, b_col, w_col, return_subgraph_membership)
 }
 

@@ -4,7 +4,11 @@
 \alias{calculate_subgraph_structure}
 \title{Find all subgraphs in pairs for every subset of edges}
 \usage{
-calculate_subgraph_structure(association_pairs, strength_column = "strength")
+calculate_subgraph_structure(
+  association_pairs,
+  strength_column = "strength",
+  return_subgraph_membership = FALSE
+)
 }
 \arguments{
 \item{association_pairs}{dataframe with columns \code{a} and \code{b} representing the
@@ -12,6 +16,11 @@ ids of the variables or nodes and columns \code{strength} that is a numeric
 indicator of strength of association (higher = stronger).}
 
 \item{strength_column}{Id of column that encodes the strength of the associations for pairs}
+
+\item{return_subgraph_membership}{Should a column with a named integer vector
+of each node's subgraph membership be returned? This can be useful for
+comparing consistency of structure across different networks etc. but comes
+at the cost of speed and memory usage.}
 }
 \value{
 Dataframe with the following columns for each unique subgraph state.\tabular{lll}{
@@ -51,5 +60,8 @@ The subgraph list column in the results contains information on the present subg
 
 virus_associations <- dplyr::arrange(virus_net, dplyr::desc(strength))
 calculate_subgraph_structure(head(virus_associations, 1000))
+
+# We can also return each nodes membership at every step, although it will slow things down a bit
+calculate_subgraph_structure(head(virus_associations, 1000), return_subgraph_membership = TRUE)
 
 }
