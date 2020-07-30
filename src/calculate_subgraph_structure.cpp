@@ -216,8 +216,15 @@ List calculate_subgraph_structure_rcpp(
           step_max_size = Nv;
         k++;
       }
+      // Very often we'll reach a stage were every node has been connected and
+      // we have a single giant component but we're still adding edges. In this
+      // case we'd be wasting a lot of flops querying every node's membership in
+      // the map. Since adding edges wont change membership we don't need to worry
+      // about modifying the membership matrix row because it will already have the
+      // same integer (0) for all nodes.
+      const bool all_nodes_connected = (nodes_seen == all_nodes.length()) & (num_subgraphs == 1);
 
-      if (return_subgraph_membership) {
+      if (return_subgraph_membership & !all_nodes_connected) {
         // Loop through all nodes and check for a subgraph membership.
 
         // If no membership is available, we give the node a unique negative
