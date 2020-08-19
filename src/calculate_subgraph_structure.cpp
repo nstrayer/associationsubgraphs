@@ -106,6 +106,17 @@ List calculate_subgraph_structure_rcpp(
   CharacterVector b = associations[b_col];
   NumericVector w = associations[w_col];
 
+  const int total_num_edges = a.length();
+
+  // Do a very quick sanity check to make sure the weight vector is sorted.
+  // I have been bitten by this too many times to count. This is not comprehensive but
+  // the assumption is if a vector is sorted for the first 100 elements its sorted...
+  for (int i = 1; i < std::min(100, total_num_edges); i++) {
+    if(w[i] > w[0]){
+      stop("Your edges don't appear to be in largest-to-smallest order. The algorithm requires them to be sorted.");
+    }
+  }
+
   // We only want to record a step for each unique weight
   NumericVector unique_w = unique(w);
   const int n_steps = unique_w.length();
@@ -137,7 +148,8 @@ List calculate_subgraph_structure_rcpp(
   int subgraph_id_counter = 0;
   int step_i = 0;
 
-  for (int i = 0; i < a.length(); i++) {
+
+  for (int i = 0; i < total_num_edges; i++) {
     const double w_i = w[i];
 
     const String& a_id = a[i];
@@ -185,7 +197,10 @@ List calculate_subgraph_structure_rcpp(
                                                     node_to_subgraph);
     }
 
+    // Note that this works to pick up the last edge as a defined value doesn't
+    // equal the undefined one pointed to by one beyond range of vector
     const bool last_edge_at_strength = w_i != w[i + 1];
+
     if (last_edge_at_strength) {
       const int num_nodes_seen = node_to_subgraph.size();
       const int num_subgraphs = subgraphs.size();
@@ -267,10 +282,11 @@ List calculate_subgraph_structure_rcpp(
         }
       }
 
-    // Wrap up step by incrementing step counter and move on
-    step_i++;
-    }
-  }
+     // Wrap up step by incrementing step counter and move on
+     step_i++;
+
+    } // End step finishing conditional
+  } // End loop over all edges
 
   List to_return =
       List::create(_["step"] = seq_len(n_steps), _["n_edges"] = n_edges,
@@ -296,20 +312,4 @@ List calculate_subgraph_structure_rcpp(
 data <- head(dplyr::arrange(virus_net, dplyr::desc(strength)), 1000)
 
 res <- calculate_subgraph_structure_rcpp(data, w_col = "strength", return_subgraph_membership = TRUE)
-
-# setNames(res$subgraph_memberships,res$subgraph_membership_ids) %>% head()
-
-# res$subgraph_membership <- lapply(seq_len(nrow(res$subgraph_membership)), function(i)res$subgraph_membership[i,])
-# as_tibble(res)
-#
-# listed_memberships %>% length()
-# res$step %>% length()
-#
-# dim(res$subgraph_membership)
-# res$subgraph_membership[326, ]
-#
-#
-# listed_memberships[[1]]
-#
-# res$nodes %>% head()
 */
