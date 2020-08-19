@@ -147,9 +147,6 @@ r2d3::r2d3(
 
 
 
-library(tidyverse)
-vandy_associations <- read_rds("~/Downloads/vandy_clean.rds")%>% select(a = phecode_a, b = phecode_b, strength = z_avg) %>%
-  mutate(strength = abs(strength))
 phecode_colors <- phewasHelper::category_colors()
 phecode_info <- phewasHelper::phecode_descriptions %>%
   select(id = phecode, description, category) %>%
@@ -169,3 +166,14 @@ visualize_subgraph_structure(
       id = paste0("n",id)),
   trim_subgraph_results = TRUE
 )
+
+
+
+
+library(tidyverse)
+vandy_associations <- read_rds("~/Downloads/vandy_clean.rds")%>% select(a = phecode_a, b = phecode_b, strength = z_avg) %>%
+  mutate(strength = abs(strength)) %>%
+  arrange(-strength)
+
+res <- calculate_subgraph_structure_rcpp(vandy_associations, w_col = "strength",
+                                         return_subgraph_membership = FALSE)
