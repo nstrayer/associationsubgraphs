@@ -37,6 +37,7 @@ draw_timelines(div, {
   on_new_step: function (new_step) {
     network_views.set_to_step(new_step);
   },
+  default_step: options.default_step
 });
 
 // =============================================================================

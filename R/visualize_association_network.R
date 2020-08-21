@@ -102,6 +102,9 @@ visualize_association_network <- function(association_pairs,
 #'   the subgraph structure over strength.
 #' @param warn_of_mismatches If there are differences in the ids present in
 #'   `association_pairs` and `node_info` should a warning be issued?
+#' @param default_step What step (as integer) should be the default loading
+#'   position for the visualization? Defaults to the step with the lowest
+#'   relative maximum cluster size.
 #' @param width,height Valid css units for output size (e.g. pixels (`px`) or percent(`%`)).
 #'
 #' @return Interactive javascript visualization of association network
@@ -123,7 +126,8 @@ visualize_subgraph_structure <- function(association_pairs,
                                          trim_subgraph_results = TRUE,
                                          warn_of_mismatches = TRUE,
                                          width = "100%",
-                                         height = "800px") {
+                                         height = "800px",
+                                         default_step) {
 
   # If association pairs are not sorted bad things happen in the algorithm
   association_pairs <- ensure_sorted(association_pairs)
@@ -132,6 +136,13 @@ visualize_subgraph_structure <- function(association_pairs,
     message("Calculating subgraph structure results...")
     subgraph_results <- calculate_subgraph_structure(association_pairs)
     message("...finished")
+  }
+
+  if(missing(default_step)){
+    default_step <- subgraph_results$step[which.min(subgraph_results$rel_max_size)]
+  }
+  if(default_step > nrow(subgraph_results)){
+    stop("requested default step is greater than the total number of steps")
   }
 
   # We need to know what ids are present in pairs for trimming and checking for mismatches
@@ -211,6 +222,7 @@ visualize_subgraph_structure <- function(association_pairs,
       ),
       structure = subgraph_results
     ),
+    options = list("default_step" = default_step),
     container = "div",
     dependencies = c(
       get_js("find_subgraphs.js"),
