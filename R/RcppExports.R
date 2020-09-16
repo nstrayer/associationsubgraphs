@@ -13,7 +13,9 @@
 #' @param return_subgraph_membership Should an integer matrix of the subgraph
 #'   membership for all nodes at all step be returned? This can be useful for
 #'   comparing consistency of structure across different networks etc. but
-#'   comes at the cost of speed and memory usage.
+#'   comes at the cost of speed and memory usage. This will also cause the
+#'   algorithm to terminate after all nodes are merged into a giant component.
+#'   This is to avoid execcessive memory usage.
 #' @export
 calculate_subgraph_structure_rcpp <- function(associations, a_col = "a", b_col = "b", w_col = "w", return_subgraph_membership = FALSE) {
     .Call(`_associationsubgraphs_calculate_subgraph_structure_rcpp`, associations, a_col, b_col, w_col, return_subgraph_membership)

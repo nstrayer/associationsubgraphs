@@ -61,7 +61,9 @@ The subgraph list column in the results contains information on the present subg
 virus_associations <- dplyr::arrange(virus_net, dplyr::desc(strength))
 calculate_subgraph_structure(head(virus_associations, 1000))
 
-# We can also return each nodes membership at every step, although it will slow things down a bit
-calculate_subgraph_structure(head(virus_associations, 1000), return_subgraph_membership = TRUE)
+# We can also return each nodes membership at every step
+# although it will slow things down a bit
+calculate_subgraph_structure(head(virus_associations, 1000),
+                             return_subgraph_membership = TRUE)
 
 }
