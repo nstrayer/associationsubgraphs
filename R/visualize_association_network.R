@@ -37,7 +37,6 @@ visualize_association_network <- function(association_pairs,
                                           alphaDecay = 0.01,
                                           n_neighbors = 5,
                                           warn_of_mismatches = TRUE) {
-  # browser()
   unique_nodes <- gather_unique_nodes(association_pairs)
   if (missing(node_info)) {
     nodes <- unique_nodes
@@ -95,20 +94,27 @@ visualize_association_network <- function(association_pairs,
 #'   \code{\link{calculate_subgraph_structure}}. If it isnt provided it is
 #'   calculated. Automatic calculation will slow down code depending on how
 #'   large dataset is.
-#' @param trim_subgraph_results Should subgraph results after a giant
-#'   subgraph has taken over be filtered out? Rule for filtering is at least
-#'   10% of the variables are in subgraphs and largest subgraph contains less
-#'   than 95% of all variables in subgraphs. Allows for easier investigating of
-#'   the subgraph structure over strength.
+#' @param trim_subgraph_results Should subgraph results after a giant subgraph
+#'   has taken over be filtered out? Rule for filtering is at least 10% of the
+#'   variables are in subgraphs and largest subgraph contains less than 95% of
+#'   all variables in subgraphs. Allows for easier investigating of the subgraph
+#'   structure over strength.
 #' @param warn_of_mismatches If there are differences in the ids present in
 #'   `association_pairs` and `node_info` should a warning be issued?
-#' @param default_step What step (as integer) should be the default loading
-#'   position for the visualization? Defaults to the step with the lowest
-#'   relative maximum cluster size.
-#' @param width,height Valid css units for output size (e.g. pixels (`px`) or percent(`%`)).
+#' @param default_step How should the default starting position of the
+#'   visualization be decided. Options are `min_max_rule` which tends to result
+#'   in lots of small subgraphs that are easier to parse,
+#'   `giant_component_local` which tries to detect when a giant component first
+#'   forms based on seen number of nodes. `giant_component_global` uses same
+#'   logic as `giant_component_local` just the threshold for a giant component
+#'   is based on all possible nodes rather than those seen. This gives the most
+#'   accurate clusterings if true cluster structure is non-hierarchical.
+#'   Alternatively you can provided the step as an integer value.
+#' @param width,height Valid css units for output size (e.g. pixels (`px`) or
+#'   percent(`%`)).
 #'
-#' @return Interactive javascript visualization of association network
-#'   subgraphs at all possible cut-points
+#' @return Interactive javascript visualization of association network subgraphs
+#'   at all possible cut-points
 #' @export
 #'
 #' @examples
@@ -127,7 +133,7 @@ visualize_subgraph_structure <- function(association_pairs,
                                          warn_of_mismatches = TRUE,
                                          width = "100%",
                                          height = "800px",
-                                         default_step) {
+                                         default_step = "min_max_rule") {
 
   # If association pairs are not sorted bad things happen in the algorithm
   association_pairs <- ensure_sorted(association_pairs)
@@ -138,11 +144,19 @@ visualize_subgraph_structure <- function(association_pairs,
     message("...finished")
   }
 
-  if(missing(default_step)){
-    default_step <- subgraph_results$step[which.min(subgraph_results$rel_max_size)]
-  }
-  if(default_step > nrow(subgraph_results)){
-    stop("requested default step is greater than the total number of steps")
+  if(default_step == "min_max_rule"){
+    default_step <- min_max_rule(subgraph_results)
+  } else if(default_step == "giant_component_local") {
+    default_step <- giant_component_detect(subgraph_results)
+  } else if(default_step == "giant_component_global") {
+    default_step <- giant_component_detect(subgraph_results, all_nodes = TRUE)
+  } else if(is.integer(default_step)) {
+    # The default step should be an integer in this case as we've exhausted the named heuristics
+    if(default_step > nrow(subgraph_results)){
+      stop("requested default step is greater than the total number of steps")
+    }
+  } else {
+    stop("default_step must be one of the provided default hueristics (\"min_max_rule\", \"giant_component_local\", \"giant_component_global\") or an integer.")
   }
 
   # We need to know what ids are present in pairs for trimming and checking for mismatches
@@ -232,6 +246,28 @@ visualize_subgraph_structure <- function(association_pairs,
     width = width,
     height = height
   )
+}
+
+min_max_rule <- function(subgraph_results){
+  subgraph_results$step[which.min(subgraph_results$rel_max_size)]
+}
+
+giant_component_detect <- function(subgraph_results, all_nodes = FALSE, wiggle = 0.05){
+  super_component_threshold <- pmax(subgraph_results$n_nodes_seen, 5)^(2/3)
+  if(all_nodes){
+    # Just means use total number of nodes to get threshold
+    super_component_threshold <- max(super_component_threshold)
+  }
+
+  rel_to_thresh <- super_component_threshold/subgraph_results$max_size
+
+  # We want to let the value dip a bit below the threshold before
+  # detecting it as it tends to bounce off the exact threshold
+  ratio_threshold <- 1 - wiggle
+
+  # Pick out the step that corresponds to just before the first time this threshold is passed
+  # Not sure why it's minus 2 and not 1, but it is
+  subgraph_results$step[which(rel_to_thresh < ratio_threshold)[1] - 2]
 }
 
 

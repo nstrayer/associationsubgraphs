@@ -11,7 +11,8 @@ visualize_subgraph_structure(
   trim_subgraph_results = TRUE,
   warn_of_mismatches = TRUE,
   width = "100\%",
-  height = "800px"
+  height = "800px",
+  default_step = "min_max_rule"
 )
 }
 \arguments{
@@ -28,20 +29,31 @@ additional info nade available on hover in visualization.}
 calculated. Automatic calculation will slow down code depending on how
 large dataset is.}
 
-\item{trim_subgraph_results}{Should subgraph results after a giant
-subgraph has taken over be filtered out? Rule for filtering is at least
-10\% of the variables are in subgraphs and largest subgraph contains less
-than 95\% of all variables in subgraphs. Allows for easier investigating of
-the subgraph structure over strength.}
+\item{trim_subgraph_results}{Should subgraph results after a giant subgraph
+has taken over be filtered out? Rule for filtering is at least 10\% of the
+variables are in subgraphs and largest subgraph contains less than 95\% of
+all variables in subgraphs. Allows for easier investigating of the subgraph
+structure over strength.}
 
 \item{warn_of_mismatches}{If there are differences in the ids present in
 \code{association_pairs} and \code{node_info} should a warning be issued?}
 
-\item{width, height}{Valid css units for output size (e.g. pixels (\code{px}) or percent(\verb{\%})).}
+\item{width, height}{Valid css units for output size (e.g. pixels (\code{px}) or
+percent(\verb{\%})).}
+
+\item{default_step}{How should the default starting position of the
+visualization be decided. Options are \code{min_max_rule} which tends to result
+in lots of small subgraphs that are easier to parse,
+\code{giant_component_local} which tries to detect when a giant component first
+forms based on seen number of nodes. \code{giant_component_global} uses same
+logic as \code{giant_component_local} just the threshold for a giant component
+is based on all possible nodes rather than those seen. This gives the most
+accurate clusterings if true cluster structure is non-hierarchical.
+Alternatively you can provided the step as an integer value.}
 }
 \value{
-Interactive javascript visualization of association network
-subgraphs at all possible cut-points
+Interactive javascript visualization of association network subgraphs
+at all possible cut-points
 }
 \description{
 Produces an interactive plot of network structure for all possible subgraph
