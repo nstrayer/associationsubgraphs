@@ -114,6 +114,8 @@ visualize_association_network <- function(association_pairs,
 #'   to highlight in results. If no `default_step` is set, then the
 #'   visualization intializes to the first instance of this node occuring in the
 #'   subgraphs.
+#' @param subgraph_messages Should messages be sent about the calculation of the
+#'   subgraph structure if it needs to be calculated by the function?
 #' @param width,height Valid css units for output size (e.g. pixels (`px`) or
 #'   percent(`%`)).
 #'
@@ -138,15 +140,20 @@ visualize_subgraph_structure <- function(association_pairs,
                                          width = "100%",
                                          height = "800px",
                                          default_step,
-                                         pinned_node = NULL) {
+                                         pinned_node = NULL,
+                                         subgraph_messages = TRUE) {
 
   # If association pairs are not sorted bad things happen in the algorithm
   association_pairs <- ensure_sorted(association_pairs)
 
   if (missing(subgraph_results)) {
-    message("Calculating subgraph structure results...")
+    if(subgraph_messages){
+      message("Calculating subgraph structure results...")
+    }
     subgraph_results <- calculate_subgraph_structure(association_pairs)
-    message("...finished")
+    if(subgraph_messages){
+      message("...finished")
+    }
   }
 
   if(missing(default_step)){
