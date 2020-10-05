@@ -17,7 +17,7 @@ const viz_sizing = units_to_sizes(
 const subgraph_info = HTMLWidgets.dataframeToD3(data.structure);
 
 // If we dont do this the viz gets messed up when embedded in a report/doc
-div.style("position", "relative");
+div.style("position", "relative").html("");
 const network_views = setup_network_views({
   div,
   sizes: {
@@ -114,9 +114,9 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
     network_div
     .select_append("span#pinned_node_id")
     .style("position", "absolute")
-    .style("top", "0")
-    .style("left", "0")
-    .text(`${options.pinned_node} highlighted`);
+      .style("top", "0")
+      .style("left", "0")
+      .text(`${options.pinned_node} highlighted`);
   }
 
   //#region Subgraph chart setup
