@@ -22,7 +22,6 @@ association_pairs <- virus_net %>%
 First we will run subgraph finding algorithm across the associations
 
 ```{r}
-
 subgraphs <- association_pairs %>% head(10000) %>% calculate_subgraph_structure()
 
 subgraphs %>% 
@@ -36,7 +35,6 @@ subgraphs %>%
 Next we can investigate the subgraph structure over search
 
 ```{r}
-
 min_rel <- subgraphs %>%
   filter(rel_max_size == min(rel_max_size)) %>%
   tail(1)
@@ -71,7 +69,6 @@ subgraphs %>%
 ```
 
 ```{r}
-
 node_info <- virus_host_viruses %>% 
   rename(id = virus_id) %>% 
   mutate(color = ifelse(type == "RNA", "orangered", "steelblue"))
@@ -82,5 +79,20 @@ visualize_subgraph_structure(
   subgraph_results = subgraphs,
   trim_subgraph_results = TRUE
 )
-
 ```
+
+## "Pinning" a node
+
+If you have a particular interest in a node in your network you can "pin" that node in the visualization so the intitial start point of the visualization is when that node is first added to the visible subgraphs. For instance, say you are a researcher interested in Dengue, simply supply the id of `"Dengue virus"` to the `visualize_subgraph_structure()` function and you will be automatically taken to where Dengue first gets grouped into a subgraph. 
+
+
+```{r dengue-pin}
+visualize_subgraph_structure(
+  association_pairs,
+  node_info = node_info,
+  subgraph_results = subgraphs,
+  trim_subgraph_results = TRUE,
+  pinned_node = "Dengue virus"
+)
+```
+
