@@ -37,7 +37,7 @@ draw_timelines(div, {
   on_new_step: function (new_step) {
     network_views.set_to_step(new_step);
   },
-  default_step: options.default_step
+  default_step: options.default_step,
 });
 
 // =============================================================================
@@ -50,8 +50,15 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
   const bar_color = "grey";
   const selected_color = d3.color(bar_color).darker();
   const alphaDecay = 0.01;
-  const node_r = 3;
-  const focus_r = 6;
+
+  const set_node_r = function (node) {
+    const node_r = 3;
+    if (options.pinned_node) {
+      return node.id == options.pinned_node ? 2 * node_r : node_r;
+    } else {
+      return node_r;
+    }
+  };
 
   const network_div = div
     .select_append("div#network_plot")
@@ -444,7 +451,6 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
 
     const subgraph_containers = network.g
       .attr("stroke", "#fff")
-      .attr("stroke-width", node_r / 3)
       .selectAll("g.subgraph")
       .data(nodes_by_subgraph, (subgraph) => subgraph.id)
       .join((enter) => {
@@ -485,6 +491,14 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
       }
     });
 
+    const set_node_opacity = function (node) {
+      if (options.pinned_node) {
+        return node.id == options.pinned_node ? 1 : 0.5;
+      } else {
+        return 0.9;
+      }
+    };
+
     all_nodes = subgraph_containers
       .select("g.node_container")
       .selectAll("circle")
@@ -493,8 +507,9 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
         (d) => d.id
       )
       .join("circle")
-      .attr("r", node_r)
-      .attr("fill", (d) => d.color || "steelblue");
+      .attr("r", set_node_r)
+      .attr("fill", (d) => d.color || "steelblue")
+      .attr("fill-opacity", set_node_opacity);
 
     const zoom = d3.zoom().on("zoom", function () {
       X = d3.event.transform.rescaleX(network.scales.X_default);
@@ -629,6 +644,12 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
 
       const [x_min, x_max] = d3.extent(nodes_in_subgraph, (n) => X(n.x));
       const [y_min, y_max] = d3.extent(nodes_in_subgraph, (n) => Y(n.y));
+
+      // This scale is used both by zoom transform but also to scale the radius of the nodes.
+      const zoom_scale = Math.min(
+        8,
+        0.7 / Math.max((x_max - x_min) / network.w, (y_max - y_min) / network.h)
+      );
       zooming = true;
       network.svg
         .transition()
@@ -637,16 +658,7 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
           zoom.transform,
           d3.zoomIdentity
             .translate(network.w / 2, network.h / 2)
-            .scale(
-              Math.min(
-                8,
-                0.7 /
-                  Math.max(
-                    (x_max - x_min) / network.w,
-                    (y_max - y_min) / network.h
-                  )
-              )
-            )
+            .scale(zoom_scale)
             .translate(-(x_max + x_min) / 2, -(y_max + y_min) / 2),
           d3.mouse(network.svg.node())
         )
@@ -667,18 +679,25 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
             });
         });
 
+      // Gets used three times and I keep forgetting to update it so it becomes a function
+      // With tiny subgraphs the zoom scale makes the nodes comically large so we set a limit of
+      // no more than 3x magnification
+      const set_r_zoomed = (node) => set_node_r(node) * Math.min(zoom_scale, 3);
+
       function highlight_node(id) {
-        nodes_in_sel.filter((n) => n.id === id).attr("r", focus_r * 1.5);
+        nodes_in_sel
+          .filter((n) => n.id === id)
+          .attr("r", (d) => set_r_zoomed(d) * 1.5);
       }
 
-      nodes_in_sel.transition().duration(750).attr("r", focus_r);
+      nodes_in_sel.transition().duration(750).attr("r", set_r_zoomed);
 
       subgraph_containers.filter((c) => c.id !== id).attr("opacity", 0);
 
       return {
         highlight_node,
         reset_node_highlights: function () {
-          nodes_in_sel.attr("r", focus_r);
+          nodes_in_sel.attr("r", set_r_zoomed);
         },
       };
     }
@@ -713,7 +732,7 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
           .on("mouseout", null)
           .transition()
           .duration(750)
-          .attr("r", node_r);
+          .attr("r", set_node_r);
       },
       highlight_subgraph: function (id) {
         reset_subgraph_highlights();
