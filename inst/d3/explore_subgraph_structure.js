@@ -100,7 +100,7 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
   });
 
   const default_instructions =
-    "Click a subgraph in network of chart to see details";
+    "Click a subgraph in network chart to see details";
   const in_focus_instructions =
     "Click anywhere outside of subgraph to reset zoom";
   const instructions_text = network_div
@@ -109,6 +109,15 @@ function setup_network_views({ div, all_edges, subgraph_info, sizes = {} }) {
     .style("top", "0")
     .style("right", "0")
     .text(default_instructions);
+
+  if(options.pinned_node){
+    network_div
+    .select_append("span#pinned_node_id")
+    .style("position", "absolute")
+    .style("top", "0")
+    .style("left", "0")
+    .text(`${options.pinned_node} highlighted`);
+  }
 
   //#region Subgraph chart setup
   const subgraph_pos = units_to_sizes(
