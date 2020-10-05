@@ -110,6 +110,10 @@ visualize_association_network <- function(association_pairs,
 #'   is based on all possible nodes rather than those seen. This gives the most
 #'   accurate clusterings if true cluster structure is non-hierarchical.
 #'   Alternatively you can provided the step as an integer value.
+#' @param pinned_node Name (matching `id` column of `association_pairs`) of node
+#'   to highlight in results. If no `default_step` is set, then the
+#'   visualization intializes to the first instance of this node occuring in the
+#'   subgraphs.
 #' @param width,height Valid css units for output size (e.g. pixels (`px`) or
 #'   percent(`%`)).
 #'
@@ -133,7 +137,8 @@ visualize_subgraph_structure <- function(association_pairs,
                                          warn_of_mismatches = TRUE,
                                          width = "100%",
                                          height = "800px",
-                                         default_step = "min_max_rule") {
+                                         default_step,
+                                         pinned_node = NULL) {
 
   # If association pairs are not sorted bad things happen in the algorithm
   association_pairs <- ensure_sorted(association_pairs)
@@ -142,6 +147,16 @@ visualize_subgraph_structure <- function(association_pairs,
     message("Calculating subgraph structure results...")
     subgraph_results <- calculate_subgraph_structure(association_pairs)
     message("...finished")
+  }
+
+  if(missing(default_step)){
+    if(is.null(pinned_node)){
+      # If the user hasn't provided any guidance for default step, use min-max-rule
+      default_step <- "min_max_rule"
+    } else {
+      # Let later logic know to look for pinned node
+      default_step <- "pinned_node"
+    }
   }
 
   if(default_step == "min_max_rule"){
@@ -154,6 +169,12 @@ visualize_subgraph_structure <- function(association_pairs,
     # The default step should be an integer in this case as we've exhausted the named heuristics
     if(default_step > nrow(subgraph_results)){
       stop("requested default step is greater than the total number of steps")
+    }
+  } else if(default_step == "pinned_node"){
+    # Locate when the pinned node first occurs in the network
+    default_step <- which(association_pairs$a == pinned_node | association_pairs$b == pinned_node)[1]
+    if(length(default_step) == 0){
+      stop(paste("The requested pinned node", pinned_node, "does not appear in the passed association pairs"))
     }
   } else {
     stop("default_step must be one of the provided default hueristics (\"min_max_rule\", \"giant_component_local\", \"giant_component_global\") or an integer.")
@@ -236,7 +257,7 @@ visualize_subgraph_structure <- function(association_pairs,
       ),
       structure = subgraph_results
     ),
-    options = list("default_step" = default_step),
+    options = list("default_step" = default_step, "pinned_node" = pinned_node),
     container = "div",
     dependencies = c(
       get_js("find_subgraphs.js"),
