@@ -196,10 +196,15 @@ visualize_subgraph_structure <- function(association_pairs,
   if (trim_subgraph_results) {
     tenth_of_nodes <- nrow(unique_nodes) * 0.1
 
+    last_edge <- max(
+      which(subgraph_results$rel_max_size > 0.95 &  subgraph_results$n_nodes_seen > tenth_of_nodes)[1],
+      default_step + 10
+    )
+
     # The head is in here because sometimes we have a junk row at end of subgraph results (needs fixing)
-    subgraph_results <- dplyr::filter(
+    subgraph_results <- utils::head(
       utils::head(subgraph_results, -1),
-      rel_max_size < 0.95 |  n_nodes_seen < tenth_of_nodes
+      last_edge
     )
 
     # We can now get rid of all the excess edges we wont ever use
