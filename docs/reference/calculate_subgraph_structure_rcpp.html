@@ -137,7 +137,8 @@ descending order of strength.</p>
   <span class='no'>associations</span>,
   <span class='kw'>a_col</span> <span class='kw'>=</span> <span class='st'>"a"</span>,
   <span class='kw'>b_col</span> <span class='kw'>=</span> <span class='st'>"b"</span>,
-  <span class='kw'>w_col</span> <span class='kw'>=</span> <span class='st'>"w"</span>
+  <span class='kw'>w_col</span> <span class='kw'>=</span> <span class='st'>"w"</span>,
+  <span class='kw'>return_subgraph_membership</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -154,6 +155,15 @@ descending order of strength.</p>
     <tr>
       <th>w_col</th>
       <td><p>Name of the column storing the strength of association</p></td>
+    </tr>
+    <tr>
+      <th>return_subgraph_membership</th>
+      <td><p>Should an integer matrix of the subgraph
+membership for all nodes at all step be returned? This can be useful for
+comparing consistency of structure across different networks etc. but
+comes at the cost of speed and memory usage. This will also cause the
+algorithm to terminate after all nodes are merged into a giant component.
+This is to avoid execcessive memory usage.</p></td>
     </tr>
     </table>
 

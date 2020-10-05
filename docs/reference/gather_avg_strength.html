@@ -133,7 +133,7 @@ variable/ids average strength. Used for normalizing pairs or investigating
 patterns in average strength.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>gather_avg_strength</span>(<span class='no'>association_pairs</span>)</pre>
+    <pre class="usage"><span class='fu'>gather_avg_strength</span>(<span class='no'>association_pairs</span>, <span class='kw'>strength_column</span> <span class='kw'>=</span> <span class='st'>"strength"</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -143,6 +143,10 @@ patterns in average strength.</p>
       <td><p>dataframe with columns <code>a</code> and <code>b</code> representing the
 ids of the variables or nodes and columns <code>strength</code> that is a numeric
 indicator of strength of association (higher = stronger).</p></td>
+    </tr>
+    <tr>
+      <th>strength_column</th>
+      <td><p>Id of column that encodes the strength of the associations for pairs</p></td>
     </tr>
     </table>
 

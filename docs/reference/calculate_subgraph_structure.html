@@ -133,7 +133,11 @@ info on every subgraph state achieved by adding nodes in one-at-a-time in
 descending order of strength.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>calculate_subgraph_structure</span>(<span class='no'>association_pairs</span>, <span class='kw'>strength_column</span> <span class='kw'>=</span> <span class='st'>"strength"</span>)</pre>
+    <pre class="usage"><span class='fu'>calculate_subgraph_structure</span>(
+  <span class='no'>association_pairs</span>,
+  <span class='kw'>strength_column</span> <span class='kw'>=</span> <span class='st'>"strength"</span>,
+  <span class='kw'>return_subgraph_membership</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -147,6 +151,13 @@ indicator of strength of association (higher = stronger).</p></td>
     <tr>
       <th>strength_column</th>
       <td><p>Id of column that encodes the strength of the associations for pairs</p></td>
+    </tr>
+    <tr>
+      <th>return_subgraph_membership</th>
+      <td><p>Should a column with a named integer vector
+of each node's subgraph membership be returned? This can be useful for
+comparing consistency of structure across different networks etc. but comes
+at the cost of speed and memory usage.</p></td>
     </tr>
     </table>
 
@@ -202,6 +213,10 @@ indicator of strength of association (higher = stronger).</p></td>
 #&gt; </span><span style='color: #555555;'>10</span><span>    10      11   0.062</span><span style='text-decoration: underline;'>3</span><span>           14           4        5        0.357
 #&gt; </span><span style='color: #555555;'># … with 317 more rows, and 4 more variables: avg_size </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>,</span><span>
 #&gt; </span><span style='color: #555555;'>#   avg_density </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, n_triples </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span style='color: #555555;'>, subgraphs </span><span style='color: #555555;font-style: italic;'>&lt;list&gt;</span><span></div><div class='input'>
+<span class='co'># We can also return each nodes membership at every step</span>
+<span class='co'># although it will slow things down a bit</span>
+<span class='fu'>calculate_subgraph_structure</span>(<span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span>(<span class='no'>virus_associations</span>, <span class='fl'>1000</span>),
+                             <span class='kw'>return_subgraph_membership</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: first element used of 'length.out' argument</span></div><div class='output co'>#&gt; <span class='error'>Error in seq_len(nrow(res$subgraph_membership)): argument must be coercible to non-negative integer</span></div><div class='input'>
 </div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

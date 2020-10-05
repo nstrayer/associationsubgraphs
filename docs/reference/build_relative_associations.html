@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Interactive association subgraphs visualization — visualize_subgraph_structure • associationsubgraphs</title>
+<title>Generate a relative association network — build_relative_associations • associationsubgraphs</title>
 
 
 <!-- jquery -->
@@ -39,10 +39,13 @@
 
 
 
-<meta property="og:title" content="Interactive association subgraphs visualization — visualize_subgraph_structure" />
-<meta property="og:description" content="Produces an interactive plot of network structure for all possible subgraph
-arrangements for passed association pairs with summary statistics to guide
-exploration of cut-points." />
+<meta property="og:title" content="Generate a relative association network — build_relative_associations" />
+<meta property="og:description" content="Takes as input a raw association network and normalizes it to
+relative-associations. Every edge's strength is transformed by dividing by
+the average strength of each of the variables it connects. E.g. if edge a-b
+has strength 1 and a's average association is 0.5 and b's average
+association is 0.75 that means this edge has a higher than normal weight
+for both nodes and its normalized strength is 1/((0.5 + 0.75)/2) = 1.6." />
 
 
 
@@ -122,26 +125,26 @@ exploration of cut-points." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Interactive association subgraphs visualization</h1>
-    <small class="dont-index">Source: <a href='https://github.com/nstrayer/associationsubgraphs/blob/master/R/visualize_association_network.R'><code>R/visualize_association_network.R</code></a></small>
-    <div class="hidden name"><code>visualize_subgraph_structure.Rd</code></div>
+    <h1>Generate a relative association network</h1>
+    <small class="dont-index">Source: <a href='https://github.com/nstrayer/associationsubgraphs/blob/master/R/relative_association_functions.R'><code>R/relative_association_functions.R</code></a></small>
+    <div class="hidden name"><code>build_relative_associations.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Produces an interactive plot of network structure for all possible subgraph
-arrangements for passed association pairs with summary statistics to guide
-exploration of cut-points.</p>
+    <p>Takes as input a raw association network and normalizes it to
+relative-associations. Every edge's strength is transformed by dividing by
+the average strength of each of the variables it connects. E.g. if edge <code>a-b</code>
+has strength <code>1</code> and <code>a</code>'s average association is <code>0.5</code> and <code>b</code>'s average
+association is <code>0.75</code> that means this edge has a higher than normal weight
+for both nodes and its normalized strength is <code>1/((0.5 + 0.75)/2) = 1.6</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>visualize_subgraph_structure</span>(
+    <pre class="usage"><span class='fu'>build_relative_associations</span>(
   <span class='no'>association_pairs</span>,
-  <span class='no'>node_info</span>,
-  <span class='no'>subgraph_results</span>,
-  <span class='kw'>trim_subgraph_results</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>warn_of_mismatches</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>width</span> <span class='kw'>=</span> <span class='st'>"100%"</span>,
-  <span class='kw'>height</span> <span class='kw'>=</span> <span class='st'>"800px"</span>,
-  <span class='kw'>default_step</span> <span class='kw'>=</span> <span class='st'>"min_max_rule"</span>
+  <span class='kw'>strength_col</span> <span class='kw'>=</span> <span class='st'>"strength"</span>,
+  <span class='kw'>rank_based</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='no'>impute_missing</span>,
+  <span class='kw'>return_imputed_pairs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -154,63 +157,49 @@ ids of the variables or nodes and columns <code>strength</code> that is a numeri
 indicator of strength of association (higher = stronger).</p></td>
     </tr>
     <tr>
-      <th>node_info</th>
-      <td><p>Optional dataframe that has a column <code>id</code> that corresponds
-to the variables codded in <code>a</code> and <code>b</code> of <code>association_pairs</code> that contains
-additional info nade available on hover in visualization.</p></td>
+      <th>rank_based</th>
+      <td><p>Should the relative strength be calculated using ranks?
+Here instead of using the raw values of strength, the ranking of edges is
+used with the max "strength" being the number of edges. Set to <code>FALSE</code> to
+use the raw strengths.</p></td>
     </tr>
     <tr>
-      <th>subgraph_results</th>
-      <td><p>Dataframe of subgraph results as returned by
-<code><a href='calculate_subgraph_structure.html'>calculate_subgraph_structure</a></code>. If it isnt provided it is
-calculated. Automatic calculation will slow down code depending on how
-large dataset is.</p></td>
+      <th>impute_missing</th>
+      <td><p>If not all possible pairs are present in
+<code>association_pairs</code>, this parameter controls how the function deals with
+these missing values. Current options are <code>"minimum"</code>(lowest seen edge
+value is substituted) and <code>zero</code> (<code>0</code> is substituted). See the section
+"missing association pairs" for more details.</p></td>
     </tr>
     <tr>
-      <th>trim_subgraph_results</th>
-      <td><p>Should subgraph results after a giant subgraph
-has taken over be filtered out? Rule for filtering is at least 10% of the
-variables are in subgraphs and largest subgraph contains less than 95% of
-all variables in subgraphs. Allows for easier investigating of the subgraph
-structure over strength.</p></td>
-    </tr>
-    <tr>
-      <th>warn_of_mismatches</th>
-      <td><p>If there are differences in the ids present in
-<code>association_pairs</code> and <code>node_info</code> should a warning be issued?</p></td>
-    </tr>
-    <tr>
-      <th>width, height</th>
-      <td><p>Valid css units for output size (e.g. pixels (<code>px</code>) or
-percent(<code>%</code>)).</p></td>
-    </tr>
-    <tr>
-      <th>default_step</th>
-      <td><p>How should the default starting position of the
-visualization be decided. Options are <code>min_max_rule</code> which tends to result
-in lots of small subgraphs that are easier to parse,
-<code>giant_component_local</code> which tries to detect when a giant component first
-forms based on seen number of nodes. <code>giant_component_global</code> uses same
-logic as <code>giant_component_local</code> just the threshold for a giant component
-is based on all possible nodes rather than those seen. This gives the most
-accurate clusterings if true cluster structure is non-hierarchical.
-Alternatively you can provided the step as an integer value.</p></td>
+      <th>return_imputed_pairs</th>
+      <td><p>If pairs were imputed to calculate averages, should those imputed pairs also be returned?</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Interactive javascript visualization of association network subgraphs
-at all possible cut-points</p>
+    <p>A new association pairs dataframe (with columns <code>a</code>, <code>b</code>, and
+<code>strength</code>) where <code>strength</code> is transformed to relative strength.</p>
+    <h2 class="hasAnchor" id="missing-association-pairs"><a class="anchor" href="#missing-association-pairs"></a>missing association pairs</h2>
+
+    
+
+
+<p>If there are missing pairs - I.e. not all <code>n*(n-1)/2</code> combinations of
+variables are represented - the function will throw a warning fill in the
+missing values with the minimum seen association strength.</p>
+<p>The following options are available using the <code>impute_missing</code> argument:</p><ul>
+<li><p><code>"minimum"</code>: The lowest seen strenght is assumed to be the value for all missing pairs (same
+as default but no warning is given).</p></li>
+<li><p><code>"zero"</code>: Value of <code>0</code> is substituted. This option only makes sense if your association is
+naturally lower bounded at <code>0</code>.</p></li>
+<li><p><code>"ignore"</code>: Here no action is taken and the averages are just used as is. Since it is likely this missingness is not at random it's likely the best option is an imputation of some sort.</p></li>
+</ul>
+
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
-<span class='no'>node_info</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/rename.html'>rename</a></span>(<span class='no'>virus_host_viruses</span>, <span class='kw'>id</span> <span class='kw'>=</span> <span class='no'>virus_id</span>)
-<span class='no'>node_info</span>$<span class='no'>color</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/ifelse.html'>ifelse</a></span>(<span class='no'>node_info</span>$<span class='no'>type</span> <span class='kw'>==</span> <span class='st'>"RNA"</span>, <span class='st'>"orangered"</span>, <span class='st'>"steelblue"</span>)
-<span class='fu'>visualize_subgraph_structure</span>(
-  <span class='no'>virus_net</span>,
-  <span class='kw'>node_info</span> <span class='kw'>=</span> <span class='no'>node_info</span>
-)</div><div class='output co'>#&gt; <span class='message'>Calculating subgraph structure results...</span></div><div class='output co'>#&gt; <span class='message'>...finished</span></div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
